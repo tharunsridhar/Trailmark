@@ -45,7 +45,7 @@ Planning stage (Round 1 of WCC Forge 48). There is no installable build yet. Set
 | Kishan S (team leader) | [KishanSadeesh](https://github.com/KishanSadeesh) | Frontend, synthetic demo project, testing, deployment, demonstration |
 | Tharun Sridhar | [tharunsridhar](https://github.com/tharunsridhar) | AI pipeline, backend, access control, Docker, documentation |
 
-Both members work together across the project. See [TEAM_ROLES.md](TEAM_ROLES.md) for the detailed split.
+Both members work together across the project.
 
 The repository is owned by the GitHub account `try2mastercode`, which belongs to Tharun Sridhar. All commits come from the two members' own accounts listed above.
 
