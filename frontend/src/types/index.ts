@@ -4,13 +4,37 @@ export type EvidenceStatus = 'verified' | 'unverified' | 'missing_conflicting';
 
 export type QuestionStatus = 'pending' | 'answered' | 'skipped' | 'unknown';
 
+export type QuestionCategory =
+  | 'Backend Architecture'
+  | 'API Development'
+  | 'Database & Migrations'
+  | 'Technical Decisions'
+  | 'Dependencies & Credentials'
+  | 'Risks & Vulnerabilities'
+  | 'Pending Tasks'
+  | 'Code Ownership';
+
+export interface FollowUpQuestion {
+  id: string;
+  question: string;
+  reason?: string;
+  answer?: string;
+  status: 'pending' | 'answered' | 'skipped';
+  answeredAt?: string;
+}
+
 export interface Question {
   id: string;
+  category: QuestionCategory;
+  shortTitle: string;
   question: string;
   reason: string;
   roleTarget: string;
   status: QuestionStatus;
   answer?: string;
+  followUp?: FollowUpQuestion;
+  audioDurationSeconds?: number;
+  hasVoiceRecording?: boolean;
   evidenceStatus: EvidenceStatus;
   updatedAt?: string;
 }
@@ -88,4 +112,3 @@ export interface UserProfile {
   avatar: string;
   email: string;
 }
-

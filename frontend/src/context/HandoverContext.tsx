@@ -10,6 +10,8 @@ import {
   Statement,
   EvidenceStatus,
   EvidencePiece,
+  QuestionCategory,
+  FollowUpQuestion,
 } from '@/types';
 
 export const DEMO_USERS: Record<Role, UserProfile> = {
@@ -67,64 +69,117 @@ const INITIAL_PROJECT: ProjectHandover = {
   questions: [
     {
       id: 'q-1',
-      question: 'Why was the payment and insurance retry policy rewritten to exponential backoff without a circuit breaker?',
-      reason: 'Identified in commit c8e92a1 on PR #104. No Architecture Decision Record (ADR) was found documenting why the circuit breaker was removed.',
+      category: 'Backend Architecture',
+      shortTitle: 'Payment Retry Architecture',
+      question:
+        'Why was the payment and insurance retry policy rewritten to exponential backoff without a circuit breaker?',
+      reason:
+        'Identified in commit c8e92a1 on PR #104. No Architecture Decision Record (ADR) was found documenting why the circuit breaker was removed.',
       roleTarget: 'Backend Developer',
       status: 'answered',
-      answer: 'The third-party payer API threw sporadic 504 gateway timeouts during morning batch processing. We introduced exponential backoff up to 5 attempts. The circuit breaker was temporarily postponed to prevent Celery task timeout conflicts.',
+      answer:
+        'The third-party payer API threw sporadic 504 gateway timeouts during morning batch processing. We introduced exponential backoff up to 5 attempts. The circuit breaker was temporarily postponed to prevent Celery task timeout conflicts.',
       evidenceStatus: 'unverified',
       updatedAt: '2026-10-31T14:20:00Z',
+      followUp: {
+        id: 'fu-q-1',
+        question:
+          'What happens if the third-party payer API remains unresponsive for more than 5 retry attempts? Where do those failed payment payloads accumulate?',
+        answer:
+          'They get pushed to the dead-letter queue (DLQ) in Redis under key `dlq:payments:unprocessed`. Priya will need to run the manual replay script `scripts/replay_dlq.py` to reconcile them with the hospital accounting database.',
+        status: 'answered',
+        answeredAt: '2026-10-31T14:25:00Z',
+      },
     },
     {
       id: 'q-2',
-      question: 'What is the token expiration strategy for emergency clinical access endpoints?',
-      reason: 'Conflicting timestamps detected between PR #88 (15 minutes) and Slack sync discussion #dev-core (1 hour).',
+      category: 'API Development',
+      shortTitle: 'Emergency Token Expiration',
+      question:
+        'What is the token expiration strategy for emergency clinical access endpoints and how is security maintained?',
+      reason:
+        'Conflicting timestamps detected between PR #88 (15 minutes) and Slack sync discussion in #dev-core (1 hour request from hospital emergency staff).',
       roleTarget: 'Backend Developer',
       status: 'answered',
-      answer: 'We kept the JWT expiration at 15 minutes for strict security compliance, but added a refresh endpoint (/auth/emergency/refresh) that auto-renews while a clinical session is active.',
+      answer:
+        'We kept the JWT expiration at 15 minutes for strict security compliance, but added a refresh endpoint (/auth/emergency/refresh) that auto-renews while a clinical session is active.',
       evidenceStatus: 'unverified',
       updatedAt: '2026-10-31T15:45:00Z',
+      followUp: {
+        id: 'fu-q-2',
+        question:
+          'Where is the JWT token validated on incoming socket streams, and how does the system revoke tokens if emergency privileges are abruptly terminated?',
+        status: 'pending',
+      },
     },
     {
       id: 'q-3',
-      question: 'Who owns the Celery worker deployment scripts and AWS S3 credentials for HIPAA archives?',
-      reason: 'Unowned cron jobs found in deploy/workers/celery.sh referencing a restricted S3 bucket.',
+      category: 'Dependencies & Credentials',
+      shortTitle: 'Celery Workers & AWS S3 IAM',
+      question:
+        'Who owns the Celery worker deployment scripts and AWS S3 credentials for HIPAA archives?',
+      reason:
+        'Unowned cron jobs found in deploy/workers/celery.sh referencing a restricted S3 bucket `med-archive-vault-prod`.',
       roleTarget: 'Backend Developer',
       status: 'answered',
-      answer: 'I provisioned it manually via Ansible vault. For the handover, Priya needs to be added to the AWS IAM role "HealthcareWorkerS3Policy" before Friday.',
+      answer:
+        'I provisioned it manually via Ansible vault. For the handover, Priya needs to be added to the AWS IAM role "HealthcareWorkerS3Policy" before Friday.',
       evidenceStatus: 'unverified',
       updatedAt: '2026-10-31T16:10:00Z',
     },
     {
       id: 'q-4',
-      question: 'What is the current status of the HL7-to-FHIR payload conversion parser?',
-      reason: 'Task card #342 was marked "In Progress" for 3 weeks with no subsequent commit linked.',
+      category: 'Pending Tasks',
+      shortTitle: 'HL7-to-FHIR Transformer Status',
+      question:
+        'What is the current status of the HL7-to-FHIR payload conversion parser, and what remains unfinished?',
+      reason:
+        'Task card #342 was marked "In Progress" for 3 weeks with no subsequent commit linked in the main branch.',
       roleTarget: 'Backend Developer',
       status: 'answered',
-      answer: 'The parser is roughly 80% complete in app/parsers/hl7.py. Demographics and patient identification pass all unit tests, but diagnostic lab observation parsing still requires schema validation against FHIR R4.',
+      answer:
+        'The parser is roughly 80% complete in app/parsers/hl7.py. Demographics and patient identification pass all unit tests, but diagnostic lab observation parsing still requires schema validation against FHIR R4.',
       evidenceStatus: 'unverified',
       updatedAt: '2026-10-31T17:05:00Z',
+      followUp: {
+        id: 'fu-q-4',
+        question:
+          'Are there any sample FHIR R4 diagnostic test fixtures already written, and what schema validator library were you planning to use?',
+        status: 'pending',
+      },
     },
     {
       id: 'q-5',
-      question: 'Are there any unencrypted staging credentials in the notification dispatch service?',
-      reason: 'Found placeholder comment "// TODO: Migrate Twilio dev keys to Vault" in services/notify.py:44.',
+      category: 'Risks & Vulnerabilities',
+      shortTitle: 'Staging Twilio Credentials',
+      question:
+        'Are there any unencrypted staging credentials in the notification dispatch service that require rotation before departure?',
+      reason:
+        'Found placeholder comment "// TODO: Migrate Twilio dev keys to Vault" in services/notify.py:44.',
       roleTarget: 'Backend Developer',
       status: 'pending',
       evidenceStatus: 'unverified',
     },
     {
       id: 'q-6',
-      question: 'Why are Alembic migrations #12 and #13 conflicting on the patient_records foreign key?',
-      reason: 'Two branches created migration files touching table patients_v2 concurrently.',
+      category: 'Database & Migrations',
+      shortTitle: 'Alembic Migration Conflicts',
+      question:
+        'Why are Alembic migrations #12 and #13 conflicting on the patient_records foreign key constraint?',
+      reason:
+        'Two git branches created migration files touching table patients_v2 concurrently without a merge head revision.',
       roleTarget: 'Backend Developer',
       status: 'pending',
       evidenceStatus: 'unverified',
     },
     {
       id: 'q-7',
-      question: 'What occurs when the Redis cache goes down during high-throughput patient vitals streaming?',
-      reason: 'Fallback logic in cache.py falls back directly to raw PostgreSQL queries without rate limiting.',
+      category: 'Technical Decisions',
+      shortTitle: 'Redis Cache Fallback Strategy',
+      question:
+        'What occurs when the Redis cache goes down during high-throughput patient vitals streaming?',
+      reason:
+        'Fallback logic in cache.py falls back directly to raw PostgreSQL queries without rate limiting, posing an outage risk.',
       roleTarget: 'Backend Developer',
       status: 'pending',
       evidenceStatus: 'unverified',
@@ -290,7 +345,12 @@ interface HandoverContextType {
     awaitingApproval: number;
     completedHandovers: number;
   };
-  saveAnswer: (questionId: string, answer: string) => void;
+  saveAnswer: (
+    questionId: string,
+    answer: string,
+    options?: { hasVoice?: boolean; durationSeconds?: number }
+  ) => void;
+  saveFollowUpAnswer: (questionId: string, answer: string) => void;
   markDontKnow: (questionId: string) => void;
   skipQuestion: (questionId: string) => void;
   submitDepartingAnswers: () => void;
@@ -308,7 +368,8 @@ const HandoverContext = createContext<HandoverContextType | undefined>(undefined
 
 export function HandoverProvider({ children }: { children: React.ReactNode }) {
   const [activeRole, setActiveRole] = useState<Role>('lead');
-  const [activeScreen, setActiveScreen] = useState<string>('dashboard');
+  // MANDATORY: First screen MUST be role-select
+  const [activeScreen, setActiveScreen] = useState<string>('role-select');
   const [project, setProject] = useState<ProjectHandover>(INITIAL_PROJECT);
 
   // Load persisted demo state if available
@@ -342,14 +403,47 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     completedHandovers: project.receipt.acknowledged ? 3 : 2,
   };
 
-  const saveAnswer = (questionId: string, answer: string) => {
+  const saveAnswer = (
+    questionId: string,
+    answer: string,
+    options?: { hasVoice?: boolean; durationSeconds?: number }
+  ) => {
+    // Check if answering triggers an intelligent follow-up
     const updatedQuestions = project.questions.map((q) => {
       if (q.id === questionId) {
+        // If question already has a followUp, keep it, or trigger a relevant one if none exists
+        let followUp = q.followUp;
+        if (!followUp && answer.length > 20) {
+          // Generate a contextual follow-up based on keywords
+          if (q.category === 'Risks & Vulnerabilities' || answer.toLowerCase().includes('twilio') || answer.toLowerCase().includes('secret')) {
+            followUp = {
+              id: `fu-${q.id}`,
+              question: 'Who currently has permission to rotate these credentials in production, and is there a scheduled downtime window?',
+              status: 'pending',
+            };
+          } else if (q.category === 'Database & Migrations' || answer.toLowerCase().includes('migration') || answer.toLowerCase().includes('alembic')) {
+            followUp = {
+              id: `fu-${q.id}`,
+              question: 'Which of the two migration scripts has already been applied in the staging environment?',
+              status: 'pending',
+            };
+          } else if (q.category === 'Technical Decisions' || answer.toLowerCase().includes('redis') || answer.toLowerCase().includes('cache')) {
+            followUp = {
+              id: `fu-${q.id}`,
+              question: 'What metric or alert in Datadog/CloudWatch monitors this cache hit ratio or database spike?',
+              status: 'pending',
+            };
+          }
+        }
+
         return {
           ...q,
           answer,
           status: 'answered' as const,
           evidenceStatus: 'unverified' as EvidenceStatus, // Rule: stays unverified!
+          hasVoiceRecording: options?.hasVoice ?? q.hasVoiceRecording,
+          audioDurationSeconds: options?.durationSeconds ?? q.audioDurationSeconds,
+          followUp,
           updatedAt: new Date().toISOString(),
         };
       }
@@ -367,7 +461,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
         title: q.question.slice(0, 45) + '...',
         content: answer,
         evidenceStatus: 'unverified',
-        sourceLabel: `Departing Member Answer`,
+        sourceLabel: `Departing Member Answer (${options?.hasVoice ? 'Voice & Transcription' : 'Text'})`,
         departingAnswer: answer,
       };
 
@@ -391,6 +485,30 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const saveFollowUpAnswer = (questionId: string, followUpAnswer: string) => {
+    const updatedQuestions = project.questions.map((q) => {
+      if (q.id === questionId && q.followUp) {
+        return {
+          ...q,
+          followUp: {
+            ...q.followUp,
+            answer: followUpAnswer,
+            status: 'answered' as const,
+            answeredAt: new Date().toISOString(),
+          },
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return q;
+    });
+
+    persist({
+      ...project,
+      questions: updatedQuestions,
+      updatedAt: new Date().toISOString(),
+    });
+  };
+
   const markDontKnow = (questionId: string) => {
     const q = project.questions.find((item) => item.id === questionId);
     const updatedQuestions = project.questions.map((item) =>
@@ -408,8 +526,8 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     // Add to gaps
     const newGap: Gap = {
       id: `gap-unk-${questionId}`,
-      title: q?.question || 'Unknown project question',
-      description: 'Departing member indicated no knowledge of this component. Marked as a known unknown.',
+      title: q?.shortTitle || q?.question || 'Unknown project question',
+      description: `Departing member indicated no knowledge of "${q?.question}". Flagged as knowledge gap.`,
       category: 'missing',
       risk: 'Medium',
       status: 'open',
@@ -490,8 +608,6 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
   };
 
   const approveHandover = () => {
-    // Preserve evidence statuses according to rule:
-    // "Don't automatically turn an answer into Verified just because the Team Lead approves the handover. Preserve its evidence status."
     persist({
       ...project,
       isApproved: true,
@@ -517,6 +633,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
   };
 
   const createNewProject = (data: Partial<ProjectHandover>) => {
+    const role = data.departingRole || 'Backend Developer';
     const newProj: ProjectHandover = {
       ...INITIAL_PROJECT,
       id: `proj-${Date.now()}`,
@@ -526,7 +643,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       techStack: data.techStack || 'TypeScript, Next.js, FastAPI',
       status: (data.status as any) || 'In Progress',
       departingMember: data.departingMember || 'Alex Chen',
-      departingRole: data.departingRole || 'Backend Developer',
+      departingRole: role,
       incomingMember: data.incomingMember || 'Priya Sharma',
       githubRepo: data.githubRepo || '',
       documents: data.documents || ['README.md', 'Architecture.md'],
@@ -534,37 +651,44 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       updatedAt: new Date().toISOString(),
       isApproved: false,
       receipt: { acknowledged: false },
-      // AI generates dynamic contextual questions based on the role and project details!
       questions: [
         {
           id: `q-gen-1`,
-          question: `What are the critical architectural decisions made for the ${data.name || 'project'} tech stack (${data.techStack || 'core services'})?`,
+          category: 'Backend Architecture',
+          shortTitle: 'Core Architecture & Stack',
+          question: `What are the critical architectural decisions and component boundaries implemented for ${data.name || 'this project'}?`,
           reason: `Extracted from repository source and project objectives provided by Team Lead.`,
-          roleTarget: data.departingRole || 'Backend Developer',
+          roleTarget: role,
           status: 'pending',
           evidenceStatus: 'unverified',
         },
         {
           id: `q-gen-2`,
-          question: `Which API endpoints or background workers have undocumented edge cases or failure modes?`,
-          reason: `Detected unlinked exception handlers in repository codebase.`,
-          roleTarget: data.departingRole || 'Backend Developer',
+          category: 'API Development',
+          shortTitle: 'API Edge Cases & Handlers',
+          question: `Which API endpoints or background workers have undocumented edge cases, rate limits, or unhandled failure modes?`,
+          reason: `Detected unlinked exception handlers in repository codebase during repository inspection.`,
+          roleTarget: role,
           status: 'pending',
           evidenceStatus: 'unverified',
         },
         {
           id: `q-gen-3`,
-          question: `Where are the operational credentials, third-party webhook secrets, and deployment variables stored?`,
+          category: 'Dependencies & Credentials',
+          shortTitle: 'Credentials & Secret Storage',
+          question: `Where are the operational credentials, third-party webhook secrets, and deployment variables stored, and how are they rotated?`,
           reason: `Compliance check: Team Lead flagged transition to ${data.incomingMember || 'incoming member'}.`,
-          roleTarget: data.departingRole || 'Backend Developer',
+          roleTarget: role,
           status: 'pending',
           evidenceStatus: 'unverified',
         },
         {
           id: `q-gen-4`,
-          question: `What is the current status of unfinished tasks before your departure?`,
+          category: 'Pending Tasks',
+          shortTitle: 'Unfinished Milestones',
+          question: `What is the current status of unfinished tasks or unmerged branches before your departure?`,
           reason: `Gaps identified in project milestone objectives.`,
-          roleTarget: data.departingRole || 'Backend Developer',
+          roleTarget: role,
           status: 'pending',
           evidenceStatus: 'unverified',
         },
@@ -576,6 +700,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
   const resetDemoData = () => {
     localStorage.removeItem('trailmark_project_state');
     setProject(INITIAL_PROJECT);
+    setActiveScreen('role-select');
   };
 
   return (
@@ -589,6 +714,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
         project,
         dashboardMetrics,
         saveAnswer,
+        saveFollowUpAnswer,
         markDontKnow,
         skipQuestion,
         submitDepartingAnswers,
@@ -614,4 +740,3 @@ export function useHandover() {
   }
   return context;
 }
-
