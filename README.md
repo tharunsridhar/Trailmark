@@ -36,7 +36,33 @@ When someone leaves a project, the files stay but much of what they knew leaves 
 
 ## Status
 
-Planning stage (Round 1 of WCC Forge 48). There is no installable build yet. Setup instructions, testing notes, known limitations and a roadmap will be added here as the project is built.
+Round 2 build, Phase 1 (foundation) done on the backend: FastAPI app, database models, sign-in with roles, handover and member routes, and the access check that hides any statement whose sources the viewer may not see. Importers, the AI pipeline and the review flow come next. The frontend and the synthetic project are in progress (see `frontend/` and `data/`). Setup notes, testing notes, known limitations and a roadmap will keep growing here.
+
+## Running the backend
+
+```bash
+cd backend
+python -m venv .venv
+.venv/Scripts/activate        # on macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+cp ../.env.example ../.env    # then set JWT_SECRET to a long random string
+uvicorn app.main:app --reload
+```
+
+The API is at `http://localhost:8000` and its interactive docs at `/docs`. Every endpoint, live and planned, is listed in [`docs/API.md`](docs/API.md).
+
+Run the tests:
+
+```bash
+cd backend
+pytest
+```
+
+Locally the backend uses SQLite, so nothing else needs installing. Postgres comes with the Docker setup.
+
+## Changes from the Round 1 plan
+
+- pgvector and similarity search are not used for now. The pipeline reads each source in full pieces instead. We may add it back if time allows.
 
 ## Team
 
@@ -52,5 +78,5 @@ The repository is owned by the GitHub account `try2mastercode`, which belongs to
 ## Disclosure
 
 - Demonstration data will be synthetic and will be disclosed as such.
-- AI assistance used in development, including AI-generated code, will be disclosed in this repository.
+- AI assistance used in development, including AI-generated code, is disclosed in this repository. The backend code was written with help from Claude Code and reviewed by the team.
 - External services planned: a large language model API, GitHub, Vercel and Render.
