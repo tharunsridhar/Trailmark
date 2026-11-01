@@ -8,35 +8,33 @@ import {
   XCircle,
   AlertTriangle,
   FileText,
-  MessageSquare,
   Shield,
   Flag,
   Edit3,
   Check,
   X,
-  ChevronRight,
   ExternalLink,
   ShieldCheck,
   ShieldAlert,
   ShieldQuestion,
+  Sparkles,
 } from 'lucide-react';
 
-// ─── Tabs ───────────────────────────────────────────────
 type Tab = 'summary' | 'answers' | 'evidence' | 'gaps';
 
 function TabButton({ active, label, count, onClick }: { active: boolean; label: string; count?: number; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+      className={`px-4 py-2 text-xs font-semibold rounded-full transition-all ${
         active
-          ? 'border-brand-600 text-brand-600'
-          : 'border-transparent text-muted hover:text-navy-800 hover:border-gray-300'
+          ? 'bg-[#5A5B4C] text-white shadow-soft'
+          : 'text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#EAEAE2]'
       }`}
     >
       {label}
       {count !== undefined && (
-        <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${active ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600'}`}>
+        <span className={`ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] ${active ? 'bg-white/20 text-white' : 'bg-[#EAEAE2] text-[#5A5B4C]'}`}>
           {count}
         </span>
       )}
@@ -44,411 +42,206 @@ function TabButton({ active, label, count, onClick }: { active: boolean; label: 
   );
 }
 
-// ─── Evidence Badge ─────────────────────────────────────
 function EvidenceBadge({ status }: { status: EvidenceStatus }) {
   const config = {
-    verified: { icon: <ShieldCheck size={13} />, bg: 'bg-green-50', text: 'text-green-700', label: 'Verified' },
-    unverified: { icon: <ShieldQuestion size={13} />, bg: 'bg-amber-50', text: 'text-amber-700', label: 'Unverified' },
-    missing_conflicting: { icon: <ShieldAlert size={13} />, bg: 'bg-red-50', text: 'text-red-700', label: 'Missing / Conflicting' },
+    verified: { icon: <ShieldCheck size={12} />, bg: 'bg-emerald-50 border-emerald-200 text-emerald-800', label: 'Verified' },
+    unverified: { icon: <ShieldQuestion size={12} />, bg: 'bg-amber-50 border-amber-200 text-amber-800', label: 'Unverified' },
+    missing_conflicting: { icon: <ShieldAlert size={12} />, bg: 'bg-red-50 border-red-200 text-red-800', label: 'Missing / Conflicting' },
   };
   const c = config[status];
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${c.bg} ${c.text}`}>
+    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${c.bg}`}>
       {c.icon} {c.label}
     </span>
   );
 }
 
-// ─── Summary Tab ────────────────────────────────────────
-function SummaryPanel({ project }: { project: ReturnType<typeof useHandover>['project'] }) {
-  const answered = project.questions.filter((q) => q.status === 'answered').length;
-  const total = project.questions.length;
-  const verified = project.statements.filter((s) => s.evidenceStatus === 'verified').length;
-  const openGaps = project.gaps.filter((g) => g.status === 'open').length;
-
-  const items = [
-    { label: 'Questions Answered', value: `${answered}/${total}`, color: 'text-brand-600' },
-    { label: 'Verified Statements', value: `${verified}/${project.statements.length}`, color: 'text-green-600' },
-    { label: 'Open Gaps', value: `${openGaps}`, color: openGaps > 0 ? 'text-red-600' : 'text-green-600' },
-    { label: 'Departing Member', value: project.departingMember, color: 'text-navy-800' },
-    { label: 'Incoming Member', value: project.incomingMember, color: 'text-navy-800' },
-    { label: 'Tech Stack', value: project.techStack, color: 'text-navy-800' },
-  ];
-
-  return (
-    <div className="space-y-5">
-      <div className="bg-white border border-[#E5EAF1] rounded-xl p-5">
-        <h4 className="text-sm font-semibold text-navy-800 mb-4">Handover Summary</h4>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {items.map((item) => (
-            <div key={item.label}>
-              <p className="text-xs text-muted mb-0.5">{item.label}</p>
-              <p className={`text-sm font-semibold ${item.color}`}>{item.value}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-white border border-[#E5EAF1] rounded-xl p-5">
-        <h4 className="text-sm font-semibold text-navy-800 mb-2">Project Description</h4>
-        <p className="text-sm text-navy-700 leading-relaxed">{project.description}</p>
-        <h4 className="text-sm font-semibold text-navy-800 mt-4 mb-2">Objectives</h4>
-        <p className="text-sm text-navy-700 leading-relaxed">{project.objectives}</p>
-      </div>
-
-      {/* Documents */}
-      <div className="bg-white border border-[#E5EAF1] rounded-xl p-5">
-        <h4 className="text-sm font-semibold text-navy-800 mb-3">Source Documents</h4>
-        <div className="space-y-2">
-          {project.documents.map((doc) => (
-            <div key={doc} className="flex items-center gap-2 text-sm text-navy-700">
-              <FileText size={14} className="text-muted shrink-0" />
-              <span>{doc}</span>
-            </div>
-          ))}
-        </div>
-        {project.githubRepo && (
-          <a href={project.githubRepo} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700 mt-3">
-            <ExternalLink size={14} /> View Repository
-          </a>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Answers Tab ────────────────────────────────────────
-function AnswersPanel({ questions }: { questions: Question[] }) {
-  return (
-    <div className="space-y-4">
-      {questions.map((q, i) => (
-        <div key={q.id} className="bg-white border border-[#E5EAF1] rounded-xl p-5">
-          <div className="flex items-start gap-3">
-            <span className="w-6 h-6 rounded-md bg-brand-50 text-brand-600 flex items-center justify-center text-xs font-bold shrink-0">
-              {i + 1}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-navy-800 mb-2">{q.question}</p>
-              <div className="flex items-center gap-2 mb-3">
-                <EvidenceBadge status={q.evidenceStatus} />
-                <span className={`text-xs font-medium ${q.status === 'answered' ? 'text-green-600' : q.status === 'unknown' ? 'text-red-600' : 'text-muted'}`}>
-                  {q.status === 'answered' ? 'Answered' : q.status === 'unknown' ? "Don't Know" : q.status === 'skipped' ? 'Skipped' : 'Pending'}
-                </span>
-              </div>
-              {q.answer && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-sm text-navy-700 leading-relaxed">{q.answer}</p>
-                </div>
-              )}
-              {!q.answer && q.status === 'pending' && (
-                <p className="text-sm text-muted italic">Awaiting response from departing member</p>
-              )}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── Evidence Tab (Statements) ──────────────────────────
-function EvidencePanel({
-  statements,
-  onEdit,
-  onReject,
-}: {
-  statements: Statement[];
-  onEdit: (id: string, content: string) => void;
-  onReject: (id: string) => void;
-}) {
+export function Screen3TeamLeadReview() {
+  const { project, editStatement, rejectStatement, resolveGap, flagGap, approveHandover, setActiveScreen } = useHandover();
+  const [activeTab, setActiveTab] = useState<Tab>('summary');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
-
-  const categoryConfig: Record<string, { bg: string; text: string; label: string }> = {
-    decision: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Decision' },
-    ownership: { bg: 'bg-purple-50', text: 'text-purple-700', label: 'Ownership' },
-    unfinished: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'Unfinished' },
-    risk: { bg: 'bg-red-50', text: 'text-red-700', label: 'Risk' },
-    dependency: { bg: 'bg-cyan-50', text: 'text-cyan-700', label: 'Dependency' },
-  };
-
-  return (
-    <div className="space-y-4">
-      {statements.map((st) => {
-        const cat = categoryConfig[st.category] || { bg: 'bg-gray-50', text: 'text-gray-700', label: st.category };
-        const isEditing = editingId === st.id;
-
-        return (
-          <div key={st.id} className="bg-white border border-[#E5EAF1] rounded-xl p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cat.bg} ${cat.text}`}>
-                    {cat.label}
-                  </span>
-                  <EvidenceBadge status={st.evidenceStatus} />
-                </div>
-                <h4 className="text-sm font-semibold text-navy-800 mb-1">{st.title}</h4>
-
-                {isEditing ? (
-                  <div className="mt-2">
-                    <textarea
-                      value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      rows={3}
-                      className="w-full px-3 py-2 rounded-lg border border-[#E5EAF1] text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-600/20 focus:border-brand-500"
-                    />
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        onClick={() => {
-                          onEdit(st.id, editContent);
-                          setEditingId(null);
-                        }}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-brand-600 hover:bg-brand-700 transition-colors flex items-center gap-1"
-                      >
-                        <Check size={12} /> Save
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted hover:bg-gray-100 transition-colors flex items-center gap-1"
-                      >
-                        <X size={12} /> Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm text-navy-700 leading-relaxed">{st.content}</p>
-                )}
-
-                {st.evidenceQuote && (
-                  <div className="mt-3 pl-3 border-l-2 border-brand-200">
-                    <p className="text-xs text-brand-700 italic">&ldquo;{st.evidenceQuote}&rdquo;</p>
-                    {st.sourceLabel && <p className="text-xs text-muted mt-0.5">— {st.sourceLabel}</p>}
-                  </div>
-                )}
-
-                {st.departingAnswer && (
-                  <div className="mt-3 bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs font-medium text-muted mb-1">Departing Member&apos;s Response</p>
-                    <p className="text-sm text-navy-700">{st.departingAnswer}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              {!isEditing && (
-                <div className="flex gap-1 shrink-0">
-                  <button
-                    onClick={() => {
-                      setEditingId(st.id);
-                      setEditContent(st.content);
-                    }}
-                    className="p-2 rounded-lg text-muted hover:text-navy-800 hover:bg-gray-100 transition-colors"
-                    title="Edit statement"
-                  >
-                    <Edit3 size={14} />
-                  </button>
-                  <button
-                    onClick={() => onReject(st.id)}
-                    className="p-2 rounded-lg text-muted hover:text-red-600 hover:bg-red-50 transition-colors"
-                    title="Remove statement"
-                  >
-                    <XCircle size={14} />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─── Gaps Tab ───────────────────────────────────────────
-function GapsPanel({
-  gaps,
-  onResolve,
-  onFlag,
-}: {
-  gaps: Gap[];
-  onResolve: (id: string, reason: string) => void;
-  onFlag: (id: string) => void;
-}) {
-  const [resolvingId, setResolvingId] = useState<string | null>(null);
-  const [resolution, setResolution] = useState('');
-
-  const riskColors: Record<string, { bg: string; text: string }> = {
-    High: { bg: 'bg-red-50', text: 'text-red-700' },
-    Medium: { bg: 'bg-amber-50', text: 'text-amber-700' },
-    Low: { bg: 'bg-green-50', text: 'text-green-700' },
-  };
-
-  return (
-    <div className="space-y-4">
-      {gaps.length === 0 && (
-        <div className="bg-white border border-[#E5EAF1] rounded-xl p-8 text-center">
-          <CheckCircle2 size={32} className="text-green-500 mx-auto mb-2" />
-          <p className="text-sm font-medium text-navy-800">No gaps detected</p>
-          <p className="text-xs text-muted mt-1">All knowledge areas are covered</p>
-        </div>
-      )}
-
-      {gaps.map((gap) => {
-        const rc = riskColors[gap.risk] || riskColors.Medium;
-        const isResolving = resolvingId === gap.id;
-
-        return (
-          <div key={gap.id} className="bg-white border border-[#E5EAF1] rounded-xl p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${rc.bg} ${rc.text}`}>
-                    {gap.risk} Risk
-                  </span>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                    gap.status === 'resolved' ? 'bg-green-50 text-green-700' : gap.status === 'flagged' ? 'bg-purple-50 text-purple-700' : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {gap.status === 'resolved' ? 'Resolved' : gap.status === 'flagged' ? 'Flagged' : 'Open'}
-                  </span>
-                  <span className={`text-xs font-medium ${gap.category === 'conflicting' ? 'text-orange-600' : 'text-muted'}`}>
-                    {gap.category === 'conflicting' ? 'Conflicting Sources' : 'Missing Info'}
-                  </span>
-                </div>
-                <h4 className="text-sm font-semibold text-navy-800 mb-1">{gap.title}</h4>
-                <p className="text-sm text-navy-700 leading-relaxed">{gap.description}</p>
-
-                {gap.sourcesInConflict && gap.sourcesInConflict.length > 0 && (
-                  <div className="mt-2 flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-muted">Sources:</span>
-                    {gap.sourcesInConflict.map((s) => (
-                      <span key={s} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {gap.resolutionReason && (
-                  <div className="mt-3 bg-green-50 rounded-lg p-3">
-                    <p className="text-xs font-medium text-green-700 mb-0.5">Resolution</p>
-                    <p className="text-xs text-green-700">{gap.resolutionReason}</p>
-                  </div>
-                )}
-
-                {isResolving && (
-                  <div className="mt-3">
-                    <textarea
-                      value={resolution}
-                      onChange={(e) => setResolution(e.target.value)}
-                      rows={2}
-                      className="w-full px-3 py-2 rounded-lg border border-[#E5EAF1] text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-600/20 focus:border-brand-500"
-                      placeholder="Explain how this gap was resolved..."
-                    />
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        onClick={() => {
-                          if (resolution.trim()) {
-                            onResolve(gap.id, resolution.trim());
-                            setResolvingId(null);
-                            setResolution('');
-                          }
-                        }}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-green-600 hover:bg-green-700 transition-colors flex items-center gap-1"
-                      >
-                        <Check size={12} /> Resolve
-                      </button>
-                      <button
-                        onClick={() => { setResolvingId(null); setResolution(''); }}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted hover:bg-gray-100 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              {gap.status === 'open' && !isResolving && (
-                <div className="flex gap-1 shrink-0">
-                  <button
-                    onClick={() => setResolvingId(gap.id)}
-                    className="p-2 rounded-lg text-muted hover:text-green-600 hover:bg-green-50 transition-colors"
-                    title="Resolve gap"
-                  >
-                    <CheckCircle2 size={14} />
-                  </button>
-                  <button
-                    onClick={() => onFlag(gap.id)}
-                    className="p-2 rounded-lg text-muted hover:text-purple-600 hover:bg-purple-50 transition-colors"
-                    title="Flag for follow-up"
-                  >
-                    <Flag size={14} />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─── Main Screen ────────────────────────────────────────
-export function Screen3TeamLeadReview() {
-  const {
-    project,
-    editStatement,
-    rejectStatement,
-    resolveGap,
-    flagGap,
-    approveHandover,
-  } = useHandover();
-
-  const [activeTab, setActiveTab] = useState<Tab>('summary');
 
   const canApprove = !project.isApproved && project.questions.some((q) => q.status === 'answered');
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+    <div className="max-w-6xl mx-auto space-y-6 pb-12">
+      {/* Header matching reference aesthetic */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-navy-800">{project.name}</h2>
-          <p className="text-sm text-muted mt-0.5">Review answers, verify evidence, and resolve gaps before approving</p>
-        </div>
-        {project.isApproved ? (
-          <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-green-50 text-green-700 text-sm font-medium">
-            <ShieldCheck size={16} />
-            Approved
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold tracking-tight text-[#1F201B]">{project.name}</h2>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EAEAE2] text-[#5A5B4C]">
+              Review & Verification
+            </span>
           </div>
-        ) : (
-          <button
-            onClick={approveHandover}
-            disabled={!canApprove}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-colors"
-          >
-            <Shield size={16} />
-            Approve Handover
-          </button>
-        )}
+          <p className="text-xs text-[#7A7B72] mt-0.5">
+            Cross-examine answers submitted by {project.departingMember} against source commits, PRs, and ADRs.
+          </p>
+        </div>
+
+        <div>
+          {project.isApproved ? (
+            <div className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold shadow-2xs">
+              <ShieldCheck size={15} />
+              Handover Approved & Published
+            </div>
+          ) : (
+            <button
+              onClick={approveHandover}
+              disabled={!canApprove}
+              className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] disabled:opacity-40 text-white text-xs font-semibold shadow-soft transition-all"
+            >
+              <Shield size={14} />
+              Approve Handover
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-[#E5EAF1] mb-6 flex gap-0">
-        <TabButton active={activeTab === 'summary'} label="Summary" onClick={() => setActiveTab('summary')} />
-        <TabButton active={activeTab === 'answers'} label="Answers" count={project.questions.length} onClick={() => setActiveTab('answers')} />
-        <TabButton active={activeTab === 'evidence'} label="Evidence" count={project.statements.length} onClick={() => setActiveTab('evidence')} />
-        <TabButton active={activeTab === 'gaps'} label="Gaps" count={project.gaps.filter(g => g.status === 'open').length} onClick={() => setActiveTab('gaps')} />
+      {/* Tabs as rounded pills */}
+      <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-white border border-[#E6E6DE] w-fit shadow-2xs">
+        <TabButton active={activeTab === 'summary'} label="Overview" onClick={() => setActiveTab('summary')} />
+        <TabButton active={activeTab === 'answers'} label="AI Answers" count={project.questions.length} onClick={() => setActiveTab('answers')} />
+        <TabButton active={activeTab === 'evidence'} label="Extracted Statements" count={project.statements.length} onClick={() => setActiveTab('evidence')} />
+        <TabButton active={activeTab === 'gaps'} label="Knowledge Gaps" count={project.gaps.filter(g => g.status === 'open').length} onClick={() => setActiveTab('gaps')} />
       </div>
 
-      {/* Tab Content */}
-      {activeTab === 'summary' && <SummaryPanel project={project} />}
-      {activeTab === 'answers' && <AnswersPanel questions={project.questions} />}
-      {activeTab === 'evidence' && <EvidencePanel statements={project.statements} onEdit={editStatement} onReject={rejectStatement} />}
-      {activeTab === 'gaps' && <GapsPanel gaps={project.gaps} onResolve={resolveGap} onFlag={flagGap} />}
+      {/* Tab 1: Summary */}
+      {activeTab === 'summary' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 bg-white rounded-3xl p-7 border border-[#E6E6DE] shadow-soft space-y-4">
+            <h3 className="text-sm font-bold text-[#1F201B]">Handover Scope & Objectives</h3>
+            <p className="text-xs text-[#3A3B34] leading-relaxed">{project.description}</p>
+            <div className="pt-2">
+              <h4 className="text-xs font-bold text-[#1F201B] mb-1">Key Objectives:</h4>
+              <p className="text-xs text-[#7A7B72] leading-relaxed">{project.objectives}</p>
+            </div>
+            <div className="pt-2">
+              <h4 className="text-xs font-bold text-[#1F201B] mb-2">Sources Checked:</h4>
+              <div className="flex flex-wrap gap-2">
+                {project.documents.map((doc) => (
+                  <span key={doc} className="px-2.5 py-1 rounded-lg bg-[#F4F4F0] border border-[#E6E6DE] text-[11px] font-medium text-[#3A3B34] flex items-center gap-1">
+                    <FileText size={12} className="text-[#5A5B4C]" />
+                    {doc}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 border border-[#E6E6DE] shadow-soft space-y-4">
+            <h3 className="text-sm font-bold text-[#1F201B]">Transition Summary</h3>
+            <div className="space-y-3 text-xs">
+              <div className="flex justify-between pb-2 border-b border-[#E6E6DE]">
+                <span className="text-[#7A7B72]">Departing:</span>
+                <span className="font-semibold text-[#1F201B]">{project.departingMember}</span>
+              </div>
+              <div className="flex justify-between pb-2 border-b border-[#E6E6DE]">
+                <span className="text-[#7A7B72]">Role:</span>
+                <span className="font-semibold text-[#1F201B]">{project.departingRole}</span>
+              </div>
+              <div className="flex justify-between pb-2 border-b border-[#E6E6DE]">
+                <span className="text-[#7A7B72]">Successor:</span>
+                <span className="font-semibold text-[#1F201B]">{project.incomingMember}</span>
+              </div>
+              <div className="flex justify-between pb-2 border-b border-[#E6E6DE]">
+                <span className="text-[#7A7B72]">Evidence Items:</span>
+                <span className="font-semibold text-[#5A5B4C]">{project.statements.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#7A7B72]">Status:</span>
+                <span className="font-bold text-[#5A5B4C]">{project.status}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 2: Answers */}
+      {activeTab === 'answers' && (
+        <div className="bg-white rounded-3xl p-7 border border-[#E6E6DE] shadow-soft space-y-4">
+          <h3 className="text-sm font-bold text-[#1F201B]">Answers Submitted by {project.departingMember}</h3>
+          <div className="divide-y divide-[#E6E6DE]">
+            {project.questions.map((q, idx) => (
+              <div key={q.id} className="py-4 first:pt-0 last:pb-0 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#F4F4F0] text-[#5A5B4C]">
+                      Q{idx + 1}
+                    </span>
+                    <span className="text-xs font-bold text-[#1F201B]">{q.shortTitle || q.question}</span>
+                  </div>
+                  <EvidenceBadge status={q.evidenceStatus} />
+                </div>
+                <p className="text-xs text-[#3A3B34] bg-[#F4F4F0] p-3 rounded-xl border border-[#E6E6DE]">
+                  {q.answer || <span className="italic text-[#A2A399]">No answer recorded.</span>}
+                </p>
+                {q.followUp && q.followUp.answer && (
+                  <p className="text-xs text-[#5A5B4C] pl-3 border-l-2 border-[#5A5B4C]">
+                    <strong>Follow-up detail:</strong> {q.followUp.answer}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 3: Extracted Statements */}
+      {activeTab === 'evidence' && (
+        <div className="bg-white rounded-3xl p-7 border border-[#E6E6DE] shadow-soft space-y-4">
+          <h3 className="text-sm font-bold text-[#1F201B]">Extracted Statements & Grounded Evidence</h3>
+          <div className="space-y-3">
+            {project.statements.map((st) => (
+              <div key={st.id} className="p-4 rounded-2xl bg-[#F4F4F0] border border-[#E6E6DE] space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#1F201B]">{st.title}</span>
+                  <EvidenceBadge status={st.evidenceStatus} />
+                </div>
+                <p className="text-xs text-[#3A3B34]">{st.content}</p>
+                {st.evidenceQuote && (
+                  <div className="text-[11px] text-[#7A7B72] italic pl-2.5 border-l-2 border-[#5A5B4C]">
+                    &ldquo;{st.evidenceQuote}&rdquo; {st.sourceLabel && `— ${st.sourceLabel}`}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: Gaps */}
+      {activeTab === 'gaps' && (
+        <div className="bg-white rounded-3xl p-7 border border-[#E6E6DE] shadow-soft space-y-4">
+          <h3 className="text-sm font-bold text-[#1F201B]">Knowledge Gaps & Open Unknowns</h3>
+          <div className="space-y-3">
+            {project.gaps.map((gap) => (
+              <div key={gap.id} className="p-4 rounded-2xl bg-[#F4F4F0] border border-[#E6E6DE] flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-800">
+                      {gap.risk} Risk
+                    </span>
+                    <span className="text-xs font-bold text-[#1F201B]">{gap.title}</span>
+                  </div>
+                  <p className="text-xs text-[#7A7B72]">{gap.description}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {gap.status === 'open' && (
+                    <button
+                      onClick={() => resolveGap(gap.id, 'Reviewed and verified in architecture sync.')}
+                      className="px-3 py-1.5 rounded-full bg-white border border-[#E6E6DE] text-xs font-semibold text-[#5A5B4C] hover:bg-[#EAEAE2]"
+                    >
+                      Resolve Gap
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

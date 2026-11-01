@@ -39,7 +39,6 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
     setErrorMessage(null);
     audioChunksRef.current = [];
 
-    // 1. Microphone access
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Audio recording is not supported in this browser.');
@@ -70,7 +69,6 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
         setRecordingSeconds((prev) => prev + 1);
       }, 1000);
 
-      // 2. Real-time Browser Speech Recognition (Web Speech API)
       const SpeechRecognition =
         (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -93,20 +91,14 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
           }
         };
 
-        recognition.onerror = () => {
-          // Graceful fallback: transcription can be typed or supplemented
-        };
-
         try {
           recognition.start();
           speechRecognitionRef.current = recognition;
-        } catch {
-          // ignore
-        }
+        } catch {}
       }
     } catch (err: any) {
       setErrorMessage(
-        err.message || 'Microphone access denied or unavailable. You can also provide a text answer.'
+        err.message || 'Microphone access denied or unavailable. You can provide a text answer.'
       );
       setIsRecording(false);
     }
@@ -124,7 +116,6 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
         } catch {}
       }
 
-      // If speech recognition didn't capture enough text, provide a realistic project transcription simulation
       if (!transcribedText.trim()) {
         setIsTranscribing(true);
         setTimeout(() => {
@@ -174,56 +165,52 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
   };
 
   return (
-    <div className="space-y-4">
-      {/* Error alert */}
+    <div className="space-y-4 pt-1">
       {errorMessage && (
-        <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2">
-          <AlertCircle size={15} className="text-amber-600 shrink-0 mt-0.5" />
+        <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2">
+          <AlertCircle size={14} className="text-amber-700 shrink-0 mt-0.5" />
           <span>{errorMessage}</span>
         </div>
       )}
 
-      {/* Voice Control Bar */}
-      <div className="p-4 rounded-xl border border-[#E2E8F0] bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+      {/* Voice Control Strip in warm stone styling */}
+      <div className="p-4 rounded-2xl border border-[#E6E6DE] bg-[#F4F4F0] flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
           {!isRecording ? (
             <button
               type="button"
               onClick={startRecording}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white hover:bg-brand-700 text-xs font-semibold shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] text-white text-xs font-semibold shadow-soft transition-all"
             >
-              <Mic size={16} />
-              {audioUrl ? 'Re-record Voice Answer' : 'Start Voice Recording'}
+              <Mic size={14} />
+              {audioUrl ? 'Re-record Voice Answer' : 'Start Recording'}
             </button>
           ) : (
             <button
               type="button"
               onClick={stopRecording}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 text-white hover:bg-red-700 text-xs font-semibold shadow-sm animate-pulse transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-red-700 text-white text-xs font-semibold shadow-soft animate-pulse transition-all"
             >
-              <Square size={15} />
+              <Square size={13} />
               Stop Recording
             </button>
           )}
 
-          {/* Timer & Pulsing badge */}
           {isRecording && (
-            <div className="flex items-center gap-2 text-xs font-medium text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
-              <span>Recording {formatTime(recordingSeconds)}</span>
-            </div>
+            <span className="text-xs font-medium text-red-700 bg-red-50 border border-red-200 px-3 py-1 rounded-full">
+              Recording {formatTime(recordingSeconds)}
+            </span>
           )}
 
-          {/* Playback Button */}
           {!isRecording && audioUrl && (
             <button
               type="button"
               onClick={togglePlayback}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-[#E2E8F0] text-xs font-medium text-[#0F172A] hover:bg-slate-50 shadow-2xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#E6E6DE] text-xs font-medium text-[#1F201B] hover:bg-[#EAEAE2]"
             >
-              {isPlaying ? <Pause size={14} /> : <Play size={14} />}
-              <span>{isPlaying ? 'Pause' : 'Play Audio'}</span>
-              <span className="text-[10px] text-[#64748B]">({formatTime(recordingSeconds)})</span>
+              {isPlaying ? <Pause size={13} /> : <Play size={13} />}
+              <span>{isPlaying ? 'Pause' : 'Play'}</span>
+              <span className="text-[10px] text-[#7A7B72]">({formatTime(recordingSeconds)})</span>
             </button>
           )}
 
@@ -231,30 +218,25 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
             <button
               type="button"
               onClick={resetRecording}
-              className="p-2 text-[#64748B] hover:text-[#0F172A] rounded-lg hover:bg-slate-100"
-              title="Discard audio"
+              className="p-1.5 text-[#7A7B72] hover:text-[#1F201B] rounded-full hover:bg-[#EAEAE2]"
+              title="Discard"
             >
-              <RotateCcw size={15} />
+              <RotateCcw size={14} />
             </button>
           )}
         </div>
 
-        <div className="text-right text-[11px] text-[#64748B] w-full sm:w-auto">
-          <span>AI will transcribe your speech automatically. You can edit before saving.</span>
-        </div>
+        <span className="text-[11px] text-[#7A7B72]">Auto-transcribes into text. Editable before saving.</span>
       </div>
 
-      {/* Transcription Status / Text Preview Area */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="text-xs font-semibold text-[#0F172A] flex items-center gap-1.5">
-            <Volume2 size={13} className="text-brand-600" />
-            Transcribed Text Preview & Manual Corrections
+          <label className="text-xs font-semibold text-[#1F201B] flex items-center gap-1">
+            <Volume2 size={13} className="text-[#5A5B4C]" />
+            Transcribed Text & Manual Corrections
           </label>
           {isTranscribing && (
-            <span className="text-[11px] text-brand-600 font-medium animate-pulse">
-              Processing speech to text...
-            </span>
+            <span className="text-[11px] text-[#5A5B4C] font-semibold animate-pulse">Transcribing...</span>
           )}
         </div>
 
@@ -265,20 +247,10 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
             onTranscriptionComplete(e.target.value, recordingSeconds);
           }}
           rows={3}
-          placeholder="Speak into the microphone or refine the auto-transcribed text here..."
-          className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] text-sm text-[#0F172A] bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-colors resize-none leading-relaxed"
+          placeholder="Speak or refine the transcribed answer here..."
+          className="w-full px-4 py-2.5 rounded-2xl border border-[#E6E6DE] text-xs text-[#1F201B] bg-white placeholder-[#A2A399] focus:outline-none focus:ring-1 focus:ring-[#5A5B4C] resize-none leading-relaxed"
         />
-
-        {transcribedText && (
-          <div className="flex items-center justify-between mt-1 text-[11px] text-[#64748B]">
-            <span>{transcribedText.split(/\s+/).filter(Boolean).length} words transcribed</span>
-            <span className="text-emerald-600 font-medium flex items-center gap-1">
-              <Check size={12} /> Ready to save
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
 }
-

@@ -4,15 +4,9 @@ import React, { useState } from 'react';
 import { useHandover } from '@/context/HandoverContext';
 import {
   CheckCircle2,
-  Clock,
-  SkipForward,
-  AlertTriangle,
   ArrowLeft,
   Send,
   Edit3,
-  ShieldAlert,
-  ChevronRight,
-  Sparkles,
   FileCheck,
 } from 'lucide-react';
 
@@ -28,9 +22,6 @@ export function InterviewCompletion({ onRevisitQuestion }: InterviewCompletionPr
   const answered = project.questions.filter((q) => q.status === 'answered').length;
   const skipped = project.questions.filter((q) => q.status === 'skipped').length;
   const unknown = project.questions.filter((q) => q.status === 'unknown').length;
-  const followUpsAnswered = project.questions.filter(
-    (q) => q.followUp && q.followUp.status === 'answered'
-  ).length;
 
   const handleSubmit = () => {
     submitDepartingAnswers();
@@ -39,50 +30,48 @@ export function InterviewCompletion({ onRevisitQuestion }: InterviewCompletionPr
 
   if (isSubmitted) {
     return (
-      <div className="max-w-2xl mx-auto py-8">
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-8 sm:p-12 text-center shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-5">
-            <CheckCircle2 size={36} />
+      <div className="max-w-2xl mx-auto py-10 select-none">
+        <div className="bg-white rounded-3xl p-8 sm:p-12 border border-[#E6E6DE] text-center shadow-soft space-y-6">
+          <div className="w-14 h-14 rounded-full bg-[#F4F4F0] text-[#5A5B4C] flex items-center justify-center mx-auto shadow-2xs">
+            <CheckCircle2 size={32} />
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A] mb-3">
-            Your project knowledge has been submitted successfully.
-          </h2>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1F201B]">
+              Handover Knowledge Submitted
+            </h2>
+            <p className="text-xs text-[#7A7B72] mt-1 max-w-md mx-auto leading-relaxed">
+              Your responses have been recorded and sent to <strong className="text-[#1F201B]">Kishan S (Team Lead)</strong> for verification against repository code and ADR documents.
+            </p>
+          </div>
 
-          <p className="text-sm text-[#64748B] leading-relaxed max-w-lg mx-auto mb-8">
-            Thank you, <strong className="text-[#0F172A]">{project.departingMember}</strong>. Your answers and voice transcriptions have been recorded and forwarded to{' '}
-            <strong className="text-[#0F172A]">Kishan S (Team Lead)</strong> for verification against source repositories and code artifacts.
-          </p>
-
-          <div className="p-4 rounded-xl bg-slate-50 border border-[#E2E8F0] text-left text-xs text-[#64748B] max-w-md mx-auto mb-8 space-y-2">
-            <div className="flex items-center justify-between">
-              <span>Handover Project:</span>
-              <span className="font-semibold text-[#0F172A]">{project.name}</span>
+          <div className="p-4 rounded-2xl bg-[#F4F4F0] border border-[#E6E6DE] text-xs max-w-sm mx-auto text-left space-y-2">
+            <div className="flex justify-between">
+              <span className="text-[#7A7B72]">Project:</span>
+              <span className="font-bold text-[#1F201B]">{project.name}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span>Submitted Responses:</span>
-              <span className="font-semibold text-[#0F172A]">
-                {answered} of {total} Questions Answered
-              </span>
+            <div className="flex justify-between">
+              <span className="text-[#7A7B72]">Questions Answered:</span>
+              <span className="font-bold text-[#5A5B4C]">{answered} / {total}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span>Status:</span>
-              <span className="font-semibold text-amber-600">Pending Lead Review (Unverified)</span>
+            <div className="flex justify-between">
+              <span className="text-[#7A7B72]">Status:</span>
+              <span className="font-bold text-amber-800">Pending Lead Approval</span>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <button
               type="button"
               onClick={() => setActiveScreen('my-handover-departing')}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-sm transition-colors"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] text-white text-xs font-semibold shadow-soft"
             >
-              Return to Handover Overview
+              Handover Overview
             </button>
             <button
               type="button"
               onClick={() => setActiveScreen('role-select')}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white border border-[#E2E8F0] hover:bg-slate-50 text-[#0F172A] font-medium text-sm transition-colors"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-white border border-[#E6E6DE] hover:bg-[#EAEAE2] text-xs font-semibold text-[#1F201B]"
             >
               Switch Role for Demo
             </button>
@@ -93,138 +82,68 @@ export function InterviewCompletion({ onRevisitQuestion }: InterviewCompletionPr
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-4xl mx-auto py-6 space-y-6 select-none">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0F172A]">Interview Summary & Review</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">
-            Review your answers before submitting to the Team Lead for review.
+          <h1 className="text-xl font-bold tracking-tight text-[#1F201B]">Review Before Submission</h1>
+          <p className="text-xs text-[#7A7B72] mt-0.5">
+            Verify your answers before forwarding the knowledge handover to Kishan S.
           </p>
         </div>
         <button
           type="button"
           onClick={() => onRevisitQuestion(0)}
-          className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1"
+          className="text-xs font-semibold text-[#5A5B4C] hover:underline flex items-center gap-1"
         >
-          <ArrowLeft size={14} /> Back to interview
+          <ArrowLeft size={13} /> Edit Questions
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div className="p-4 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs">
-          <div className="text-xs font-medium text-[#64748B] mb-1">Answered</div>
-          <div className="text-2xl font-bold text-emerald-600">
-            {answered} <span className="text-xs text-[#64748B] font-normal">/ {total}</span>
-          </div>
-        </div>
-        <div className="p-4 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs">
-          <div className="text-xs font-medium text-[#64748B] mb-1">Follow-ups</div>
-          <div className="text-2xl font-bold text-brand-600">{followUpsAnswered}</div>
-        </div>
-        <div className="p-4 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs">
-          <div className="text-xs font-medium text-[#64748B] mb-1">Skipped</div>
-          <div className="text-2xl font-bold text-[#64748B]">{skipped}</div>
-        </div>
-        <div className="p-4 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs">
-          <div className="text-xs font-medium text-[#64748B] mb-1">Flagged Gaps</div>
-          <div className="text-2xl font-bold text-amber-600">{unknown}</div>
-        </div>
-      </div>
+      <div className="bg-white rounded-3xl p-7 border border-[#E6E6DE] shadow-soft space-y-4">
+        <h2 className="text-sm font-bold text-[#1F201B] flex items-center gap-2">
+          <FileCheck size={16} className="text-[#5A5B4C]" />
+          Summary of Recorded Checkpoints
+        </h2>
 
-      {/* Answer List */}
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-sm overflow-hidden mb-6">
-        <div className="p-4 sm:p-5 border-b border-[#E2E8F0] bg-slate-50/60 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
-            <FileCheck size={16} className="text-brand-600" />
-            Checkpoint Responses ({total})
-          </h2>
-          <span className="text-xs text-[#64748B]">Click any response to edit</span>
-        </div>
-
-        <div className="divide-y divide-[#E2E8F0]">
-          {project.questions.map((q, idx) => {
-            return (
-              <div
-                key={q.id}
-                className="p-4 sm:p-5 hover:bg-slate-50/70 transition-colors flex items-start justify-between gap-4"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-[#0F172A]">
-                      Q{idx + 1}
-                    </span>
-                    <span className="text-xs font-semibold text-brand-600">{q.category}</span>
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                        q.status === 'answered'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : q.status === 'unknown'
-                            ? 'bg-amber-50 text-amber-700'
-                            : 'bg-slate-100 text-[#64748B]'
-                      }`}
-                    >
-                      {q.status === 'answered'
-                        ? 'Answered'
-                        : q.status === 'unknown'
-                          ? "Marked Don't Know"
-                          : 'Skipped'}
-                    </span>
-                  </div>
-
-                  <p className="text-sm font-medium text-[#0F172A] mb-2">{q.question}</p>
-
-                  {q.answer ? (
-                    <div className="p-3 rounded-lg bg-slate-50 border border-[#E2E8F0] text-xs text-[#0F172A] leading-relaxed">
-                      {q.answer}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-[#64748B] italic">No answer provided.</p>
-                  )}
-
-                  {/* Follow-up answer if present */}
-                  {q.followUp && q.followUp.answer && (
-                    <div className="mt-2 pl-3 border-l-2 border-brand-300">
-                      <p className="text-[11px] font-medium text-brand-700">Follow-up clarification:</p>
-                      <p className="text-xs text-[#0F172A]">{q.followUp.answer}</p>
-                    </div>
-                  )}
+        <div className="divide-y divide-[#E6E6DE]">
+          {project.questions.map((q, idx) => (
+            <div key={q.id} className="py-3.5 first:pt-0 last:pb-0 flex items-start justify-between gap-4 text-xs">
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-[#5A5B4C]">Q{idx + 1}</span>
+                  <span className="font-bold text-[#1F201B]">{q.shortTitle || q.question}</span>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => onRevisitQuestion(idx)}
-                  className="p-2 rounded-lg text-[#64748B] hover:text-brand-600 hover:bg-white border border-transparent hover:border-[#E2E8F0] shrink-0"
-                  title="Edit answer"
-                >
-                  <Edit3 size={15} />
-                </button>
+                <p className="text-[#3A3B34] bg-[#F4F4F0] p-2.5 rounded-xl border border-[#E6E6DE]">
+                  {q.answer || <span className="italic text-[#A2A399]">No answer recorded.</span>}
+                </p>
               </div>
-            );
-          })}
+              <button
+                type="button"
+                onClick={() => onRevisitQuestion(idx)}
+                className="p-1.5 text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] rounded-lg shrink-0 mt-1"
+                title="Edit response"
+              >
+                <Edit3 size={14} />
+              </button>
+            </div>
+          ))}
         </div>
-      </div>
 
-      {/* Submission CTA */}
-      <div className="p-5 rounded-2xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <h3 className="text-sm font-bold text-[#0F172A]">Ready to submit your handover knowledge?</h3>
-          <p className="text-xs text-[#64748B] mt-0.5">
-            Your responses will be transmitted to Team Lead Kishan S for verification.
+        <div className="pt-4 border-t border-[#E6E6DE] flex items-center justify-between">
+          <p className="text-xs text-[#7A7B72]">
+            {answered} answered, {skipped} skipped, {unknown} unknown.
           </p>
-        </div>
 
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-sm flex items-center justify-center gap-2 transition-all"
-        >
-          <Send size={15} />
-          Submit Answers to Team Lead
-        </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="px-6 py-2.5 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] text-white text-xs font-semibold shadow-soft flex items-center gap-1.5"
+          >
+            <Send size={13} />
+            Submit Answers to Team Lead
+          </button>
+        </div>
       </div>
     </div>
   );
 }
-

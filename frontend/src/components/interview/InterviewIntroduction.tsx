@@ -10,7 +10,6 @@ import {
   Mic,
   FileText,
   ShieldCheck,
-  CheckCircle2,
   FolderGit2,
   User,
   Sparkles,
@@ -23,153 +22,82 @@ export function InterviewIntroduction() {
   const answeredCount = project.questions.filter((q) => q.status === 'answered').length;
 
   return (
-    <div className="max-w-3xl mx-auto py-4">
-      {/* Top Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs text-[#64748B] mb-6">
-        <span>Trailmark</span>
-        <span>/</span>
-        <span>Knowledge Handover</span>
-        <span>/</span>
-        <span className="text-[#0F172A] font-semibold">{project.name}</span>
-      </div>
-
-      {/* Main Card */}
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-7 sm:p-9 shadow-sm">
-        {/* Header Badge */}
-        <div className="flex items-center justify-between mb-6">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-brand-600 border border-blue-100">
-            <Sparkles size={13} />
-            AI-Guided Handover Interview
+    <div className="max-w-4xl mx-auto py-6 select-none">
+      <div className="bg-white rounded-3xl p-8 sm:p-10 border border-[#E6E6DE] shadow-soft space-y-8">
+        <div className="flex items-center justify-between">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#F4F4F0] text-[#5A5B4C]">
+            <Sparkles size={12} />
+            AI Handover Agent
           </span>
-          <span className="text-xs font-medium text-[#64748B]">
-            Assigned to {project.departingMember}
+          <span className="text-xs text-[#7A7B72]">
+            Assigned: {project.departingMember}
           </span>
         </div>
 
-        {/* Title */}
-        <h1 className="text-2xl sm:text-3xl font-bold text-[#0F172A] tracking-tight mb-3">
-          Project Knowledge Handover Interview
-        </h1>
-        <p className="text-sm text-[#64748B] leading-relaxed mb-8">
-          Before your transition, Trailmark captures critical architectural decisions, undocumented workflows, dependencies, and unfinished milestones to ensure a seamless succession for{' '}
-          <strong className="text-[#0F172A]">{project.incomingMember}</strong>.
-        </p>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1F201B] mb-2">
+            Project Knowledge Handover
+          </h1>
+          <p className="text-xs sm:text-sm text-[#7A7B72] leading-relaxed">
+            The AI agent formulated questions from repository commits, PR reviews, and ADR documents to ensure complete transition of your backend components to <strong className="text-[#1F201B]">{project.incomingMember}</strong>.
+          </p>
+        </div>
 
-        {/* Project & Role Info Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-xl bg-slate-50 border border-[#E2E8F0] mb-8">
-          <div>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#64748B] mb-1">
-              <FolderGit2 size={13} className="text-brand-600" />
-              Project Name
+        {/* Project Card in reference style */}
+        <div className="p-6 rounded-2xl bg-[#F4F4F0] border border-[#E6E6DE] space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p className="text-[#7A7B72] font-semibold mb-0.5">Project</p>
+              <p className="font-bold text-[#1F201B]">{project.name}</p>
             </div>
-            <p className="text-sm font-bold text-[#0F172A]">{project.name}</p>
+            <div>
+              <p className="text-[#7A7B72] font-semibold mb-0.5">Role</p>
+              <p className="font-bold text-[#1F201B]">{project.departingRole}</p>
+            </div>
           </div>
 
-          <div>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#64748B] mb-1">
-              <User size={13} className="text-brand-600" />
-              Interview For & Role
-            </div>
-            <p className="text-sm font-bold text-[#0F172A]">
-              {project.departingMember}{' '}
-              <span className="text-xs font-medium text-[#64748B]">({project.departingRole})</span>
-            </p>
-          </div>
-
-          <div className="sm:col-span-2 pt-3 border-t border-[#E2E8F0]/60">
-            <div className="text-xs font-semibold text-[#64748B] mb-1">Project Overview</div>
-            <p className="text-xs sm:text-sm text-[#0F172A] leading-relaxed">
-              {project.description}
-            </p>
-          </div>
-
-          <div className="sm:col-span-2 pt-2">
-            <div className="text-xs font-semibold text-[#64748B] mb-1">Core Tech Stack</div>
-            <div className="flex flex-wrap gap-1.5">
-              {project.techStack.split(',').map((tech) => (
-                <span
-                  key={tech.trim()}
-                  className="px-2 py-0.5 rounded-md bg-white border border-[#E2E8F0] text-[11px] font-medium text-[#0F172A]"
-                >
-                  {tech.trim()}
-                </span>
-              ))}
-            </div>
+          <div className="text-xs pt-2 border-t border-[#E6E6DE]">
+            <p className="text-[#7A7B72] font-semibold mb-0.5">Scope & Tech Stack</p>
+            <p className="text-[#3A3B34] leading-relaxed">{project.techStack}</p>
           </div>
         </div>
 
-        {/* Checkpoint Stats & Capabilities */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          <div className="p-3.5 rounded-xl border border-[#E2E8F0] bg-white">
-            <div className="flex items-center gap-1.5 text-brand-600 text-xs font-semibold mb-1">
-              <HelpCircle size={14} />
-              Questions
-            </div>
-            <p className="text-lg font-bold text-[#0F172A]">{totalQuestions} Checkpoints</p>
-            <p className="text-[11px] text-[#64748B]">Role-targeted</p>
+        {/* 4 Feature Badges */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div className="p-4 rounded-2xl bg-white border border-[#E6E6DE] shadow-2xs">
+            <span className="text-[#7A7B72]">Checkpoints</span>
+            <p className="text-base font-bold text-[#1F201B] mt-0.5">{totalQuestions} Questions</p>
           </div>
-
-          <div className="p-3.5 rounded-xl border border-[#E2E8F0] bg-white">
-            <div className="flex items-center gap-1.5 text-amber-600 text-xs font-semibold mb-1">
-              <Clock size={14} />
-              Duration
-            </div>
-            <p className="text-lg font-bold text-[#0F172A]">~15 mins</p>
-            <p className="text-[11px] text-[#64748B]">At your pace</p>
+          <div className="p-4 rounded-2xl bg-white border border-[#E6E6DE] shadow-2xs">
+            <span className="text-[#7A7B72]">Pacing</span>
+            <p className="text-base font-bold text-[#1F201B] mt-0.5">~15 mins</p>
           </div>
-
-          <div className="p-3.5 rounded-xl border border-[#E2E8F0] bg-white">
-            <div className="flex items-center gap-1.5 text-blue-600 text-xs font-semibold mb-1">
-              <FileText size={14} />
-              Text Option
-            </div>
-            <p className="text-lg font-bold text-[#0F172A]">Available</p>
-            <p className="text-[11px] text-[#64748B]">Guided editor</p>
+          <div className="p-4 rounded-2xl bg-white border border-[#E6E6DE] shadow-2xs">
+            <span className="text-[#7A7B72]">Text Option</span>
+            <p className="text-base font-bold text-[#1F201B] mt-0.5">Full Editor</p>
           </div>
-
-          <div className="p-3.5 rounded-xl border border-[#E2E8F0] bg-white">
-            <div className="flex items-center gap-1.5 text-purple-600 text-xs font-semibold mb-1">
-              <Mic size={14} />
-              Voice Option
-            </div>
-            <p className="text-lg font-bold text-[#0F172A]">Available</p>
-            <p className="text-[11px] text-[#64748B]">Auto-transcribed</p>
+          <div className="p-4 rounded-2xl bg-white border border-[#E6E6DE] shadow-2xs">
+            <span className="text-[#7A7B72]">Voice Option</span>
+            <p className="text-base font-bold text-[#1F201B] mt-0.5">Auto-Transcribed</p>
           </div>
         </div>
 
-        {/* Governance Notice */}
-        <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-100 flex items-start gap-3 mb-8 text-xs text-blue-900 leading-relaxed">
-          <ShieldCheck size={18} className="text-brand-600 shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold text-blue-950">Team Lead Review Workflow: </span>
-            Answers provided here will be organized and forwarded to{' '}
-            <strong>Kishan S (Team Lead)</strong> for verification against source repositories and documentation before publication to your successor.
-          </div>
-        </div>
-
-        {/* Action Button */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#E2E8F0]">
-          <div className="text-xs text-[#64748B]">
-            {answeredCount > 0 ? (
-              <span className="font-medium text-emerald-600">
-                You have previously saved {answeredCount} of {totalQuestions} questions.
-              </span>
-            ) : (
-              <span>You can pause and resume the interview anytime.</span>
-            )}
-          </div>
+        {/* Start Button */}
+        <div className="pt-4 border-t border-[#E6E6DE] flex items-center justify-between">
+          <p className="text-xs text-[#7A7B72]">
+            {answeredCount > 0 ? `${answeredCount} of ${totalQuestions} answered` : 'All responses saved automatically.'}
+          </p>
 
           <button
             type="button"
             onClick={() => setActiveScreen('interview')}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-sm flex items-center justify-center gap-2 transition-all hover:gap-3"
+            className="px-6 py-2.5 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] text-white text-xs font-semibold shadow-soft flex items-center gap-1.5 transition-all"
           >
             <span>{answeredCount > 0 ? 'Resume Interview' : 'Start Handover Interview'}</span>
-            <ArrowRight size={16} />
+            <ArrowRight size={14} />
           </button>
         </div>
       </div>
     </div>
   );
 }
-
