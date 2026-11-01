@@ -3,19 +3,26 @@
 import React, { useState } from 'react';
 import { useHandover } from '@/context/HandoverContext';
 import {
-  FolderKanban,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  PlusCircle,
+  TrendingUp,
+  TrendingDown,
+  Calendar as CalendarIcon,
+  ChevronDown,
+  Plus,
+  Sparkles,
+  Layers,
+  ArrowUpRight,
+  ExternalLink,
   Github,
   Upload,
   FileText,
-  ArrowRight,
-  ExternalLink,
-  Sparkles,
-  Layers,
   Activity,
+  CheckCircle2,
+  AlertTriangle,
+  FolderKanban,
+  FileCode2,
+  Server,
+  Database,
+  Share2,
 } from 'lucide-react';
 
 export function Screen1TeamLeadDashboard() {
@@ -27,7 +34,7 @@ export function Screen1TeamLeadDashboard() {
     currentUser,
   } = useHandover();
 
-  // Create Form State
+  // Handover Creation Modal state
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formData, setFormData] = useState<{
     name: string;
@@ -80,410 +87,797 @@ export function Screen1TeamLeadDashboard() {
     });
 
     setIsFormOpen(false);
-    // Directly guide to review or AI questions
     setActiveScreen('review');
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Top Welcome & Action Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6 rounded-2xl border border-slate-200 bg-white dark:border-navy-800 dark:bg-navy-900 shadow-sm">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-50 text-brand-700 dark:bg-navy-800 dark:text-blue-300 mb-2">
-            <Layers className="w-3.5 h-3.5" />
-            <span>Team Lead Operations</span>
+    <div className="p-6 sm:p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-300">
+      {/* =========================================================================
+          ROW 1: Pastel Metric Cards + Evidence Analytics Bar Chart
+      ========================================================================= */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Card 1: Soft Peach / Orange */}
+        <div className="rounded-3xl p-6 bg-[#FFE7D6] dark:bg-[#2A1D17] border border-[#FFD0B3] dark:border-[#4A2E1F] flex flex-col justify-between shadow-sm transition-all hover:scale-[1.01]">
+          <span className="text-xs font-bold text-[#8A4A1C] dark:text-[#E8955A] uppercase tracking-wider">
+            Handover Statements
+          </span>
+          <div className="my-3">
+            <h3 className="text-3xl font-black text-[#4A240A] dark:text-[#FFD3B0] tracking-tight">
+              1904claims
+            </h3>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Lead Dashboard & Project Overseer
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1">
-            Logged in as <strong>{currentUser.name}</strong> ({currentUser.roleTitle}). Create new handovers, configure authorized sources, and audit AI-extracted project claims.
-          </p>
+          <div className="flex items-center gap-1.5 text-xs font-bold text-[#8A4A1C] dark:text-[#E8955A]">
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>+5.93% extracted from sources</span>
+          </div>
         </div>
 
-        <button
-          onClick={() => setIsFormOpen(!isFormOpen)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs sm:text-sm text-white bg-brand-600 hover:bg-brand-700 dark:bg-brand-600 dark:hover:bg-brand-500 shadow-md transition-all self-start md:self-auto"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>{isFormOpen ? 'Close Creation Form' : 'Create New Handover'}</span>
-        </button>
-      </div>
-
-      {/* Metrics Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <div className="p-5 rounded-2xl border border-slate-200 bg-white dark:border-navy-800 dark:bg-navy-900 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Projects</span>
-            <div className="p-2 rounded-lg bg-blue-50 dark:bg-navy-800 text-brand-600 dark:text-blue-400">
-              <FolderKanban className="w-4 h-4" />
-            </div>
+        {/* Card 2: Soft Lime / Yellow-Green */}
+        <div className="rounded-3xl p-6 bg-[#EEFAA3] dark:bg-[#1E260D] border border-[#DAEE76] dark:border-[#384714] flex flex-col justify-between shadow-sm transition-all hover:scale-[1.01]">
+          <span className="text-xs font-bold text-[#566E0C] dark:text-[#BFDD4B] uppercase tracking-wider">
+            Verified Evidence
+          </span>
+          <div className="my-3">
+            <h3 className="text-3xl font-black text-[#2B3903] dark:text-[#E3F888] tracking-tight">
+              749sources
+            </h3>
           </div>
-          <p className="text-2xl sm:text-3xl font-extrabold mt-3 text-slate-900 dark:text-white">
-            {dashboardMetrics.totalProjects}
-          </p>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Active repository workspaces</span>
+          <div className="flex items-center gap-1.5 text-xs font-bold text-[#566E0C] dark:text-[#BFDD4B]">
+            <TrendingDown className="w-3.5 h-3.5" />
+            <span>+5.93% test coverage</span>
+          </div>
         </div>
 
-        <div className="p-5 rounded-2xl border border-slate-200 bg-white dark:border-navy-800 dark:bg-navy-900 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Pending Handovers</span>
-            <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
-              <Clock className="w-4 h-4" />
-            </div>
+        {/* Card 3: Soft Pink / Lavender */}
+        <div className="rounded-3xl p-6 bg-[#F8D9FE] dark:bg-[#281530] border border-[#EBB6F5] dark:border-[#4B225C] flex flex-col justify-between shadow-sm transition-all hover:scale-[1.01]">
+          <span className="text-xs font-bold text-[#792C8B] dark:text-[#D987EE] uppercase tracking-wider">
+            Handover Confidence
+          </span>
+          <div className="my-3">
+            <h3 className="text-3xl font-black text-[#3E0F49] dark:text-[#F3CBFA] tracking-tight">
+              92.4%
+            </h3>
           </div>
-          <p className="text-2xl sm:text-3xl font-extrabold mt-3 text-slate-900 dark:text-white">
-            {dashboardMetrics.pendingHandovers}
-          </p>
-          <span className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 block">In progress & leaver Q&A</span>
+          <div className="flex items-center gap-1.5 text-xs font-bold text-[#792C8B] dark:text-[#D987EE]">
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>+5.93% verified claims</span>
+          </div>
         </div>
 
-        <div className="p-5 rounded-2xl border border-slate-200 bg-white dark:border-navy-800 dark:bg-navy-900 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Awaiting Approval</span>
-            <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
-              <AlertTriangle className="w-4 h-4" />
-            </div>
+        {/* Card 4: Evidence Analytic Multi-bar Chart (Spans top right) */}
+        <div className="rounded-3xl p-6 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
+              Evidence Analytic
+            </h4>
+            <span className="text-[10px] font-bold text-slate-400">Weekly Audit</span>
           </div>
-          <p className="text-2xl sm:text-3xl font-extrabold mt-3 text-slate-900 dark:text-white">
-            {dashboardMetrics.awaitingApproval}
-          </p>
-          <span className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-1 block">Ready for lead verification</span>
-        </div>
 
-        <div className="p-5 rounded-2xl border border-slate-200 bg-white dark:border-navy-800 dark:bg-navy-900 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Completed Handovers</span>
-            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
+          {/* Bar Chart Visualization */}
+          <div className="flex items-end justify-between h-24 pt-2 px-1">
+            {[
+              { day: 'Mon', h1: '65%', h2: '40%', h3: '85%' },
+              { day: 'Tue', h1: '85%', h2: '55%', h3: '45%' },
+              { day: 'Wed', h1: '95%', h2: '70%', h3: '90%' },
+              { day: 'Thu', h1: '50%', h2: '80%', h3: '60%' },
+              { day: 'Fri', h1: '75%', h2: '45%', h3: '80%' },
+              { day: 'Sat', h1: '90%', h2: '60%', h3: '70%' },
+              { day: 'Sun', h1: '80%', h2: '50%', h3: '85%' },
+            ].map((col) => (
+              <div key={col.day} className="flex flex-col items-center gap-1.5">
+                <div className="flex items-end gap-1 h-20">
+                  <div
+                    style={{ height: col.h1 }}
+                    className="w-1.5 rounded-full bg-[#DAEE76] dark:bg-[#b0cc34]"
+                  />
+                  <div
+                    style={{ height: col.h2 }}
+                    className="w-1.5 rounded-full bg-[#FFD0B3] dark:bg-[#d67a42]"
+                  />
+                  <div
+                    style={{ height: col.h3 }}
+                    className="w-1.5 rounded-full bg-[#EBB6F5] dark:bg-[#c664d9]"
+                  />
+                </div>
+                <span className="text-[9px] font-bold text-slate-400">{col.day}</span>
+              </div>
+            ))}
           </div>
-          <p className="text-2xl sm:text-3xl font-extrabold mt-3 text-slate-900 dark:text-white">
-            {dashboardMetrics.completedHandovers}
-          </p>
-          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 block">Receipt acknowledged</span>
-        </div>
-      </div>
 
-      {/* Create Handover Form Drawer/Modal */}
-      {isFormOpen && (
-        <div className="p-6 sm:p-8 rounded-2xl border border-brand-200 bg-blue-50/40 dark:border-navy-700 dark:bg-navy-900/90 shadow-lg space-y-6 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-navy-700">
+          {/* Legend Below Chart */}
+          <div className="grid grid-cols-3 gap-1 pt-3 border-t border-slate-100 dark:border-navy-800 text-[10px] text-center">
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-brand-600 dark:text-blue-400" />
-                Create Handover & Initialize AI Pipeline
-              </h2>
-              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
-                Provide comprehensive project context. The AI analyzes these parameters and connected repository to generate targeted questions for the departing member.
-              </p>
+              <span className="text-slate-400 block">• Verified</span>
+              <strong className="text-slate-800 dark:text-slate-200">28%</strong>
             </div>
-            <button
-              onClick={() => setIsFormOpen(false)}
-              className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
-            >
-              Cancel
-            </button>
+            <div>
+              <span className="text-slate-400 block">• Unverified</span>
+              <strong className="text-slate-800 dark:text-slate-200">40%</strong>
+            </div>
+            <div>
+              <span className="text-slate-400 block">• Gaps</span>
+              <strong className="text-slate-800 dark:text-slate-200">32%</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          ROW 2: Schedule (Calendar) + Revenue/Knowledge Wave + Completion Report
+      ========================================================================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Departure Schedule (Mini Calendar) - 3 cols */}
+        <div className="lg:col-span-3 rounded-3xl p-6 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
+              Departure Schedule
+            </h4>
+            <span className="text-[10px] font-semibold text-slate-400">Nov 2026</span>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Project Name */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Project Name <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Distributed Patient Sync Engine"
-                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
+          {/* Days Header */}
+          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 mb-2">
+            <span>Sun</span>
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+          </div>
 
-              {/* Technology Stack */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Technology Stack <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.techStack}
-                  onChange={(e) => setFormData({ ...formData, techStack: e.target.value })}
-                  placeholder="e.g. Python, FastAPI, PostgreSQL, Celery, Docker"
-                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
+          {/* Calendar Grid with lime highlighted days */}
+          <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-slate-600 dark:text-slate-300">
+            {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+              <span key={d} className="py-1">
+                {d}
+              </span>
+            ))}
+            {[
+              { d: 8, active: true },
+              { d: 9 },
+              { d: 10 },
+              { d: 11, active: true },
+              { d: 12 },
+              { d: 13 },
+              { d: 14 },
+            ].map((item) => (
+              <span
+                key={item.d}
+                className={`py-1 rounded-full ${
+                  item.active
+                    ? 'bg-[#D4F442] font-black text-slate-950 shadow-sm'
+                    : ''
+                }`}
+              >
+                {item.d}
+              </span>
+            ))}
+            {[
+              { d: 15 },
+              { d: 16 },
+              { d: 17 },
+              { d: 18, active: true },
+              { d: 19, active: true },
+              { d: 20 },
+              { d: 21 },
+            ].map((item) => (
+              <span
+                key={item.d}
+                className={`py-1 rounded-full ${
+                  item.active
+                    ? 'bg-[#D4F442] font-black text-slate-950 shadow-sm'
+                    : ''
+                }`}
+              >
+                {item.d}
+              </span>
+            ))}
+            {[
+              { d: 22, active: true },
+              { d: 23 },
+              { d: 24 },
+              { d: 25 },
+              { d: 26 },
+              { d: 27 },
+              { d: 28 },
+            ].map((item) => (
+              <span
+                key={item.d}
+                className={`py-1 rounded-full ${
+                  item.active
+                    ? 'bg-[#D4F442] font-black text-slate-950 shadow-sm'
+                    : ''
+                }`}
+              >
+                {item.d}
+              </span>
+            ))}
+            {[
+              { d: 29 },
+              { d: 30, active: true },
+              { d: 31, active: true },
+            ].map((item) => (
+              <span
+                key={item.d}
+                className={`py-1 rounded-full ${
+                  item.active
+                    ? 'bg-[#D4F442] font-black text-slate-950 shadow-sm'
+                    : ''
+                }`}
+              >
+                {item.d}
+              </span>
+            ))}
+          </div>
 
-              {/* Project Description */}
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Project Description
-                </label>
-                <textarea
-                  rows={2}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Detailed context of the platform architecture, key modules, and user flows..."
-                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
+          <div className="pt-3 mt-3 border-t border-slate-100 dark:border-navy-800 flex items-center justify-between text-[10px] text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#D4F442]"></span>
+              Handover Milestones
+            </span>
+            <span className="font-bold text-slate-700 dark:text-slate-300">6 Events</span>
+          </div>
+        </div>
 
-              {/* Project Objectives */}
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Project Objectives & Milestones
-                </label>
-                <textarea
-                  rows={2}
-                  value={formData.objectives}
-                  onChange={(e) => setFormData({ ...formData, objectives: e.target.value })}
-                  placeholder="Upcoming release targets, performance goals, and key transitions..."
-                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
+        {/* Knowledge Wave Curve Chart - 6 cols */}
+        <div className="lg:col-span-6 rounded-3xl p-6 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                Knowledge Reconstructed
+              </h4>
+              <div className="flex items-center gap-3 text-[10px] text-slate-400 mt-0.5">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#D4F442]"></span> Verified Sources
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-slate-300"></span> Unverified Claims
+                </span>
               </div>
+            </div>
 
-              {/* Project Status */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Current Project Status
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'In Progress' | 'Pre-release' | 'Active Handover' | 'Approved' | 'Completed' })}
-                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                >
-                  <option value="In Progress">In Progress</option>
-                  <option value="Pre-release">Pre-release</option>
-                  <option value="Active Handover">Active Handover</option>
-                  <option value="Maintenance">Maintenance</option>
-                </select>
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-navy-800 text-[11px] font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+              <span>Weekly</span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            </div>
+          </div>
+
+          {/* SVG Wave Chart */}
+          <div className="relative h-44 w-full pt-4">
+            {/* Value Callout Badge */}
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[10px] font-bold shadow-md flex items-center gap-1.5 z-10">
+              <span className="text-emerald-400">+9,488 claims</span>
+              <span className="text-slate-400">|</span>
+              <span className="text-slate-300">12 gaps</span>
+            </div>
+
+            <svg viewBox="0 0 500 140" className="w-full h-full overflow-visible">
+              <defs>
+                <linearGradient id="limeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#D4F442" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#D4F442" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+
+              {/* Horizontal Grid lines */}
+              <line x1="0" y1="20" x2="500" y2="20" stroke="currentColor" className="text-slate-100 dark:text-navy-800" strokeDasharray="3 3" />
+              <line x1="0" y1="55" x2="500" y2="55" stroke="currentColor" className="text-slate-100 dark:text-navy-800" strokeDasharray="3 3" />
+              <line x1="0" y1="90" x2="500" y2="90" stroke="currentColor" className="text-slate-100 dark:text-navy-800" strokeDasharray="3 3" />
+
+              {/* Secondary dashed curve */}
+              <path
+                d="M 10 90 C 70 70, 130 110, 200 85 C 270 60, 330 95, 410 75 C 450 65, 480 70, 495 65"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeDasharray="4 4"
+                className="text-slate-300 dark:text-slate-600"
+              />
+
+              {/* Primary Lime Wave Curve */}
+              <path
+                d="M 10 75 C 80 110, 140 40, 220 70 C 280 90, 330 20, 390 45 C 440 65, 470 50, 495 40"
+                fill="none"
+                stroke="#B5DE1C"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+              />
+
+              {/* Fill under primary curve */}
+              <path
+                d="M 10 75 C 80 110, 140 40, 220 70 C 280 90, 330 20, 390 45 C 440 65, 470 50, 495 40 L 495 130 L 10 130 Z"
+                fill="url(#limeGrad)"
+              />
+            </svg>
+          </div>
+
+          {/* Chart X-Axis Days */}
+          <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 px-2 pt-2 border-t border-slate-100 dark:border-navy-800">
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+            <span>Sun</span>
+          </div>
+        </div>
+
+        {/* Handover Completion Report (Dual Gauge Arcs) - 3 cols */}
+        <div className="lg:col-span-3 rounded-3xl p-6 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
+              Completion Report
+            </h4>
+            <span className="text-[10px] font-bold text-emerald-500">Audit Ready</span>
+          </div>
+
+          {/* Dual Semicircular Gauge Graphic */}
+          <div className="flex items-center justify-center gap-6 py-3">
+            {/* Gauge 1: 56% Verified Claims */}
+            <div className="flex flex-col items-center">
+              <div className="relative w-24 h-14 overflow-hidden flex items-end justify-center">
+                <svg viewBox="0 0 100 55" className="w-24 h-14">
+                  <path
+                    d="M 10 50 A 40 40 0 0 1 90 50"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="10"
+                    className="text-slate-100 dark:text-navy-800"
+                  />
+                  <path
+                    d="M 10 50 A 40 40 0 0 1 65 14"
+                    fill="none"
+                    stroke="#D4F442"
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                  />
+                </svg>
               </div>
+              <span className="text-[10px] font-bold text-slate-400 mt-1">• Verified Claims</span>
+              <strong className="text-sm font-black text-slate-800 dark:text-slate-100">56%</strong>
+            </div>
 
-              {/* GitHub Repository */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  GitHub Repository URL
-                </label>
-                <div className="relative">
-                  <Github className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            {/* Gauge 2: 44% Successor Prepared */}
+            <div className="flex flex-col items-center">
+              <div className="relative w-24 h-14 overflow-hidden flex items-end justify-center">
+                <svg viewBox="0 0 100 55" className="w-24 h-14">
+                  <path
+                    d="M 10 50 A 40 40 0 0 1 90 50"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="10"
+                    className="text-slate-100 dark:text-navy-800"
+                  />
+                  <path
+                    d="M 10 50 A 40 40 0 0 1 52 10"
+                    fill="none"
+                    stroke="#EBB6F5"
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <span className="text-[10px] font-bold text-slate-400 mt-1">• Gaps Resolved</span>
+              <strong className="text-sm font-black text-slate-800 dark:text-slate-100">44%</strong>
+            </div>
+          </div>
+
+          <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-navy-800 text-center">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400">
+              Handover status: <strong className="text-brand-600 dark:text-blue-400">{project.status}</strong>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          ROW 3: Quick Handover Profile Cards (Product Cards from image)
+      ========================================================================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Card 1: Active Handover - Smart Healthcare */}
+        <div
+          onClick={() => setActiveScreen('review')}
+          className="group cursor-pointer rounded-3xl p-5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 shadow-sm hover:shadow-md transition-all flex items-center gap-4"
+        >
+          <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center text-brand-600 dark:text-blue-400 font-black text-lg shadow-inner group-hover:scale-105 transition-transform">
+            <FileCode2 className="w-8 h-8" />
+          </div>
+          <div className="flex-1">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+              Primary Handover
+            </span>
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white mt-1 group-hover:text-brand-600 transition-colors">
+              {project.name}
+            </h4>
+            <p className="text-xs font-black text-slate-800 dark:text-slate-200 mt-0.5">
+              {project.departingRole}
+            </p>
+          </div>
+        </div>
+
+        {/* Card 2: Secondary Handover - Distributed Pipeline */}
+        <div
+          onClick={() => setActiveScreen('review')}
+          className="group cursor-pointer rounded-3xl p-5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 shadow-sm hover:shadow-md transition-all flex items-center gap-4"
+        >
+          <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center text-amber-500 font-black text-lg shadow-inner group-hover:scale-105 transition-transform">
+            <Server className="w-8 h-8" />
+          </div>
+          <div className="flex-1">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+              Queue Worker
+            </span>
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white mt-1 group-hover:text-amber-500 transition-colors">
+              Patient Ingestion Engine
+            </h4>
+            <p className="text-xs font-black text-slate-800 dark:text-slate-200 mt-0.5">
+              Celery / Redis Stack
+            </p>
+          </div>
+        </div>
+
+        {/* Card 3: Quick Add Handover Button */}
+        <div
+          onClick={() => setIsFormOpen(true)}
+          className="cursor-pointer rounded-3xl p-5 bg-white dark:bg-navy-900 border-2 border-dashed border-slate-200 dark:border-navy-800 hover:border-brand-500 dark:hover:border-blue-400 transition-all flex items-center justify-center gap-3 group"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-[#D4F442] text-slate-950 flex items-center justify-center font-bold shadow-sm group-hover:scale-110 transition-transform">
+            <Plus className="w-6 h-6 stroke-[3]" />
+          </div>
+          <div className="text-left">
+            <h4 className="text-sm font-black text-slate-900 dark:text-white">
+              Add Handover
+            </h4>
+            <span className="text-xs text-slate-400">Initialize AI Pipeline</span>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          ROW 4: Handover Audit History Table + Knowledge Distribution Map
+      ========================================================================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Audit Table - 8 cols */}
+        <div className="lg:col-span-8 rounded-3xl p-6 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
+              Transaction & Audit History
+            </h4>
+            <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 cursor-pointer">
+              <span>Newest</span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-navy-800 text-[10px] font-bold uppercase text-slate-400">
+                  <th className="pb-3 font-semibold">ID</th>
+                  <th className="pb-3 font-semibold">Leaver & Handover</th>
+                  <th className="pb-3 font-semibold">Source Ref</th>
+                  <th className="pb-3 font-semibold">Date</th>
+                  <th className="pb-3 font-semibold">Claims</th>
+                  <th className="pb-3 font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-navy-800 text-slate-700 dark:text-slate-300">
+                <tr className="hover:bg-slate-50/50 dark:hover:bg-navy-850/50 transition-colors">
+                  <td className="py-3 font-mono font-bold text-slate-400">#982</td>
+                  <td className="py-3 font-bold text-slate-900 dark:text-white">Alex Chen</td>
+                  <td className="py-3 text-slate-500 font-mono">PR #104 (Backoff)</td>
+                  <td className="py-3 text-slate-400">August 9, 2026</td>
+                  <td className="py-3 font-mono font-bold">$139.75</td>
+                  <td className="py-3">
+                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Success
+                    </span>
+                  </td>
+                </tr>
+                <tr className="hover:bg-slate-50/50 dark:hover:bg-navy-850/50 transition-colors">
+                  <td className="py-3 font-mono font-bold text-slate-400">#091</td>
+                  <td className="py-3 font-bold text-slate-900 dark:text-white">Sarah Jenkins</td>
+                  <td className="py-3 text-slate-500 font-mono">deploy/celery.sh</td>
+                  <td className="py-3 text-slate-400">August 9, 2026</td>
+                  <td className="py-3 font-mono font-bold">$738.00</td>
+                  <td className="py-3">
+                    <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Failed (Gap)
+                    </span>
+                  </td>
+                </tr>
+                <tr className="hover:bg-slate-50/50 dark:hover:bg-navy-850/50 transition-colors">
+                  <td className="py-3 font-mono font-bold text-slate-400">#090</td>
+                  <td className="py-3 font-bold text-slate-900 dark:text-white">Michael Zhang</td>
+                  <td className="py-3 text-slate-500 font-mono">Architecture_ADR-04</td>
+                  <td className="py-3 text-slate-400">August 9, 2026</td>
+                  <td className="py-3 font-mono font-bold">$389.09</td>
+                  <td className="py-3">
+                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Success
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Source Distribution Map - 4 cols */}
+        <div className="lg:col-span-4 rounded-3xl p-6 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
+              Product Distribution
+            </h4>
+            <span className="text-[10px] font-bold text-slate-400">4 Connected Nodes</span>
+          </div>
+
+          {/* SVG Vector World / Nodes Distribution Map */}
+          <div className="relative h-36 w-full flex items-center justify-center">
+            <svg viewBox="0 0 320 130" className="w-full h-full text-slate-300 dark:text-navy-700">
+              {/* Map Outline Dotted Nodes */}
+              <circle cx="50" cy="45" r="3" fill="#D4F442" />
+              <circle cx="100" cy="70" r="3" fill="#EBB6F5" />
+              <circle cx="160" cy="35" r="4" fill="#3B82F6" />
+              <circle cx="230" cy="60" r="3" fill="#D4F442" />
+              <circle cx="270" cy="85" r="3" fill="#EBB6F5" />
+
+              {/* Connecting Arcs */}
+              <path
+                d="M 50 45 Q 105 15, 160 35"
+                fill="none"
+                stroke="#EBB6F5"
+                strokeWidth="1.5"
+                strokeDasharray="3 3"
+              />
+              <path
+                d="M 160 35 Q 195 20, 230 60"
+                fill="none"
+                stroke="#EBB6F5"
+                strokeWidth="1.5"
+                strokeDasharray="3 3"
+              />
+              <path
+                d="M 100 70 Q 185 100, 270 85"
+                fill="none"
+                stroke="#EBB6F5"
+                strokeWidth="1.5"
+                strokeDasharray="3 3"
+              />
+
+              {/* World outline dots */}
+              {[
+                [40, 40], [60, 40], [70, 50], [50, 60],
+                [90, 65], [110, 75], [105, 85],
+                [150, 30], [170, 30], [165, 45], [180, 50],
+                [220, 55], [240, 65], [250, 75], [230, 80],
+                [260, 80], [280, 90], [290, 85],
+              ].map(([cx, cy], i) => (
+                <circle key={i} cx={cx} cy={cy} r="1.5" fill="currentColor" opacity="0.4" />
+              ))}
+            </svg>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-navy-800 text-[10px]">
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <Github className="w-3.5 h-3.5" />
+              <span>GitHub (PRs/Commits)</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <Database className="w-3.5 h-3.5" />
+              <span>S3 Vault / SOP Docs</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          HANDOVER CREATION FORM MODAL
+      ========================================================================= */}
+      {isFormOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-navy-800">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-brand-600 dark:text-blue-400" />
+                  Create Handover & Initialize AI Pipeline
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Configure repository sources and target roles for automated knowledge extraction.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsFormOpen(false)}
+                className="text-slate-400 hover:text-slate-800 dark:hover:text-white font-bold text-lg"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Project Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g. Distributed Patient Sync Engine"
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Technology Stack *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.techStack}
+                    onChange={(e) => setFormData({ ...formData, techStack: e.target.value })}
+                    placeholder="e.g. Python, FastAPI, PostgreSQL, Celery"
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Project Description
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Describe core architecture and services..."
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Project Objectives
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={formData.objectives}
+                    onChange={(e) => setFormData({ ...formData, objectives: e.target.value })}
+                    placeholder="Key transitions, milestone deliverables..."
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Current Status
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        status: e.target.value as 'In Progress' | 'Pre-release' | 'Active Handover' | 'Approved' | 'Completed',
+                      })
+                    }
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-white"
+                  >
+                    <option value="In Progress">In Progress</option>
+                    <option value="Pre-release">Pre-release</option>
+                    <option value="Active Handover">Active Handover</option>
+                    <option value="Approved">Approved</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    GitHub Repository URL
+                  </label>
                   <input
                     type="url"
                     value={formData.githubRepo}
                     onChange={(e) => setFormData({ ...formData, githubRepo: e.target.value })}
                     placeholder="https://github.com/org/repo"
-                    className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-white"
                   />
                 </div>
-              </div>
 
-              {/* Departing Member */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Departing Member
-                </label>
-                <select
-                  value={formData.departingMember}
-                  onChange={(e) => setFormData({ ...formData, departingMember: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                >
-                  <option value="Alex Chen">Alex Chen (Senior Backend Engineer)</option>
-                  <option value="Sarah Jenkins">Sarah Jenkins (DevOps Specialist)</option>
-                  <option value="Michael Zhang">Michael Zhang (Frontend Architect)</option>
-                </select>
-              </div>
-
-              {/* Member's Role */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Member's Project Role
-                </label>
-                <select
-                  value={formData.departingRole}
-                  onChange={(e) => setFormData({ ...formData, departingRole: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                >
-                  <option value="Backend Developer">Backend Developer</option>
-                  <option value="Frontend Developer">Frontend Developer</option>
-                  <option value="DevOps & Infrastructure Engineer">DevOps & Infrastructure Engineer</option>
-                  <option value="Full-Stack Engineer">Full-Stack Engineer</option>
-                  <option value="Lead Mobile Architect">Lead Mobile Architect</option>
-                </select>
-              </div>
-
-              {/* Incoming Member */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Incoming Member
-                </label>
-                <select
-                  value={formData.incomingMember}
-                  onChange={(e) => setFormData({ ...formData, incomingMember: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                >
-                  <option value="Priya Sharma">Priya Sharma (Incoming Software Engineer)</option>
-                  <option value="David Miller">David Miller (Junior Developer)</option>
-                  <option value="Anita Rao">Anita Rao (Associate Engineer)</option>
-                </select>
-              </div>
-
-              {/* Project Documents Upload */}
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Project Documents (ADRs, Specifications, Chat Archives)
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newFileName}
-                    onChange={(e) => setNewFileName(e.target.value)}
-                    placeholder="Attach file or enter filename (e.g. Architecture_Decision_Record_ADR-04.md)"
-                    className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-slate-100"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddFile}
-                    className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-200 dark:bg-navy-800 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-navy-700 transition-colors flex items-center gap-1.5"
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Departing Member Role
+                  </label>
+                  <select
+                    value={formData.departingRole}
+                    onChange={(e) => setFormData({ ...formData, departingRole: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-white"
                   >
-                    <Upload className="w-3.5 h-3.5" />
-                    Attach
-                  </button>
+                    <option value="Backend Developer">Backend Developer</option>
+                    <option value="Frontend Developer">Frontend Developer</option>
+                    <option value="DevOps & Infrastructure Engineer">DevOps & Infrastructure Engineer</option>
+                    <option value="Full-Stack Engineer">Full-Stack Engineer</option>
+                  </select>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {uploadedFiles.map((file) => (
-                    <span
-                      key={file}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-lg bg-white dark:bg-navy-950 border border-slate-300 dark:border-navy-700 text-slate-700 dark:text-slate-300"
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Incoming Member
+                  </label>
+                  <select
+                    value={formData.incomingMember}
+                    onChange={(e) => setFormData({ ...formData, incomingMember: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-white"
+                  >
+                    <option value="Priya Sharma">Priya Sharma</option>
+                    <option value="David Miller">David Miller</option>
+                    <option value="Anita Rao">Anita Rao</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Attach Documents (ADRs, Specifications)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newFileName}
+                      onChange={(e) => setNewFileName(e.target.value)}
+                      placeholder="Add document filename (e.g. ADR_Architecture.md)"
+                      className="flex-1 p-2 rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddFile}
+                      className="px-3 py-2 bg-slate-200 dark:bg-navy-800 rounded-xl font-bold"
                     >
-                      <FileText className="w-3.5 h-3.5 text-brand-600 dark:text-blue-400" />
-                      {file}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFile(file)}
-                        className="text-slate-400 hover:text-rose-500 font-bold ml-1"
+                      Attach
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {uploadedFiles.map((file) => (
+                      <span
+                        key={file}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-navy-950 border border-slate-300 dark:border-navy-700 text-[11px]"
                       >
-                        ×
-                      </button>
-                    </span>
-                  ))}
+                        <FileText className="w-3 h-3 text-brand-600" />
+                        {file}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile(file)}
+                          className="text-slate-400 hover:text-rose-500 font-bold ml-1"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="pt-4 border-t border-slate-200 dark:border-navy-700 flex justify-end">
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 dark:bg-brand-600 dark:hover:bg-brand-500 shadow-md transition-all"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>Create Handover & Generate AI Questions</span>
-              </button>
-            </div>
-          </form>
+              <div className="pt-4 border-t border-slate-100 dark:border-navy-800 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsFormOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-navy-700 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-[#D4F442] text-slate-950 font-black shadow-md hover:bg-[#c3e634]"
+                >
+                  Create Handover & Generate Questions
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
-
-      {/* Active Handovers Table */}
-      <div className="rounded-2xl border border-slate-200 bg-white dark:border-navy-800 dark:bg-navy-900 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-slate-200 dark:border-navy-800 flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">Active Handover Portfolios</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Current state of handovers under your review and governance.
-            </p>
-          </div>
-          <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 dark:bg-navy-800 dark:text-slate-300">
-            1 Active Handover
-          </span>
-        </div>
-
-        <div className="divide-y divide-slate-100 dark:divide-navy-800">
-          <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/60 dark:hover:bg-navy-850/50 transition-colors">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{project.name}</h3>
-                <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                    project.status === 'Approved'
-                      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300'
-                      : project.status === 'Completed'
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
-                      : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
-                  }`}
-                >
-                  {project.status}
-                </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                  Stack: {project.techStack}
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-1 max-w-2xl">
-                {project.description}
-              </p>
-              <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1">
-                <span>Leaver: <strong className="text-slate-700 dark:text-slate-200">{project.departingMember}</strong> ({project.departingRole})</span>
-                <span>•</span>
-                <span>Successor: <strong className="text-slate-700 dark:text-slate-200">{project.incomingMember}</strong></span>
-                <span>•</span>
-                <span>Questions: <strong className="text-slate-700 dark:text-slate-200">{project.questions.filter((q) => q.status === 'answered').length}/{project.questions.length}</strong></span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 self-start md:self-auto">
-              <button
-                onClick={() => setActiveScreen('review')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 dark:bg-brand-600 dark:hover:bg-brand-500 transition-colors shadow-sm"
-              >
-                <span>Review & Approve</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Handover Activity Section */}
-      <div className="rounded-2xl border border-slate-200 bg-white dark:border-navy-800 dark:bg-navy-900 shadow-sm p-5 space-y-4">
-        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <Activity className="w-4 h-4 text-brand-600 dark:text-blue-400" />
-          Recent Handover Activity
-        </h3>
-        <div className="space-y-3">
-          <div className="flex items-start gap-3 text-xs">
-            <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5"></div>
-            <div>
-              <p className="text-slate-800 dark:text-slate-200">
-                <strong>Alex Chen</strong> answered question regarding <span className="italic">"Emergency Access Token Strategy"</span>.
-              </p>
-              <span className="text-[10px] text-slate-400">Marked as Unverified • Pending lead verification</span>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 text-xs">
-            <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5"></div>
-            <div>
-              <p className="text-slate-800 dark:text-slate-200">
-                AI Pipeline extracted <strong className="font-semibold">5 source evidence citations</strong> from GitHub PR #104 and ADR-04.
-              </p>
-              <span className="text-[10px] text-slate-400">Claims linked to commits and doc quotes</span>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 text-xs">
-            <div className="w-2 h-2 rounded-full bg-rose-500 mt-1.5"></div>
-            <div>
-              <p className="text-slate-800 dark:text-slate-200">
-                Automated gap check flagged <span className="font-semibold text-rose-600 dark:text-rose-400">Redis cache fallback omission</span> in `cache.py`.
-              </p>
-              <span className="text-[10px] text-slate-400">High Risk • Transferred to Gaps section</span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
