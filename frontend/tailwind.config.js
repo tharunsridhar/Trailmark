@@ -1,6 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: 'class',
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -8,15 +7,12 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+      },
       colors: {
-        navy: {
-          950: '#060a16', // darkest canvas
-          900: '#0b1329', // card / panel background
-          850: '#0f1a38', // card elevated
-          800: '#16234b', // borders / hover
-          700: '#1d2f65', // subtle interactive
-          600: '#253e85',
-        },
+        page: '#F7F9FC',
+        sidebar: '#ffffff',
         brand: {
           50: '#eff6ff',
           100: '#dbeafe',
@@ -24,14 +20,32 @@ module.exports = {
           300: '#93c5fd',
           400: '#60a5fa',
           500: '#3b82f6',
-          600: '#2563eb', // primary blue
+          600: '#2563eb',
           700: '#1d4ed8',
           800: '#1e40af',
           900: '#1e3a8a',
         },
+        navy: {
+          50: '#f0f3f9',
+          100: '#dce3f0',
+          200: '#b8c6e0',
+          700: '#1a2744',
+          800: '#0f1a2e',
+          900: '#0a1120',
+        },
+        border: '#E5EAF1',
+        muted: '#64748b',
+      },
+      borderRadius: {
+        DEFAULT: '8px',
+      },
+      boxShadow: {
+        card: '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03)',
+        'card-hover': '0 4px 12px 0 rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.04)',
+        sidebar: '1px 0 0 0 #E5EAF1',
+        topbar: '0 1px 0 0 #E5EAF1',
       },
     },
   },
   plugins: [],
 }
-
