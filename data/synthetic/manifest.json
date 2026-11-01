@@ -1,0 +1,60 @@
+{
+  "project_name": "Campus Events App",
+  "people": [
+    { "name": "Asha", "role": "leaver", "email": "asha@campus-synthetic.internal" },
+    { "name": "Deepak", "role": "lead", "email": "deepak-lead@campus-synthetic.internal" },
+    { "name": "Kiran", "role": "successor", "email": "kiran@campus-synthetic.internal" },
+    { "name": "Ravi", "role": "member", "email": "ravi@campus-synthetic.internal" },
+    { "name": "Neha", "role": "member", "email": "neha@campus-synthetic.internal" }
+  ],
+  "sources": [
+    {
+      "file": "repo/export.json",
+      "type": "repo",
+      "name": "Code repository",
+      "allowed_roles": ["lead", "departing", "incoming"]
+    },
+    {
+      "file": "chat/chat.json",
+      "type": "chat",
+      "name": "Team Chat Archive",
+      "allowed_roles": ["lead", "departing", "incoming"]
+    },
+    {
+      "file": "tasks/tasks.csv",
+      "type": "tasks",
+      "name": "Project Tasks Board",
+      "allowed_roles": ["lead", "departing", "incoming"]
+    },
+    {
+      "file": "tasks/empty_tasks.csv",
+      "type": "tasks",
+      "name": "Empty Tasks Test File",
+      "allowed_roles": ["lead", "departing", "incoming"]
+    },
+    {
+      "file": "docs/architecture_overview.md",
+      "type": "doc",
+      "name": "Architecture Overview",
+      "allowed_roles": ["lead", "departing", "incoming"]
+    },
+    {
+      "file": "docs/deployment_guide.md",
+      "type": "doc",
+      "name": "Deployment Guide",
+      "allowed_roles": ["lead", "departing", "incoming"]
+    },
+    {
+      "file": "docs/meeting_notes_august.md",
+      "type": "doc",
+      "name": "August Meeting Notes",
+      "allowed_roles": ["lead", "departing", "incoming"]
+    },
+    {
+      "file": "docs/hr_private_notes.md",
+      "type": "doc",
+      "name": "HR Private Notes (Confidential)",
+      "allowed_roles": ["lead"]
+    }
+  ]
+}

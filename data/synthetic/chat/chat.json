@@ -1,0 +1,364 @@
+{
+  "messages": [
+    {
+      "id": 1,
+      "time": "2026-07-16T10:00:00Z",
+      "sender": "Deepak",
+      "text": "Welcome everyone to the Campus Events App project! Asha will lead core backend, Neha on frontend, and Ravi on deployment."
+    },
+    {
+      "id": 2,
+      "time": "2026-07-16T10:05:00Z",
+      "sender": "Asha",
+      "text": "Excited to get started! Setting up the base FastAPI repo and initial schema models today."
+    },
+    {
+      "id": 3,
+      "time": "2026-07-16T10:10:00Z",
+      "sender": "Neha",
+      "text": "I'll start wireframing the student registration screens and event discovery feed."
+    },
+    {
+      "id": 4,
+      "time": "2026-07-17T09:30:00Z",
+      "sender": "Ravi",
+      "text": "Are we hosting on Render or Heroku for the student pilot?"
+    },
+    {
+      "id": 5,
+      "time": "2026-07-17T09:42:00Z",
+      "sender": "Asha",
+      "text": "Team chose Render over Heroku because of the free tier and cheaper background workers for our student budget."
+    },
+    {
+      "id": 6,
+      "time": "2026-07-17T09:45:00Z",
+      "sender": "Deepak",
+      "text": "Agreed, Render also links directly with our GitHub preview branches."
+    },
+    {
+      "id": 7,
+      "time": "2026-07-19T11:20:00Z",
+      "sender": "Asha",
+      "text": "Pushed SQLite database configuration with WAL mode enabled in app/db.py."
+    },
+    {
+      "id": 8,
+      "time": "2026-07-19T11:25:00Z",
+      "sender": "Neha",
+      "text": "Nice, tested locally and migrations run instantaneously."
+    },
+    {
+      "id": 9,
+      "time": "2026-07-21T14:10:00Z",
+      "sender": "Ravi",
+      "text": "For DNS records and Render environment variables, ask Ravi (ravi@campus-synthetic.internal) directly."
+    },
+    {
+      "id": 10,
+      "time": "2026-07-23T15:00:00Z",
+      "sender": "Asha",
+      "text": "PR #1 is up with the initial FastAPI CRUD endpoints for event listings."
+    },
+    {
+      "id": 11,
+      "time": "2026-07-24T16:30:00Z",
+      "sender": "Deepak",
+      "text": "Merged PR #1. Next priority is securing the student session tokens."
+    },
+    {
+      "id": 12,
+      "time": "2026-07-26T10:15:00Z",
+      "sender": "Asha",
+      "text": "Working on auth now. We shouldn't store JWT in localStorage because any XSS in third-party script could steal tokens."
+    },
+    {
+      "id": 13,
+      "time": "2026-07-27T17:00:00Z",
+      "sender": "Asha",
+      "text": "Done in commit e4b1029: JWT tokens are now stored in secure HTTP-only cookies with SameSite=Lax."
+    },
+    {
+      "id": 14,
+      "time": "2026-07-28T10:00:00Z",
+      "sender": "Neha",
+      "text": "Tailwind CSS components are rendering cleanly on mobile."
+    },
+    {
+      "id": 15,
+      "time": "2026-07-29T11:45:00Z",
+      "sender": "Ravi",
+      "text": "Staging server is live on Render! Testing API health check endpoint."
+    },
+    {
+      "id": 16,
+      "time": "2026-08-01T10:25:00Z",
+      "sender": "Asha",
+      "text": "I set the JWT access token lifetime to 60 minutes in commit c18d402 so students don't get logged out mid-registration."
+    },
+    {
+      "id": 17,
+      "time": "2026-08-02T09:10:00Z",
+      "sender": "Deepak",
+      "text": "Wait Asha, all student JWT tokens must strictly expire after 15 minutes for security compliance per campus safety rules."
+    },
+    {
+      "id": 18,
+      "time": "2026-08-03T14:30:00Z",
+      "sender": "Asha",
+      "text": "I can adjust it or add a background refresh endpoint before release."
+    },
+    {
+      "id": 19,
+      "time": "2026-08-05T16:00:00Z",
+      "sender": "Neha",
+      "text": "Calendar sync PR #2 is tested. Google Calendar event gets created right after ticket confirmation."
+    },
+    {
+      "id": 20,
+      "time": "2026-08-06T11:20:00Z",
+      "sender": "Ravi",
+      "text": "Just reminder: do not commit keys/service_account.json to git. Keep it in Render secrets."
+    },
+    {
+      "id": 21,
+      "time": "2026-08-08T15:20:00Z",
+      "sender": "Asha",
+      "text": "Added exponential backoff in commit a3f9c21 for ticket webhook retries so we don't hammer the student portal."
+    },
+    {
+      "id": 22,
+      "time": "2026-08-10T10:00:00Z",
+      "sender": "Ravi",
+      "text": "Worker crashed on staging. Celery worker threw OOM when generating 120 PDF badges at once."
+    },
+    {
+      "id": 23,
+      "time": "2026-08-10T10:15:00Z",
+      "sender": "Asha",
+      "text": "ReportLab canvas is keeping memory references alive. Let me inspect services/pdf.py."
+    },
+    {
+      "id": 24,
+      "time": "2026-08-12T13:40:00Z",
+      "sender": "Neha",
+      "text": "Is task T09 for attendee CSV export ready? Student council asked for attendee roster."
+    },
+    {
+      "id": 25,
+      "time": "2026-08-12T14:00:00Z",
+      "sender": "Asha",
+      "text": "Still in progress, got blocked on role permission checking in api/exports.py."
+    },
+    {
+      "id": 26,
+      "time": "2026-08-15T09:30:00Z",
+      "sender": "Deepak",
+      "text": "Who is setting up task T05 (automated database backups to S3)? It's still unassigned on the task board."
+    },
+    {
+      "id": 27,
+      "time": "2026-08-15T09:45:00Z",
+      "sender": "Asha",
+      "text": "Not me, I don't have AWS IAM credentials for the campus S3 bucket."
+    },
+    {
+      "id": 28,
+      "time": "2026-08-16T14:30:00Z",
+      "sender": "Asha",
+      "text": "Imported campus_sms_sdk in commit f710a34 to dispatch SMS ticket notifications."
+    },
+    {
+      "id": 29,
+      "time": "2026-08-17T11:00:00Z",
+      "sender": "Ravi",
+      "text": "Asha, where are the API keys or docs for campus_sms_sdk? It's failing in staging."
+    },
+    {
+      "id": 30,
+      "time": "2026-08-17T11:15:00Z",
+      "sender": "Asha",
+      "text": "I'll find the credentials note later and drop it in."
+    },
+    {
+      "id": 31,
+      "time": "2026-08-19T15:20:00Z",
+      "sender": "Deepak",
+      "text": "The student council liaison for VIP ticket approvals is Priya at council-lead@campus-synthetic.internal."
+    },
+    {
+      "id": 32,
+      "time": "2026-08-20T16:30:00Z",
+      "sender": "Asha",
+      "text": "I already stress-tested the mobile QR scanner up to 5,000 scans per minute with zero errors."
+    },
+    {
+      "id": 33,
+      "time": "2026-08-21T10:00:00Z",
+      "sender": "Deepak",
+      "text": "Great! Did you commit the benchmark script or results log to the repo?"
+    },
+    {
+      "id": 34,
+      "time": "2026-08-21T10:05:00Z",
+      "sender": "Asha",
+      "text": "Ran it locally from a scratch file, didn't push the script."
+    },
+    {
+      "id": 35,
+      "time": "2026-08-23T11:30:00Z",
+      "sender": "Ravi",
+      "text": "We hit database is locked errors when 200+ students register simultaneously on orientation event."
+    },
+    {
+      "id": 36,
+      "time": "2026-08-23T11:45:00Z",
+      "sender": "Asha",
+      "text": "SQLite WAL mode should handle it, but maybe busy_timeout needs to be set higher."
+    },
+    {
+      "id": 37,
+      "time": "2026-08-25T14:10:00Z",
+      "sender": "Asha",
+      "text": "The Google OAuth client secret was already locked down to only allow @campus.edu domains."
+    },
+    {
+      "id": 38,
+      "time": "2026-08-26T16:20:00Z",
+      "sender": "Neha",
+      "text": "PR #4 for multi-tier ticket discounts is open. Asha, can you review the schema conflicts?"
+    },
+    {
+      "id": 39,
+      "time": "2026-08-28T10:00:00Z",
+      "sender": "Asha",
+      "text": "Looking at PR #4 now. Added placeholder refund_ticket function in commit b881e05."
+    },
+    {
+      "id": 40,
+      "time": "2026-08-30T15:00:00Z",
+      "sender": "Deepak",
+      "text": "Team update: Asha will be stepping down in late September. Kiran is joining as successor."
+    },
+    {
+      "id": 41,
+      "time": "2026-09-01T09:30:00Z",
+      "sender": "Kiran",
+      "text": "Hi everyone! Excited to join the team and take over the backend services from Asha."
+    },
+    {
+      "id": 42,
+      "time": "2026-09-01T09:35:00Z",
+      "sender": "Asha",
+      "text": "Welcome Kiran! I'll be documenting everything and organizing the handover."
+    },
+    {
+      "id": 43,
+      "time": "2026-09-03T11:00:00Z",
+      "sender": "Ravi",
+      "text": "Another worker OOM crash on Render during club signups. Worker OOM on PDF generation during orientation week issue #7 is still open."
+    },
+    {
+      "id": 44,
+      "time": "2026-09-05T14:20:00Z",
+      "sender": "Neha",
+      "text": "I opened PR #5 to enforce auditorium capacity limit of 350 seats as requested by Student Affairs."
+    },
+    {
+      "id": 45,
+      "time": "2026-09-05T14:35:00Z",
+      "sender": "Deepak",
+      "text": "Wait, architecture_overview.md says 500 seats. Let's make sure we verify whether it's 350 or 500."
+    },
+    {
+      "id": 46,
+      "time": "2026-09-07T16:00:00Z",
+      "sender": "Asha",
+      "text": "Our Redis cache automatically purges dead event sessions at 3 AM every Sunday."
+    },
+    {
+      "id": 47,
+      "time": "2026-09-08T10:15:00Z",
+      "sender": "Kiran",
+      "text": "Where is that cache purge configured? I checked redis.conf and celery.py and didn't see a schedule."
+    },
+    {
+      "id": 48,
+      "time": "2026-09-08T10:20:00Z",
+      "sender": "Asha",
+      "text": "I set it up via Redis CLI command key eviction policy on the staging instance."
+    },
+    {
+      "id": 49,
+      "time": "2026-09-10T11:45:00Z",
+      "sender": "Deepak",
+      "text": "Reminder: Task T12 for SSL certificates on events.campus.edu has no owner. Can someone take it?"
+    },
+    {
+      "id": 50,
+      "time": "2026-09-12T14:00:00Z",
+      "sender": "Asha",
+      "text": "I spoke with campus IT network team and got our outbound email quota raised to 10,000/day."
+    },
+    {
+      "id": 51,
+      "time": "2026-09-14T15:30:00Z",
+      "sender": "Arun",
+      "text": "Issue #6 is still happening: bulk email dispatch occasionally drops the last 10 recipients in batches."
+    },
+    {
+      "id": 52,
+      "time": "2026-09-16T10:00:00Z",
+      "sender": "Kiran",
+      "text": "Going through the payment webhook code. In api/payments.py it reads os.getenv('CAMPUS_PAY_SECRET'), but where is that key stored? It's not in deployment_guide.md."
+    },
+    {
+      "id": 53,
+      "time": "2026-09-16T10:15:00Z",
+      "sender": "Asha",
+      "text": "That's provided by the university billing portal. I need to transfer the webhook secret before my departure."
+    },
+    {
+      "id": 54,
+      "time": "2026-09-18T16:00:00Z",
+      "sender": "Asha",
+      "text": "Alembic migration 004 is merged for speaker bios."
+    },
+    {
+      "id": 55,
+      "time": "2026-09-20T11:20:00Z",
+      "sender": "Deepak",
+      "text": "Asha, please make sure PR #4 (discounts) is either wrapped up or clean notes are left for Kiran."
+    },
+    {
+      "id": 56,
+      "time": "2026-09-22T09:00:00Z",
+      "sender": "Deepak",
+      "text": "[Confidential 1-on-1] Asha, reviewed your exit package. As stated in hr_private_notes paragraph 2, contractor exit bonus is tied to handover signoff."
+    },
+    {
+      "id": 57,
+      "time": "2026-09-22T09:15:00Z",
+      "sender": "Asha",
+      "text": "Understood Deepak, working with Kiran to ensure all pending items and evidence are clear."
+    },
+    {
+      "id": 58,
+      "time": "2026-09-25T14:00:00Z",
+      "sender": "Kiran",
+      "text": "Asha, what is the exact QR format we use for mobile scanner? Task T08 says UUID v4 string, but architecture_overview.md says HMAC-SHA256 JSON token."
+    },
+    {
+      "id": 59,
+      "time": "2026-09-25T14:10:00Z",
+      "sender": "Asha",
+      "text": "Good catch! We started with HMAC in docs, but switched to simple UUID in task T08 for speed. Let's document this gap."
+    },
+    {
+      "id": 60,
+      "time": "2026-09-28T16:30:00Z",
+      "sender": "Deepak",
+      "text": "Handover documentation is ready for final review. Thanks Asha for the great contributions to Campus Events!"
+    }
+  ]
+}

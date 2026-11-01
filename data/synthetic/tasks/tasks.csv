@@ -1,0 +1,19 @@
+id,title,owner,status,due,notes
+T01,Initialize FastAPI backend boilerplate,Asha,done,2026-07-20,Setup poetry and initial app structure
+T02,Configure SQLite database with WAL mode,Asha,done,2026-07-25,Chosen for local MVP performance without server costs
+T03,Design event registration schemas,Neha,done,2026-07-28,Pydantic v2 schemas for Event and Ticket models
+T04,Implement user authentication with JWT cookies,Asha,done,2026-08-05,HTTP-only cookies with 60min expiry
+T05,Set up automated daily database backup to S3,,todo,2026-08-15,Need AWS IAM user credentials and bucket policy
+T06,Integrate student email verification endpoint,Asha,done,2026-08-10,Validates university domain emails
+T07,Build event discovery and filter UI,Neha,done,2026-08-18,Tailwind CSS filter tabs for campus venues
+T08,Generate unique QR codes for attendee badge scanning,Asha,done,2026-08-20,QR codes use UUID v4 strings for instant verification
+T09,Implement CSV export for registered attendees,Asha,in_progress,2026-08-12,Stalled waiting for admin role permission check refactor
+T10,Set up Render deployment webhooks and staging,Ravi,done,2026-08-22,Render chosen for zero-cost static hosting and easy worker deployment
+T11,Write PDF ticket badge generation worker,Ravi,done,2026-08-26,Uses ReportLab in separate celery worker daemon
+T12,Configure SSL certificates for custom domain events.campus.edu,,todo,2026-09-01,Waiting on university central IT DNS delegation
+T13,Fix memory exhaustion during bulk badge export,Ravi,in_progress,2026-09-05,Batch processing in chunks of 50 to avoid worker OOM
+T14,Add multi-tier ticket pricing and discount codes,Asha,in_progress,2026-09-10,PR 4 open with failing type checks
+T15,Audit access control and private HR documents,Deepak,done,2026-09-15,Lead-only HR notes verified
+T16,Write database migration scripts for speaker profiles,Asha,done,2026-09-18,Alembic revision 004
+T17,Prepare successor handover documentation for Kiran,Asha,in_progress,2026-09-25,Drafting architecture and credentials overview
+T18,End-to-end load test ticket registration rush,,todo,2026-09-28,Need test script to simulate 500 simultaneous student registrations

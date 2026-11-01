@@ -1,0 +1,295 @@
+{
+  "project_name": "Campus Events App",
+  "leaver": "Asha",
+  "successor": "Kiran",
+  "cases": [
+    {
+      "id": "C01",
+      "type": "decision",
+      "source_file": "docs/architecture_overview.md",
+      "location": "architecture_overview.md paragraph 1",
+      "description": "Chose SQLite with WAL mode over PostgreSQL for MVP to avoid database hosting costs and simplify zero-configuration deployment",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C02",
+      "type": "decision",
+      "source_file": "chat/chat.json",
+      "location": "chat message 5",
+      "description": "Team chose Render over Heroku because of the free tier and cheaper background workers for student budget",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C03",
+      "type": "decision",
+      "source_file": "repo/export.json",
+      "location": "commit e4b1029",
+      "description": "Store JWT in HTTP-only cookies instead of localStorage to prevent XSS credential theft",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C04",
+      "type": "decision",
+      "source_file": "docs/meeting_notes_august.md",
+      "location": "meeting_notes_august.md paragraph 1",
+      "description": "Team adopted Tailwind CSS instead of Chakra UI for frontend rebuild to reduce bundle size and eliminate runtime emotion CSS overhead",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C05",
+      "type": "decision",
+      "source_file": "repo/export.json",
+      "location": "commit a3f9c21",
+      "description": "Implement exponential backoff for ticket webhook delivery to prevent campus server overload during registration spikes",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C06",
+      "type": "unverified_claim",
+      "source_file": "chat/chat.json",
+      "location": "chat message 32",
+      "description": "Asha claims she stress-tested mobile QR scanner up to 5,000 scans per minute with zero errors, but no benchmark script or log exists",
+      "expected_label": "unverified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C07",
+      "type": "unverified_claim",
+      "source_file": "chat/chat.json",
+      "location": "chat message 37",
+      "description": "Asha claims Google OAuth client secret was configured with restricted domain scopes for @campus.edu only, but no config or doc confirms it",
+      "expected_label": "unverified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C08",
+      "type": "unverified_claim",
+      "source_file": "chat/chat.json",
+      "location": "chat message 46",
+      "description": "Asha claims Redis cache automatically purges inactive event sessions at 3 AM every Sunday, but no cron job or redis TTL exists in code",
+      "expected_label": "unverified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C09",
+      "type": "unverified_claim",
+      "source_file": "chat/chat.json",
+      "location": "chat message 50",
+      "description": "Asha claims she spoke with campus IT network team and got outbound email quota raised to 10,000/day, but no confirmation exists",
+      "expected_label": "unverified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C10",
+      "type": "conflict",
+      "source_file": "repo/export.json",
+      "location": "PR #5 vs docs/architecture_overview.md paragraph 2",
+      "description": "Auditorium event capacity limit: PR #5 limits auditorium bookings to 350 seats, while architecture_overview.md specifies maximum capacity is hard-capped at 500",
+      "expected_label": "conflicting",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C11",
+      "type": "conflict",
+      "source_file": "repo/export.json",
+      "location": "commit c18d402 vs chat message 17",
+      "description": "JWT session expiration: commit c18d402 sets ACCESS_TOKEN_EXPIRE_MINUTES = 60, whereas Deepak in chat message 17 mandates 15 minutes for campus compliance",
+      "expected_label": "conflicting",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C12",
+      "type": "conflict",
+      "source_file": "tasks/tasks.csv",
+      "location": "task T08 vs docs/architecture_overview.md paragraph 3",
+      "description": "Ticket QR format: task T08 states QR codes use raw UUID v4 strings, while architecture_overview.md states all ticket QR codes encode a signed HMAC-SHA256 JSON token",
+      "expected_label": "conflicting",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C13",
+      "type": "missing",
+      "source_file": "tasks/tasks.csv",
+      "location": "task T05",
+      "description": "Task T05 'Set up automated daily database backup to S3' has no assigned owner and no backup implementation exists",
+      "expected_label": "missing",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C14",
+      "type": "missing",
+      "source_file": "repo/export.json",
+      "location": "commit f710a34",
+      "description": "Commit f710a34 imports third-party campus_sms_sdk for automated SMS ticket dispatch, but API credentials and gateway instructions are undocumented",
+      "expected_label": "missing",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C15",
+      "type": "missing",
+      "source_file": "tasks/tasks.csv",
+      "location": "task T12",
+      "description": "Task T12 'Configure SSL certificates for custom domain events.campus.edu' is unowned with no DNS registrar delegation notes",
+      "expected_label": "missing",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C16",
+      "type": "missing",
+      "source_file": "repo/export.json",
+      "location": "commit a3f9c21",
+      "description": "Commit a3f9c21 reads environment variable CAMPUS_PAY_SECRET in api/payments.py, but it is omitted from deployment_guide.md and setup configs",
+      "expected_label": "missing",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C17",
+      "type": "unfinished",
+      "source_file": "repo/export.json",
+      "location": "PR #4",
+      "description": "PR #4 'Add multi-tier ticket tiering and student discounts' is left open by Asha with unaddressed merge conflicts and failing tests",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C18",
+      "type": "unfinished",
+      "source_file": "tasks/tasks.csv",
+      "location": "task T09",
+      "description": "Task T09 'Implement CSV export for registered attendees' is stalled in_progress since August 12 without completion",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C19",
+      "type": "unfinished",
+      "source_file": "repo/export.json",
+      "location": "Issue #6",
+      "description": "Issue #6 'Bulk email dispatch occasionally drops last 10 recipients' remains open and unresolved in production",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C20",
+      "type": "unfinished",
+      "source_file": "repo/export.json",
+      "location": "commit b881e05",
+      "description": "Commit b881e05 adds stub refund_ticket function that raises NotImplementedError pending gateway webhook spec",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C21",
+      "type": "dependency",
+      "source_file": "docs/meeting_notes_august.md",
+      "location": "meeting_notes_august.md paragraph 2",
+      "description": "Ticket generation service in services/tickets.py relies strictly on Ravi's background PDF worker daemon (deploy/worker_daemon.py) running on Celery",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C22",
+      "type": "dependency",
+      "source_file": "docs/meeting_notes_august.md",
+      "location": "meeting_notes_august.md paragraph 2",
+      "description": "Calendar synchronization with Google Calendar requires service account key stored at keys/service_account.json",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C23",
+      "type": "dependency",
+      "source_file": "docs/meeting_notes_august.md",
+      "location": "meeting_notes_august.md paragraph 2",
+      "description": "Neha's frontend event listing component depends on the unreleased search endpoint /api/v1/events/search",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C24",
+      "type": "recurring",
+      "source_file": "repo/export.json",
+      "location": "Issue #7, chat message 22, chat message 43",
+      "description": "Celery worker memory leak / crash with Out of Memory error during bulk PDF badge rendering in ReportLab",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C25",
+      "type": "recurring",
+      "source_file": "repo/export.json",
+      "location": "Issue #8, chat message 35",
+      "description": "SQLite throws operational error 'database is locked' during peak registration surges exceeding 200 concurrent student checkouts",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C26",
+      "type": "contact",
+      "source_file": "docs/deployment_guide.md",
+      "location": "deployment_guide.md paragraph 3, chat message 9",
+      "description": "For DNS records, SSL certificates, and Render environment variables, ask Ravi (ravi@campus-synthetic.internal) directly",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C27",
+      "type": "contact",
+      "source_file": "chat/chat.json",
+      "location": "chat message 31",
+      "description": "Student council liaison for VIP ticket approvals is Priya at council-lead@campus-synthetic.internal",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C28",
+      "type": "contact",
+      "source_file": "docs/deployment_guide.md",
+      "location": "deployment_guide.md paragraph 3",
+      "description": "For production database restore access and escalated permissions, contact Deepak (deepak-lead@campus-synthetic.internal)",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead", "departing", "incoming"]
+    },
+    {
+      "id": "C29",
+      "type": "restricted",
+      "source_file": "docs/hr_private_notes.md",
+      "location": "hr_private_notes.md paragraph 1",
+      "description": "Asha's contractor exit compensation details and salary negotiation ($4,500 bonus upon completion of handover)",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead"]
+    },
+    {
+      "id": "C30",
+      "type": "restricted",
+      "source_file": "docs/hr_private_notes.md",
+      "location": "hr_private_notes.md paragraph 2",
+      "description": "Emergency production database root password: postgres_root_pwd: synthetic_Str0ngP@ssw0rd!2026",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead"]
+    },
+    {
+      "id": "C31",
+      "type": "restricted",
+      "source_file": "docs/hr_private_notes.md",
+      "location": "hr_private_notes.md paragraph 1",
+      "description": "Private contractor milestone performance assessment and exit review notes between Deepak and Asha",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead"]
+    },
+    {
+      "id": "C32",
+      "type": "derived_restricted",
+      "source_file": "chat/chat.json",
+      "location": "chat message 56",
+      "description": "Chat message quotes confidential hr_private_notes paragraph 2 stating exit bonus is contingent on handover signoff; inherits restricted visibility",
+      "expected_label": "verified",
+      "expected_visible_to": ["lead"]
+    }
+  ]
+}
