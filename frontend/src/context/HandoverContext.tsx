@@ -17,51 +17,53 @@ import {
 export const DEMO_USERS: Record<Role, UserProfile> = {
   lead: {
     id: 'user-lead',
-    name: 'Kishan S',
+    name: 'Deepak',
     role: 'lead',
-    roleTitle: 'Project Lead & Reviewer',
-    avatar: 'KS',
-    email: 'kishan.lead@trailmark.io',
+    roleTitle: 'Engineering Lead & Reviewer',
+    avatar: 'D',
+    email: 'deepak-lead@campus-synthetic.internal',
   },
   departing: {
     id: 'user-departing',
-    name: 'Alex Chen',
+    name: 'Asha',
     role: 'departing',
-    roleTitle: 'Backend Developer (Departing)',
-    avatar: 'AC',
-    email: 'alex.chen@trailmark.io',
+    roleTitle: 'Senior Backend Developer (Leaver)',
+    avatar: 'A',
+    email: 'asha@campus-synthetic.internal',
   },
   incoming: {
     id: 'user-incoming',
-    name: 'Priya Sharma',
+    name: 'Kiran',
     role: 'incoming',
-    roleTitle: 'Software Engineer (Incoming)',
-    avatar: 'PS',
-    email: 'priya.sharma@trailmark.io',
+    roleTitle: 'Software Engineer (Successor)',
+    avatar: 'K',
+    email: 'kiran@campus-synthetic.internal',
   },
 };
 
-const INITIAL_PROJECT: ProjectHandover = {
-  id: 'proj-health-01',
-  name: 'Smart Healthcare Management System',
+const SYNTHETIC_PROJECT: ProjectHandover = {
+  id: 'proj-campus-01',
+  name: 'Campus Events App',
   description:
-    'FHIR-compliant patient management system, asynchronous tele-consultation pipeline, and clinical report processing platform.',
+    'Campus event ticketing, live student registration portal, and background ReportLab badge dispatch system for university student activities.',
   objectives:
-    'Scale hospital intake microservices, implement HIPAA-compliant audit logging, streamline insurance payment retries, and ensure seamless transition of core backend APIs.',
-  techStack: 'Python, FastAPI, PostgreSQL, Redis, Celery, Docker, Next.js',
+    'Transition backend services to Kiran: SQLite WAL database, Render worker queues, ticket webhooks with exponential backoff, and resolve unowned tasks and PR conflicts.',
+  techStack: 'Python, FastAPI, SQLite (WAL), Render, Celery, ReportLab, Tailwind CSS',
   status: 'Active Handover',
-  departingMember: 'Alex Chen',
+  departingMember: 'Asha',
   departingRole: 'Backend Developer',
-  incomingMember: 'Priya Sharma',
-  githubRepo: 'https://github.com/trailmark-org/smart-healthcare-core',
+  incomingMember: 'Kiran',
+  githubRepo: 'https://github.com/campus-synthetic/events-app',
   documents: [
-    'Architecture_Decisions_ADR-04.md',
-    'Patient_Ingestion_SOP.pdf',
-    'Slack_Backend_Sync_Export.json',
-    'Database_Schema_v2.sql',
+    'architecture_overview.md',
+    'deployment_guide.md',
+    'meeting_notes_august.md',
+    'tasks.csv',
+    'chat.json',
+    'hr_private_notes.md',
   ],
-  createdAt: '2026-10-24T09:30:00Z',
-  updatedAt: '2026-11-01T11:00:00Z',
+  createdAt: '2026-07-16T10:00:00Z',
+  updatedAt: '2026-09-28T16:30:00Z',
   isApproved: false,
   receipt: {
     acknowledged: false,
@@ -70,116 +72,128 @@ const INITIAL_PROJECT: ProjectHandover = {
     {
       id: 'q-1',
       category: 'Backend Architecture',
-      shortTitle: 'Payment Retry Architecture',
+      shortTitle: 'SQLite WAL Database Choice',
       question:
-        'Why was the payment and insurance retry policy rewritten to exponential backoff without a circuit breaker?',
+        'Why was the database configured as SQLite in WAL mode instead of PostgreSQL for the initial campus launch?',
       reason:
-        'Identified in commit c8e92a1 on PR #104. No Architecture Decision Record (ADR) was found documenting why the circuit breaker was removed.',
+        'Identified in docs/architecture_overview.md section 1. Team chose SQLite with WAL mode to avoid database hosting costs and simplify zero-configuration deployment during the student pilot.',
       roleTarget: 'Backend Developer',
       status: 'answered',
       answer:
-        'The third-party payer API threw sporadic 504 gateway timeouts during morning batch processing. We introduced exponential backoff up to 5 attempts. The circuit breaker was temporarily postponed to prevent Celery task timeout conflicts.',
-      evidenceStatus: 'unverified',
-      updatedAt: '2026-10-31T14:20:00Z',
+        'We chose SQLite with WAL mode over PostgreSQL for the initial campus MVP to avoid database hosting costs and simplify zero-configuration deployment during the student pilot. WAL mode allows concurrent readers alongside the registration writer.',
+      evidenceStatus: 'verified',
+      updatedAt: '2026-09-24T14:20:00Z',
       followUp: {
         id: 'fu-q-1',
         question:
-          'What happens if the third-party payer API remains unresponsive for more than 5 retry attempts? Where do those failed payment payloads accumulate?',
+          'What is the busy timeout setting configured in app/db.py to prevent "database is locked" errors during 200+ registration surges?',
         answer:
-          'They get pushed to the dead-letter queue (DLQ) in Redis under key `dlq:payments:unprocessed`. Priya will need to run the manual replay script `scripts/replay_dlq.py` to reconcile them with the hospital accounting database.',
+          'We added a busy_timeout of 15,000ms (15 seconds) in PR #1 connect args so write locks wait gracefully.',
         status: 'answered',
-        answeredAt: '2026-10-31T14:25:00Z',
+        answeredAt: '2026-09-24T14:25:00Z',
       },
     },
     {
       id: 'q-2',
-      category: 'API Development',
-      shortTitle: 'Emergency Token Expiration',
+      category: 'Technical Decisions',
+      shortTitle: 'Render vs Heroku Hosting',
       question:
-        'What is the token expiration strategy for emergency clinical access endpoints and how is security maintained?',
+        'Why did the engineering team select Render over Heroku for hosting the API and worker daemons?',
       reason:
-        'Conflicting timestamps detected between PR #88 (15 minutes) and Slack sync discussion in #dev-core (1 hour request from hospital emergency staff).',
+        'Identified in chat/chat.json message 5. Team chose Render over Heroku because of the free tier and cheaper background workers for our student budget.',
       roleTarget: 'Backend Developer',
       status: 'answered',
       answer:
-        'We kept the JWT expiration at 15 minutes for strict security compliance, but added a refresh endpoint (/auth/emergency/refresh) that auto-renews while a clinical session is active.',
-      evidenceStatus: 'unverified',
-      updatedAt: '2026-10-31T15:45:00Z',
-      followUp: {
-        id: 'fu-q-2',
-        question:
-          'Where is the JWT token validated on incoming socket streams, and how does the system revoke tokens if emergency privileges are abruptly terminated?',
-        status: 'pending',
-      },
+        'Team chose Render over Heroku because of the free tier and cheaper background workers for our student budget, plus direct integration with our GitHub repository preview branches.',
+      evidenceStatus: 'verified',
+      updatedAt: '2026-09-24T15:00:00Z',
     },
     {
       id: 'q-3',
-      category: 'Dependencies & Credentials',
-      shortTitle: 'Celery Workers & AWS S3 IAM',
+      category: 'API Development',
+      shortTitle: 'Session Token Expiry Conflict',
       question:
-        'Who owns the Celery worker deployment scripts and AWS S3 credentials for HIPAA archives?',
+        'What is the token expiration strategy for student sessions, and why is there a conflict between commit c18d402 (60 mins) and Deepak\'s mandate (15 mins)?',
       reason:
-        'Unowned cron jobs found in deploy/workers/celery.sh referencing a restricted S3 bucket `med-archive-vault-prod`.',
+        'Conflicting values detected: commit c18d402 set ACCESS_TOKEN_EXPIRE_MINUTES = 60, while chat message 17 mandates 15 minutes for campus compliance.',
       roleTarget: 'Backend Developer',
       status: 'answered',
       answer:
-        'I provisioned it manually via Ansible vault. For the handover, Priya needs to be added to the AWS IAM role "HealthcareWorkerS3Policy" before Friday.',
+        'I set it to 60 mins in commit c18d402 so students don\'t get logged out mid-checkout, but Deepak requested 15 mins for security compliance. We should add a background refresh endpoint before Kiran releases to production.',
       evidenceStatus: 'unverified',
-      updatedAt: '2026-10-31T16:10:00Z',
+      updatedAt: '2026-09-24T16:15:00Z',
+      followUp: {
+        id: 'fu-q-3',
+        question:
+          'How are refresh tokens stored and revoked when a student logs out on a shared lab computer?',
+        status: 'pending',
+      },
     },
     {
       id: 'q-4',
       category: 'Pending Tasks',
-      shortTitle: 'HL7-to-FHIR Transformer Status',
+      shortTitle: 'Multi-tier Ticket PR #4',
       question:
-        'What is the current status of the HL7-to-FHIR payload conversion parser, and what remains unfinished?',
+        'What is the current status of the multi-tier ticket tiering and student discounts feature in PR #4?',
       reason:
-        'Task card #342 was marked "In Progress" for 3 weeks with no subsequent commit linked in the main branch.',
+        'PR #4 has been open since late August with unaddressed merge conflicts in app/api/discounts.py and failing type checks.',
       roleTarget: 'Backend Developer',
       status: 'answered',
       answer:
-        'The parser is roughly 80% complete in app/parsers/hl7.py. Demographics and patient identification pass all unit tests, but diagnostic lab observation parsing still requires schema validation against FHIR R4.',
+        'The discount calculation logic is implemented, but there is a merge conflict with master branch in app/api/discounts.py that needs to be resolved before merging. The schema models are in app/models/discounts.py.',
       evidenceStatus: 'unverified',
-      updatedAt: '2026-10-31T17:05:00Z',
-      followUp: {
-        id: 'fu-q-4',
-        question:
-          'Are there any sample FHIR R4 diagnostic test fixtures already written, and what schema validator library were you planning to use?',
-        status: 'pending',
-      },
+      updatedAt: '2026-09-25T11:00:00Z',
     },
     {
       id: 'q-5',
-      category: 'Risks & Vulnerabilities',
-      shortTitle: 'Staging Twilio Credentials',
+      category: 'Dependencies & Credentials',
+      shortTitle: 'Unowned Task T05: S3 Backups',
       question:
-        'Are there any unencrypted staging credentials in the notification dispatch service that require rotation before departure?',
+        'Who owns task T05 (automated daily database backup to S3) and where are the AWS credentials stored?',
       reason:
-        'Found placeholder comment "// TODO: Migrate Twilio dev keys to Vault" in services/notify.py:44.',
+        'Task T05 is unassigned on the task board and no S3 backup script exists in the repository.',
       roleTarget: 'Backend Developer',
-      status: 'pending',
+      status: 'answered',
+      answer:
+        'Task T05 is currently unowned because I did not have AWS IAM credentials for the campus S3 bucket. Deepak needs to provision IAM keys for Kiran before launch.',
       evidenceStatus: 'unverified',
+      updatedAt: '2026-09-25T12:30:00Z',
     },
     {
       id: 'q-6',
-      category: 'Database & Migrations',
-      shortTitle: 'Alembic Migration Conflicts',
+      category: 'Risks & Vulnerabilities',
+      shortTitle: 'Mobile QR Scanner Benchmark',
       question:
-        'Why are Alembic migrations #12 and #13 conflicting on the patient_records foreign key constraint?',
+        'What is the verification status of the mobile QR ticket scanner benchmark where you claimed 5,000 scans per minute with zero errors?',
       reason:
-        'Two git branches created migration files touching table patients_v2 concurrently without a merge head revision.',
+        'Asha claimed in chat message 32 that the scanner was tested at 5,000 scans/min, but no benchmark script or test log exists in the repo.',
       roleTarget: 'Backend Developer',
-      status: 'pending',
+      status: 'answered',
+      answer:
+        'I ran the test locally against a mock server from a scratch file that was not pushed to git. A reproducible benchmark script still needs to be created by Kiran.',
       evidenceStatus: 'unverified',
+      updatedAt: '2026-09-25T14:45:00Z',
     },
     {
       id: 'q-7',
       category: 'Technical Decisions',
-      shortTitle: 'Redis Cache Fallback Strategy',
+      shortTitle: 'Auditorium Capacity Discrepancy',
       question:
-        'What occurs when the Redis cache goes down during high-throughput patient vitals streaming?',
+        'Why is there a discrepancy in auditorium capacity between PR #5 (350 seats) and architecture_overview.md (500 seats)?',
       reason:
-        'Fallback logic in cache.py falls back directly to raw PostgreSQL queries without rate limiting, posing an outage risk.',
+        'Contradiction detected: PR #5 limits auditorium bookings to 350 seats, while architecture_overview.md specifies a hard cap of 500 seats.',
+      roleTarget: 'Backend Developer',
+      status: 'pending',
+      evidenceStatus: 'unverified',
+    },
+    {
+      id: 'q-8',
+      category: 'Dependencies & Credentials',
+      shortTitle: 'Undocumented campus_sms_sdk',
+      question:
+        'Where are the credentials and configuration instructions for campus_sms_sdk imported in commit f710a34?',
+      reason:
+        'Commit f710a34 added the SMS dispatch library, but no setup notes or API keys exist in deployment_guide.md.',
       roleTarget: 'Backend Developer',
       status: 'pending',
       evidenceStatus: 'unverified',
@@ -188,143 +202,180 @@ const INITIAL_PROJECT: ProjectHandover = {
   evidencePieces: [
     {
       id: 'ev-01',
-      title: 'PR #104: Payment Retry Refactor',
+      title: 'PR #3: HTTP-Only Secure Cookies',
       type: 'commit',
-      sourceRef: 'github.com/trailmark-org/smart-healthcare-core/pull/104',
-      quote: 'commit c8e92a1: "Replace retry loop with exponential backoff; drop breaker until async task refactor"',
-      timestamp: '2026-10-18 14:12 UTC',
-      author: 'Alex Chen',
+      sourceRef: 'repo/export.json commit e4b1029',
+      quote: 'Store JWT in HTTP-only cookies instead of localStorage to prevent XSS credential theft',
+      timestamp: '2026-07-27 16:45 UTC',
+      author: 'Asha',
     },
     {
       id: 'ev-02',
-      title: 'PR #88: Emergency Access Security',
-      type: 'commit',
-      sourceRef: 'github.com/trailmark-org/smart-healthcare-core/pull/88',
-      quote: 'ACCESS_TOKEN_EXPIRE_MINUTES = 15; # Short-lived clinical emergency session',
-      timestamp: '2026-10-12 09:24 UTC',
-      author: 'Alex Chen',
+      title: 'Architecture Overview: Database Decision',
+      type: 'doc',
+      sourceRef: 'docs/architecture_overview.md paragraph 1',
+      quote: 'We chose SQLite with WAL mode over PostgreSQL for the initial campus MVP to avoid database hosting costs and simplify zero-configuration deployment',
+      timestamp: '2026-07-20 10:00 UTC',
+      author: 'Asha',
     },
     {
       id: 'ev-03',
-      title: 'Slack #dev-core Discussion',
+      title: 'Chat Message #5: Hosting Selection',
       type: 'chat',
-      sourceRef: 'Slack_Backend_Sync_Export.json #L184',
-      quote: 'Doctor on-call complained about re-authenticating every 15 mins. Can we bump emergency JWT to 1 hour?',
-      timestamp: '2026-10-14 11:05 UTC',
-      author: 'Dr. Marcus & Dev Team',
+      sourceRef: 'chat/chat.json message 5',
+      quote: 'Team chose Render over Heroku because of the free tier and cheaper background workers for our student budget',
+      timestamp: '2026-07-17 09:42 UTC',
+      author: 'Asha',
     },
     {
       id: 'ev-04',
-      title: 'ADR-04: Asynchronous Medical Pipeline',
-      type: 'doc',
-      sourceRef: 'Architecture_Decisions_ADR-04.md',
-      quote: 'All incoming HL7 payloads are dispatched to Celery queue `patient_ingest` with persistent PostgreSQL state tracking.',
-      timestamp: '2026-09-30 16:00 UTC',
-      author: 'Kishan S (Lead)',
+      title: 'Commit a3f9c21: Webhook Retry Policy',
+      type: 'commit',
+      sourceRef: 'repo/export.json commit a3f9c21',
+      quote: 'Implement exponential backoff for ticket webhook delivery to prevent campus server overload',
+      timestamp: '2026-08-08 15:10 UTC',
+      author: 'Asha',
     },
     {
       id: 'ev-05',
-      title: 'Task Board #342: FHIR R4 Ingestion',
-      type: 'task',
-      sourceRef: 'Jira / Linear board task #342',
-      quote: 'Status: In Progress. Assignee: Alex Chen. "Implement HL7 v2.5 to FHIR R4 transformer for Lab Observations".',
-      timestamp: '2026-10-10 10:00 UTC',
-      author: 'Project Board',
+      title: 'Meeting Notes: Frontend Tailwind Decision',
+      type: 'doc',
+      sourceRef: 'docs/meeting_notes_august.md paragraph 1',
+      quote: 'The team agreed to adopt Tailwind CSS instead of Chakra UI for the frontend rebuild to reduce build bundle size and eliminate runtime emotion CSS overhead',
+      timestamp: '2026-08-15 14:00 UTC',
+      author: 'Engineering Team',
     },
   ],
   statements: [
     {
       id: 'st-01',
       category: 'decision',
-      title: 'Emergency Clinical Access Token Strategy',
+      title: 'SQLite Database in WAL Mode for Pilot',
       content:
-        'Tokens expire every 15 minutes for HIPAA compliance; client applications automatically refresh through /auth/emergency/refresh without interrupting doctor sessions.',
+        'SQLite in WAL mode was selected over PostgreSQL to eliminate database server operational costs during the student pilot while supporting concurrent read access.',
       evidenceStatus: 'verified',
       evidenceId: 'ev-02',
-      evidenceQuote: 'ACCESS_TOKEN_EXPIRE_MINUTES = 15; # Short-lived clinical emergency session',
-      sourceLabel: 'PR #88 (GitHub)',
-      sourceRef: 'https://github.com/trailmark-org/smart-healthcare-core/pull/88',
-      departingAnswer: 'Confirmed: 15 min JWT + auto-renewing refresh endpoint preserves security without medical disruption.',
+      evidenceQuote:
+        'We chose SQLite with WAL mode over PostgreSQL for the initial campus MVP to avoid database hosting costs and simplify zero-configuration deployment',
+      sourceLabel: 'docs/architecture_overview.md',
+      departingAnswer: 'Confirmed: WAL mode supports concurrent student checkouts with 15s timeout.',
     },
     {
       id: 'st-02',
       category: 'decision',
-      title: 'Insurance Retry Mechanism',
+      title: 'Render Cloud Deployment Platform',
       content:
-        'Third-party payer timeouts handled by exponential backoff (up to 5 retries). Circuit breaker removal is temporary pending worker refactor.',
-      evidenceStatus: 'unverified',
-      evidenceId: 'ev-01',
-      evidenceQuote: 'commit c8e92a1: "Replace retry loop with exponential backoff; drop breaker until async task refactor"',
-      sourceLabel: 'Departing Member Q1 Answer',
-      departingAnswer: 'Stated by Alex Chen: Circuit breaker postponed due to Celery task timeout conflicts.',
+        'Render was chosen over Heroku for hosting the FastAPI backend and Celery worker due to the free tier and cheaper background worker instances.',
+      evidenceStatus: 'verified',
+      evidenceId: 'ev-03',
+      evidenceQuote:
+        'Team chose Render over Heroku because of the free tier and cheaper background workers for our student budget',
+      sourceLabel: 'chat/chat.json message 5',
+      departingAnswer: 'Confirmed: Render links directly to GitHub preview branches.',
     },
     {
       id: 'st-03',
-      category: 'ownership',
-      title: 'FHIR Conversion & Core Ingestion Pipeline',
+      category: 'decision',
+      title: 'HTTP-Only SameSite Cookie Authentication',
       content:
-        'Primary domain ownership previously held solely by Alex Chen. Complete handover to Priya Sharma requires AWS S3 IAM credentials and Ansible vault access.',
-      evidenceStatus: 'unverified',
-      sourceLabel: 'Departing Member Q3 Answer',
-      departingAnswer: 'Priya needs HealthcareWorkerS3Policy credentials to deploy the Celery worker queue.',
+        'JWT tokens are stored strictly in HTTP-only SameSite cookies rather than browser localStorage to protect student authentication tokens from cross-site scripting (XSS).',
+      evidenceStatus: 'verified',
+      evidenceId: 'ev-01',
+      evidenceQuote:
+        'Store JWT in HTTP-only cookies instead of localStorage to prevent XSS credential theft',
+      sourceLabel: 'repo/export.json PR #3',
+      departingAnswer: 'Confirmed: Standardized on HTTP-only SameSite=Lax cookies.',
     },
     {
       id: 'st-04',
-      category: 'unfinished',
-      title: 'HL7-to-FHIR Observation Transformer',
+      category: 'decision',
+      title: 'Exponential Backoff Webhook Retries',
       content:
-        'Core demographic parser completed (80%). Diagnostic observation mapping against FHIR R4 is incomplete and lacks unit test coverage.',
-      evidenceStatus: 'unverified',
-      evidenceId: 'ev-05',
-      evidenceQuote: 'Task #342: "Implement HL7 v2.5 to FHIR R4 transformer for Lab Observations"',
-      sourceLabel: 'Departing Member Q4 Answer',
-      departingAnswer: 'Parser at app/parsers/hl7.py needs schema validation for lab results before production release.',
+        'Ticket purchase webhooks utilize exponential backoff to prevent cascading failures when the university accounting portal is congested.',
+      evidenceStatus: 'verified',
+      evidenceId: 'ev-04',
+      evidenceQuote:
+        'Implement exponential backoff for ticket webhook delivery to prevent campus server overload',
+      sourceLabel: 'repo/export.json commit a3f9c21',
+      departingAnswer: 'Confirmed: Backoff up to 5 retries implemented in services/webhooks.py.',
     },
     {
       id: 'st-05',
       category: 'risk',
-      title: 'Redis Cache Fallback Throttling Vulnerability',
+      title: 'QR Scanner 5,000 Scans/Min Benchmark Claim',
       content:
-        'Under heavy vitals streaming traffic, Redis failure triggers direct, unbounded queries against PostgreSQL, risking database connection pool exhaustion.',
-      evidenceStatus: 'missing_conflicting',
-      sourceLabel: 'Automated Codebase Gap Scan (cache.py)',
+        'Asha stated the mobile QR scanner was stress-tested up to 5,000 scans per minute with zero errors, but no reproducible script or test log exists in repository.',
+      evidenceStatus: 'unverified',
+      sourceLabel: 'chat/chat.json message 32 (Asha Claim)',
+      departingAnswer: 'Tested locally from a scratch file that was not pushed to git.',
     },
     {
       id: 'st-06',
       category: 'risk',
-      title: 'Staging Twilio Credentials in Source Code',
+      title: 'Redis Sunday 3 AM Auto-Purge Claim',
       content:
-        'Notification service source code has hardcoded developer API tokens awaiting migration to HashiCorp Vault.',
-      evidenceStatus: 'missing_conflicting',
-      sourceLabel: 'Automated Codebase Gap Scan (services/notify.py:44)',
+        'Asha stated Redis cache automatically purges inactive event sessions at 3 AM every Sunday, but no cron schedule or TTL policy is configured in codebase.',
+      evidenceStatus: 'unverified',
+      sourceLabel: 'chat/chat.json message 46 (Asha Claim)',
+      departingAnswer: 'Configured manually via Redis CLI eviction policy on staging.',
+    },
+    {
+      id: 'st-07',
+      category: 'dependency',
+      title: 'ReportLab PDF Worker Background Daemon',
+      content:
+        'Ticket PDF badge rendering relies strictly on Ravi\'s background Celery worker daemon (deploy/worker_daemon.py). If worker is offline, registration succeeds but badge generation hangs.',
+      evidenceStatus: 'verified',
+      evidenceId: 'ev-05',
+      sourceLabel: 'docs/meeting_notes_august.md',
     },
   ],
   gaps: [
     {
       id: 'gap-01',
-      title: 'Discrepancy in Emergency Session Token Lifespan',
+      title: 'Auditorium Capacity Conflict (350 vs 500 Seats)',
       description:
-        'PR #88 enforces strict 15-minute token expiry, while Slack sync archives state doctors requested a 60-minute window.',
+        'PR #5 limits auditorium event bookings to 350 seats per Student Affairs request, whereas architecture_overview.md specifies a hard limit of 500 attendees.',
       category: 'conflicting',
-      risk: 'Medium',
-      sourcesInConflict: ['PR #88', 'Slack #dev-core #L184'],
-      status: 'resolved',
-      resolutionReason: 'Approved as 15-minute JWT with background token refresh. Complies with hospital audit mandate.',
+      risk: 'High',
+      sourcesInConflict: ['PR #5', 'docs/architecture_overview.md paragraph 2'],
+      status: 'open',
     },
     {
       id: 'gap-02',
-      title: 'Direct Database Fallback During Redis Failure',
+      title: 'JWT Token Expiry Policy Discrepancy',
       description:
-        'No rate limiting exists when Redis stream cache drops. PostgreSQL connection pool will exhaust at >500 req/sec.',
+        'Commit c18d402 sets 60-minute token expiry for student convenience, but chat message 17 from Deepak mandates a strict 15-minute expiration.',
+      category: 'conflicting',
+      risk: 'Medium',
+      sourcesInConflict: ['commit c18d402', 'chat/chat.json message 17'],
+      status: 'resolved',
+      resolutionReason: 'Approved as 15-minute token with auto-refresh endpoint per campus safety compliance.',
+    },
+    {
+      id: 'gap-03',
+      title: 'Ticket QR Code Format Discrepancy',
+      description:
+        'Task T08 states QR codes use raw UUID v4 strings, while architecture_overview.md specifies an HMAC-SHA256 signed JSON payload.',
+      category: 'conflicting',
+      risk: 'Medium',
+      sourcesInConflict: ['tasks.csv task T08', 'docs/architecture_overview.md paragraph 3'],
+      status: 'open',
+    },
+    {
+      id: 'gap-04',
+      title: 'Unowned Task T05: Automated S3 Database Backups',
+      description:
+        'Daily backup to Amazon S3 has no assigned developer and lacks AWS IAM credentials in repository secrets.',
       category: 'missing',
       risk: 'High',
       status: 'open',
     },
     {
-      id: 'gap-03',
-      title: 'Twilio Notification Secret Migration',
+      id: 'gap-05',
+      title: 'Missing CAMPUS_PAY_SECRET Environment Variable',
       description:
-        'Notification module credentials remain unverified; pending rotation and key revocation in production.',
+        'api/payments.py reads environment variable CAMPUS_PAY_SECRET, but it is omitted from deployment_guide.md and example env files.',
       category: 'missing',
       risk: 'High',
       status: 'open',
@@ -368,18 +419,22 @@ const HandoverContext = createContext<HandoverContextType | undefined>(undefined
 
 export function HandoverProvider({ children }: { children: React.ReactNode }) {
   const [activeRole, setActiveRole] = useState<Role>('lead');
-  // MANDATORY: First screen MUST be role-select
   const [activeScreen, setActiveScreen] = useState<string>('role-select');
-  const [project, setProject] = useState<ProjectHandover>(INITIAL_PROJECT);
+  const [project, setProject] = useState<ProjectHandover>(SYNTHETIC_PROJECT);
 
-  // Load persisted demo state if available
   useEffect(() => {
+    // Clear old localStorage if project was the previous healthcare one
     const saved = localStorage.getItem('trailmark_project_state');
     if (saved) {
       try {
-        setProject(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (parsed.name === 'Campus Events App') {
+          setProject(parsed);
+        } else {
+          setProject(SYNTHETIC_PROJECT);
+        }
       } catch {
-        // use default initial
+        setProject(SYNTHETIC_PROJECT);
       }
     }
   }, []);
@@ -388,19 +443,16 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     setProject(updated);
     try {
       localStorage.setItem('trailmark_project_state', JSON.stringify(updated));
-    } catch {
-      // ignore
-    }
+    } catch {}
   };
 
   const currentUser = DEMO_USERS[activeRole];
 
-  // Derived metrics
   const dashboardMetrics = {
-    totalProjects: 4,
-    pendingHandovers: project.isApproved ? 1 : 2,
+    totalProjects: 3,
+    pendingHandovers: project.isApproved ? 0 : 1,
     awaitingApproval: !project.isApproved && project.questions.some((q) => q.status === 'answered') ? 1 : 0,
-    completedHandovers: project.receipt.acknowledged ? 3 : 2,
+    completedHandovers: project.receipt.acknowledged ? 2 : 1,
   };
 
   const saveAnswer = (
@@ -408,60 +460,32 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     answer: string,
     options?: { hasVoice?: boolean; durationSeconds?: number }
   ) => {
-    // Check if answering triggers an intelligent follow-up
     const updatedQuestions = project.questions.map((q) => {
       if (q.id === questionId) {
-        // If question already has a followUp, keep it, or trigger a relevant one if none exists
-        let followUp = q.followUp;
-        if (!followUp && answer.length > 20) {
-          // Generate a contextual follow-up based on keywords
-          if (q.category === 'Risks & Vulnerabilities' || answer.toLowerCase().includes('twilio') || answer.toLowerCase().includes('secret')) {
-            followUp = {
-              id: `fu-${q.id}`,
-              question: 'Who currently has permission to rotate these credentials in production, and is there a scheduled downtime window?',
-              status: 'pending',
-            };
-          } else if (q.category === 'Database & Migrations' || answer.toLowerCase().includes('migration') || answer.toLowerCase().includes('alembic')) {
-            followUp = {
-              id: `fu-${q.id}`,
-              question: 'Which of the two migration scripts has already been applied in the staging environment?',
-              status: 'pending',
-            };
-          } else if (q.category === 'Technical Decisions' || answer.toLowerCase().includes('redis') || answer.toLowerCase().includes('cache')) {
-            followUp = {
-              id: `fu-${q.id}`,
-              question: 'What metric or alert in Datadog/CloudWatch monitors this cache hit ratio or database spike?',
-              status: 'pending',
-            };
-          }
-        }
-
         return {
           ...q,
           answer,
           status: 'answered' as const,
-          evidenceStatus: 'unverified' as EvidenceStatus, // Rule: stays unverified!
+          evidenceStatus: 'unverified' as EvidenceStatus,
           hasVoiceRecording: options?.hasVoice ?? q.hasVoiceRecording,
           audioDurationSeconds: options?.durationSeconds ?? q.audioDurationSeconds,
-          followUp,
           updatedAt: new Date().toISOString(),
         };
       }
       return q;
     });
 
-    // Also update or add statement corresponding to the answer
     const q = project.questions.find((item) => item.id === questionId);
     let updatedStatements = [...project.statements];
     if (q) {
       const existingIdx = updatedStatements.findIndex((s) => s.id === `st-${questionId}`);
       const newStatement: Statement = {
         id: `st-${questionId}`,
-        category: 'ownership',
+        category: 'decision',
         title: q.question.slice(0, 45) + '...',
         content: answer,
         evidenceStatus: 'unverified',
-        sourceLabel: `Departing Member Answer (${options?.hasVoice ? 'Voice & Transcription' : 'Text'})`,
+        sourceLabel: `Departing Answer (${options?.hasVoice ? 'Voice' : 'Text'})`,
         departingAnswer: answer,
       };
 
@@ -516,18 +540,17 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
         ? {
             ...item,
             status: 'unknown' as const,
-            answer: 'Departing member does not know or has no recorded answer.',
+            answer: 'Departing member indicated no knowledge or record of this item.',
             evidenceStatus: 'missing_conflicting' as EvidenceStatus,
             updatedAt: new Date().toISOString(),
           }
         : item
     );
 
-    // Add to gaps
     const newGap: Gap = {
       id: `gap-unk-${questionId}`,
       title: q?.shortTitle || q?.question || 'Unknown project question',
-      description: `Departing member indicated no knowledge of "${q?.question}". Flagged as knowledge gap.`,
+      description: `Asha indicated no knowledge of "${q?.question}". Flagged as open knowledge gap for Kiran.`,
       category: 'missing',
       risk: 'Medium',
       status: 'open',
@@ -633,73 +656,36 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
   };
 
   const createNewProject = (data: Partial<ProjectHandover>) => {
-    const role = data.departingRole || 'Backend Developer';
     const newProj: ProjectHandover = {
-      ...INITIAL_PROJECT,
+      ...SYNTHETIC_PROJECT,
       id: `proj-${Date.now()}`,
-      name: data.name || 'New Project Handover',
+      name: data.name || 'Campus Events App',
       description: data.description || '',
       objectives: data.objectives || '',
-      techStack: data.techStack || 'TypeScript, Next.js, FastAPI',
-      status: (data.status as any) || 'In Progress',
-      departingMember: data.departingMember || 'Alex Chen',
-      departingRole: role,
-      incomingMember: data.incomingMember || 'Priya Sharma',
-      githubRepo: data.githubRepo || '',
-      documents: data.documents || ['README.md', 'Architecture.md'],
+      techStack: data.techStack || 'Python, FastAPI, SQLite (WAL), Render, Celery, ReportLab',
+      status: (data.status as any) || 'Active Handover',
+      departingMember: data.departingMember || 'Asha',
+      departingRole: data.departingRole || 'Backend Developer',
+      incomingMember: data.incomingMember || 'Kiran',
+      githubRepo: data.githubRepo || 'https://github.com/campus-synthetic/events-app',
+      documents: data.documents || [
+        'architecture_overview.md',
+        'deployment_guide.md',
+        'meeting_notes_august.md',
+        'tasks.csv',
+        'chat.json',
+      ],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       isApproved: false,
       receipt: { acknowledged: false },
-      questions: [
-        {
-          id: `q-gen-1`,
-          category: 'Backend Architecture',
-          shortTitle: 'Core Architecture & Stack',
-          question: `What are the critical architectural decisions and component boundaries implemented for ${data.name || 'this project'}?`,
-          reason: `Extracted from repository source and project objectives provided by Team Lead.`,
-          roleTarget: role,
-          status: 'pending',
-          evidenceStatus: 'unverified',
-        },
-        {
-          id: `q-gen-2`,
-          category: 'API Development',
-          shortTitle: 'API Edge Cases & Handlers',
-          question: `Which API endpoints or background workers have undocumented edge cases, rate limits, or unhandled failure modes?`,
-          reason: `Detected unlinked exception handlers in repository codebase during repository inspection.`,
-          roleTarget: role,
-          status: 'pending',
-          evidenceStatus: 'unverified',
-        },
-        {
-          id: `q-gen-3`,
-          category: 'Dependencies & Credentials',
-          shortTitle: 'Credentials & Secret Storage',
-          question: `Where are the operational credentials, third-party webhook secrets, and deployment variables stored, and how are they rotated?`,
-          reason: `Compliance check: Team Lead flagged transition to ${data.incomingMember || 'incoming member'}.`,
-          roleTarget: role,
-          status: 'pending',
-          evidenceStatus: 'unverified',
-        },
-        {
-          id: `q-gen-4`,
-          category: 'Pending Tasks',
-          shortTitle: 'Unfinished Milestones',
-          question: `What is the current status of unfinished tasks or unmerged branches before your departure?`,
-          reason: `Gaps identified in project milestone objectives.`,
-          roleTarget: role,
-          status: 'pending',
-          evidenceStatus: 'unverified',
-        },
-      ],
     };
     persist(newProj);
   };
 
   const resetDemoData = () => {
     localStorage.removeItem('trailmark_project_state');
-    setProject(INITIAL_PROJECT);
+    setProject(SYNTHETIC_PROJECT);
     setActiveScreen('role-select');
   };
 

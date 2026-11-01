@@ -20,11 +20,11 @@ const ROLES: RoleOption[] = [
   {
     key: 'lead',
     title: 'Team Lead',
-    badge: 'Lead & Reviewer',
-    assignedUser: 'Kishan S',
+    badge: 'Reviewer',
+    assignedUser: 'Deepak',
     userRole: 'Engineering Lead',
     description:
-      'Create project handovers, provide project details, manage departing members, review AI-generated information, verify evidence and approve handovers.',
+      'Manage the Campus Events handover, review Asha\'s answers against repository sources, resolve discrepancies (such as auditorium capacity limits), and approve the handover.',
     icon: <Shield size={26} />,
     targetScreen: 'dashboard',
   },
@@ -32,10 +32,10 @@ const ROLES: RoleOption[] = [
     key: 'departing',
     title: 'Departing Team Member',
     badge: 'Knowledge Source',
-    assignedUser: 'Alex Chen',
-    userRole: 'Senior Backend Developer',
+    assignedUser: 'Asha',
+    userRole: 'Senior Backend Developer (Leaver)',
     description:
-      'Participate in an AI-guided knowledge handover interview, answer questions based on your project role, provide text or voice responses and submit your knowledge to the Team Lead.',
+      'Participate in the AI-guided knowledge interview, explain the SQLite WAL setup, answer unowned task and PR questions, clarify dependencies, and submit answers to Deepak.',
     icon: <UserMinus size={26} />,
     targetScreen: 'departing-intro',
   },
@@ -43,10 +43,10 @@ const ROLES: RoleOption[] = [
     key: 'incoming',
     title: 'Incoming Team Member',
     badge: 'Successor',
-    assignedUser: 'Priya Sharma',
-    userRole: 'Incoming Software Engineer',
+    assignedUser: 'Kiran',
+    userRole: 'Software Engineer (Successor)',
     description:
-      'Access the Team Lead-approved project handover, understand responsibilities, inspect supporting evidence, identify missing information and acknowledge receipt.',
+      'Access the approved Campus Events handover, inspect verified architecture decisions, review open gaps (like unowned S3 backups), and acknowledge receipt.',
     icon: <UserPlus size={26} />,
     targetScreen: 'incoming-handover',
   },
@@ -93,7 +93,7 @@ export function Screen0RoleSelection() {
         </div>
       </div>
 
-      {/* 3 Interactive Large Role Cards in warm stone & rounded-3xl styling */}
+      {/* 3 Interactive Large Role Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
         {ROLES.map((r) => {
           const isSelected = selectedRole === r.key;
@@ -125,7 +125,7 @@ export function Screen0RoleSelection() {
 
                 <h2 className="text-lg font-bold text-[#1F201B] mb-1">{r.title}</h2>
                 <p className="text-xs font-medium text-[#5A5B4C] mb-3">
-                  Persona: <span className="font-semibold">{r.assignedUser}</span>
+                  Persona: <span className="font-semibold">{r.assignedUser}</span> ({r.userRole.split('(')[0].trim()})
                 </p>
 
                 <p className="text-xs text-[#7A7B72] leading-relaxed mb-6">
@@ -144,7 +144,7 @@ export function Screen0RoleSelection() {
                 >
                   {isSelected ? (
                     <>
-                      <Check size={14} /> Selected
+                      <Check size={14} /> Entering as {r.assignedUser}...
                     </>
                   ) : (
                     <>
@@ -159,7 +159,9 @@ export function Screen0RoleSelection() {
       </div>
 
       <div className="mt-12 text-center text-xs text-[#7A7B72] max-w-md">
-        <p>Demonstration mode. All roles connect to the real healthcare backend pipeline.</p>
+        <p>
+          Testing against synthetic project: <strong>Campus Events App</strong>. Switch personas anytime from the top bar or sidebar.
+        </p>
       </div>
     </div>
   );
