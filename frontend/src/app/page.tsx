@@ -17,6 +17,8 @@ export default function Home() {
     case 'dashboard':
     case 'create':
       return <Screen1TeamLeadDashboard />;
+    case 'departing-intro':
+    case 'interview':
     case 'questions':
     case 'my-handover-departing':
       return <Screen2DepartingQuestions />;
@@ -29,4 +31,3 @@ export default function Home() {
       return <Screen0RoleSelection />;
   }
 }
-

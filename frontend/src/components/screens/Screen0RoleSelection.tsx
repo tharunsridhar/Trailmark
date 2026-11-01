@@ -1,92 +1,177 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useHandover } from '@/context/HandoverContext';
 import { Role } from '@/types';
-import { Shield, UserMinus, UserPlus, Compass, ArrowRight } from 'lucide-react';
+import { Shield, UserMinus, UserPlus, Compass, ArrowRight, Check } from 'lucide-react';
 
-const roles: { key: Role; label: string; subtitle: string; description: string; icon: React.ReactNode }[] = [
+interface RoleOption {
+  key: Role;
+  title: string;
+  badge: string;
+  assignedUser: string;
+  userRole: string;
+  description: string;
+  icon: React.ReactNode;
+  targetScreen: string;
+}
+
+const ROLES: RoleOption[] = [
   {
     key: 'lead',
-    label: 'Team Lead',
-    subtitle: 'Lead & Reviewer',
-    description: 'Create project handovers, review answers and evidence, resolve gaps, and approve completed handovers.',
+    title: 'Team Lead',
+    badge: 'Lead & Reviewer',
+    assignedUser: 'Kishan S',
+    userRole: 'Engineering Lead',
+    description:
+      'Create project handovers, provide project details, manage departing members, review AI-generated information, verify evidence and approve handovers.',
     icon: <Shield size={28} />,
+    targetScreen: 'dashboard',
   },
   {
     key: 'departing',
-    label: 'Departing Member',
-    subtitle: 'Knowledge Source',
-    description: 'Answer AI-generated questions about your project role, provide context, and document decisions.',
+    title: 'Departing Team Member',
+    badge: 'Knowledge Source',
+    assignedUser: 'Alex Chen',
+    userRole: 'Senior Backend Developer',
+    description:
+      'Participate in an AI-guided knowledge handover interview, answer questions based on your project role, provide text or voice responses and submit your knowledge to the Team Lead.',
     icon: <UserMinus size={28} />,
+    targetScreen: 'departing-intro',
   },
   {
     key: 'incoming',
-    label: 'Incoming Member',
-    subtitle: 'Knowledge Receiver',
-    description: 'Review the approved handover, inspect evidence and gaps, and acknowledge receipt of project knowledge.',
+    title: 'Incoming Team Member',
+    badge: 'Successor',
+    assignedUser: 'Priya Sharma',
+    userRole: 'Incoming Software Engineer',
+    description:
+      'Access the Team Lead-approved project handover, understand responsibilities, inspect supporting evidence, identify missing information and acknowledge receipt.',
     icon: <UserPlus size={28} />,
+    targetScreen: 'incoming-handover',
   },
 ];
 
 export function Screen0RoleSelection() {
   const { setActiveRole, setActiveScreen } = useHandover();
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const handleSelect = (role: Role) => {
-    setActiveRole(role);
-    if (role === 'lead') setActiveScreen('dashboard');
-    else if (role === 'departing') setActiveScreen('questions');
-    else setActiveScreen('incoming-handover');
+  const handleSelectRole = (r: RoleOption) => {
+    setSelectedRole(r.key);
+    setIsTransitioning(true);
+    setActiveRole(r.key);
+
+    setTimeout(() => {
+      setActiveScreen(r.targetScreen);
+    }, 280);
   };
 
   return (
-    <div className="min-h-screen bg-page flex flex-col items-center justify-center px-4 py-12">
-      {/* Logo */}
-      <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center px-4 py-12">
+      {/* Brand Header */}
+      <div className="flex items-center gap-2.5 mb-8">
+        <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center shadow-sm">
           <Compass size={22} className="text-white" />
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-navy-800 tracking-tight">TRAILMARK</h1>
-          <p className="text-[10px] font-semibold text-muted uppercase tracking-[0.2em] -mt-0.5">Handover OS</p>
+        <div className="flex flex-col leading-none">
+          <span className="text-base font-bold text-[#0F172A] tracking-wider">TRAILMARK</span>
+          <span className="text-[10px] font-semibold text-[#64748B] uppercase tracking-[0.2em] mt-0.5">
+            Handover OS
+          </span>
         </div>
       </div>
 
-      {/* Heading */}
-      <div className="text-center mt-8 mb-10 max-w-lg">
-        <h2 className="text-2xl font-semibold text-navy-800 mb-2">
-          Select your role
-        </h2>
-        <p className="text-sm text-muted leading-relaxed">
-          Choose a demo persona to explore the knowledge handover workflow — from project creation and AI-driven questions, through lead review, to incoming member acknowledgement.
+      {/* Main Title Banner */}
+      <div className="text-center max-w-xl mb-10">
+        <h1 className="text-3xl sm:text-4xl font-bold text-[#0F172A] tracking-tight mb-2.5">
+          Welcome to Trailmark
+        </h1>
+        <p className="text-base sm:text-lg text-[#64748B] font-medium mb-4">
+          Your project knowledge, carried forward.
+        </p>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-xs font-semibold text-brand-600">
+          <span>How would you like to continue?</span>
+        </div>
+      </div>
+
+      {/* 3 Interactive Large Role Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+        {ROLES.map((r) => {
+          const isSelected = selectedRole === r.key;
+          return (
+            <div
+              key={r.key}
+              onClick={() => handleSelectRole(r)}
+              className={`group relative bg-white border rounded-2xl p-7 text-left cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                isSelected
+                  ? 'border-brand-600 ring-2 ring-brand-500/20 shadow-lg -translate-y-1'
+                  : 'border-[#E2E8F0] hover:border-brand-300 hover:shadow-md hover:-translate-y-0.5'
+              }`}
+            >
+              {/* Card Top: Icon & Badge */}
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <div
+                    className={`w-14 h-14 rounded-xl flex items-center justify-center transition-colors ${
+                      isSelected
+                        ? 'bg-brand-600 text-white'
+                        : 'bg-brand-50 text-brand-600 group-hover:bg-brand-100'
+                    }`}
+                  >
+                    {r.icon}
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-[#64748B]">
+                    {r.badge}
+                  </span>
+                </div>
+
+                {/* Role Title */}
+                <h2 className="text-xl font-bold text-[#0F172A] mb-1.5">{r.title}</h2>
+
+                {/* Persona Tag */}
+                <p className="text-xs font-medium text-brand-600 mb-3.5">
+                  Demo persona: <span className="font-semibold">{r.assignedUser}</span> ({r.userRole})
+                </p>
+
+                {/* Detailed Spec Description */}
+                <p className="text-sm text-[#64748B] leading-relaxed mb-6">
+                  {r.description}
+                </p>
+              </div>
+
+              {/* Action Button */}
+              <div className="pt-4 border-t border-[#F1F5F9]">
+                <button
+                  type="button"
+                  className={`w-full py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${
+                    isSelected
+                      ? 'bg-brand-600 text-white shadow-sm'
+                      : 'bg-slate-50 text-[#0F172A] group-hover:bg-brand-600 group-hover:text-white'
+                  }`}
+                >
+                  {isSelected ? (
+                    <>
+                      <Check size={16} /> Entering workspace...
+                    </>
+                  ) : (
+                    <>
+                      Select {r.title} <ArrowRight size={15} />
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer Notes */}
+      <div className="mt-12 text-center text-xs text-[#64748B] max-w-md">
+        <p>
+          Demonstration mode for Round 2. Seeded with sample healthcare pipeline project. You can switch personas at any point using the sidebar switch.
         </p>
       </div>
-
-      {/* Role cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-3xl">
-        {roles.map((r) => (
-          <button
-            key={r.key}
-            onClick={() => handleSelect(r.key)}
-            className="group bg-white border border-[#E5EAF1] rounded-xl p-6 text-left hover:border-brand-300 hover:shadow-card-hover transition-all duration-200 flex flex-col"
-          >
-            <div className="w-12 h-12 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-4 group-hover:bg-brand-100 transition-colors">
-              {r.icon}
-            </div>
-            <h3 className="text-base font-semibold text-navy-800 mb-0.5">{r.label}</h3>
-            <p className="text-xs font-medium text-brand-600 mb-3">{r.subtitle}</p>
-            <p className="text-sm text-muted leading-relaxed flex-1">{r.description}</p>
-            <div className="flex items-center gap-1.5 mt-4 text-sm font-medium text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity">
-              Continue <ArrowRight size={14} />
-            </div>
-          </button>
-        ))}
-      </div>
-
-      {/* Footer */}
-      <p className="text-xs text-muted mt-10">
-        Demo environment — no authentication required
-      </p>
     </div>
   );
 }

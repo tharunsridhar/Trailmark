@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useHandover, DEMO_USERS } from '@/context/HandoverContext';
+import { useHandover } from '@/context/HandoverContext';
 import {
   LayoutDashboard,
   FilePlus,
@@ -11,6 +11,7 @@ import {
   Search,
   LogOut,
   Compass,
+  Sparkles,
 } from 'lucide-react';
 
 interface NavItem {
@@ -26,12 +27,12 @@ const LEAD_NAV: NavItem[] = [
 ];
 
 const DEPARTING_NAV: NavItem[] = [
-  { id: 'my-handover-departing', label: 'My Handover', icon: <FileText size={18} /> },
-  { id: 'questions', label: 'AI Questions', icon: <MessageSquareText size={18} /> },
+  { id: 'departing-intro', label: 'Handover Overview', icon: <FileText size={18} /> },
+  { id: 'interview', label: 'AI Interview', icon: <Sparkles size={18} /> },
 ];
 
 const INCOMING_NAV: NavItem[] = [
-  { id: 'incoming-handover', label: 'My Handover', icon: <FileText size={18} /> },
+  { id: 'incoming-handover', label: 'Handover Document', icon: <FileText size={18} /> },
   { id: 'evidence-gaps', label: 'Evidence & Gaps', icon: <Search size={18} /> },
 ];
 
@@ -61,10 +62,12 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         <p className="px-3 text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">
-          Menu
+          Workspace Menu
         </p>
         {navItems.map((item) => {
-          const isActive = activeScreen === item.id;
+          const isActive =
+            activeScreen === item.id ||
+            (item.id === 'interview' && (activeScreen === 'questions' || activeScreen === 'my-handover-departing'));
           return (
             <button
               key={item.id}
@@ -82,8 +85,8 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User info / Role switch */}
-      <div className="border-t border-[#E5EAF1] p-4">
+      {/* User info / Switch Role button */}
+      <div className="border-t border-[#E5EAF1] p-4 bg-slate-50/50">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">
             {currentUser.avatar}
@@ -94,13 +97,20 @@ export function Sidebar() {
           </div>
           <button
             onClick={() => {
-              setActiveRole('lead');
               setActiveScreen('role-select');
             }}
-            className="p-1.5 rounded-md text-muted hover:text-navy-800 hover:bg-gray-100 transition-colors"
-            title="Switch role"
+            className="p-1.5 rounded-md text-muted hover:text-brand-600 hover:bg-white border border-transparent hover:border-[#E5EAF1] transition-colors"
+            title="Switch demo persona"
           >
             <LogOut size={16} />
+          </button>
+        </div>
+        <div className="mt-2 text-center">
+          <button
+            onClick={() => setActiveScreen('role-select')}
+            className="text-[11px] font-semibold text-brand-600 hover:underline inline-flex items-center gap-1"
+          >
+            ← Switch Demo Role
           </button>
         </div>
       </div>
