@@ -2,21 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --background: #F7F9FC;
-  --foreground: #0f1a2e;
-  --card-bg: #ffffff;
-  --card-border: #E5EAF1;
-  --accent-blue: #2563EB;
-  --accent-light: #EFF6FF;
-  --sidebar-bg: #ffffff;
-  --topbar-bg: #ffffff;
-  --muted: #64748b;
-  --success: #16a34a;
-  --warning: #f59e0b;
-  --danger: #dc2626;
+  --background: #F4F4F0;
+  --foreground: #1F201B;
+  --card-bg: #FFFFFF;
+  --card-border: #E6E6DE;
+  --accent-primary: #5A5B4C;
+  --accent-hover: #4A4B3E;
+  --accent-light: #F0F0E8;
+  --muted: #7A7B72;
 }
 
 * {
@@ -41,16 +37,16 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3);
-  border-radius: 3px;
+  background: rgba(122, 123, 114, 0.25);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.5);
+  background: rgba(90, 91, 76, 0.45);
 }
 
-/* Focus ring */
+/* Subtle focus rings */
 *:focus-visible {
-  outline: 2px solid var(--accent-blue);
+  outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }

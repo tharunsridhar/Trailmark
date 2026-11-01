@@ -6,12 +6,14 @@ import {
   LayoutDashboard,
   FilePlus,
   ClipboardCheck,
-  MessageSquareText,
   FileText,
+  Sparkles,
   Search,
   LogOut,
+  FolderKanban,
+  Users,
   Compass,
-  Sparkles,
+  Layers,
 } from 'lucide-react';
 
 interface NavItem {
@@ -21,23 +23,23 @@ interface NavItem {
 }
 
 const LEAD_NAV: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+  { id: 'dashboard', label: 'Overview', icon: <LayoutDashboard size={18} /> },
   { id: 'create', label: 'Create Handover', icon: <FilePlus size={18} /> },
-  { id: 'review', label: 'Review & Approval', icon: <ClipboardCheck size={18} /> },
+  { id: 'review', label: 'Review & Verification', icon: <ClipboardCheck size={18} /> },
 ];
 
 const DEPARTING_NAV: NavItem[] = [
   { id: 'departing-intro', label: 'Handover Overview', icon: <FileText size={18} /> },
-  { id: 'interview', label: 'AI Interview', icon: <Sparkles size={18} /> },
+  { id: 'interview', label: 'AI Question Agent', icon: <Sparkles size={18} /> },
 ];
 
 const INCOMING_NAV: NavItem[] = [
-  { id: 'incoming-handover', label: 'Handover Document', icon: <FileText size={18} /> },
+  { id: 'incoming-handover', label: 'Handover Knowledge', icon: <FileText size={18} /> },
   { id: 'evidence-gaps', label: 'Evidence & Gaps', icon: <Search size={18} /> },
 ];
 
 export function Sidebar() {
-  const { activeRole, activeScreen, setActiveScreen, setActiveRole, currentUser } = useHandover();
+  const { activeRole, activeScreen, setActiveScreen, currentUser } = useHandover();
 
   const navItems =
     activeRole === 'lead'
@@ -47,70 +49,89 @@ export function Sidebar() {
         : INCOMING_NAV;
 
   return (
-    <aside className="w-[260px] bg-white flex flex-col border-r border-[#E5EAF1] h-screen shrink-0">
-      {/* Logo */}
-      <div className="h-16 flex items-center gap-2.5 px-6 border-b border-[#E5EAF1]">
-        <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center">
-          <Compass size={18} className="text-white" />
+    <aside className="w-[260px] bg-[#F4F4F0] flex flex-col border-r border-[#E6E6DE] h-screen shrink-0 select-none">
+      {/* Brand Header */}
+      <div className="h-20 flex items-center gap-3 px-6">
+        <div className="w-8 h-8 rounded-full bg-[#5A5B4C] flex items-center justify-center text-white shadow-2xs">
+          <Compass size={17} />
         </div>
-        <div className="flex flex-col leading-tight">
-          <span className="text-sm font-bold text-navy-800 tracking-wide">TRAILMARK</span>
-          <span className="text-[10px] font-medium text-muted uppercase tracking-widest">Handover OS</span>
+        <div className="flex flex-col">
+          <span className="text-lg font-bold tracking-tight text-[#1F201B]">Trailmark</span>
+          <span className="text-[10px] font-semibold text-[#7A7B72] tracking-[0.15em] uppercase -mt-0.5">
+            Handover OS
+          </span>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        <p className="px-3 text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">
-          Workspace Menu
-        </p>
-        {navItems.map((item) => {
-          const isActive =
-            activeScreen === item.id ||
-            (item.id === 'interview' && (activeScreen === 'questions' || activeScreen === 'my-handover-departing'));
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveScreen(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-brand-50 text-brand-600'
-                  : 'text-navy-700 hover:bg-gray-50 hover:text-navy-800'
-              }`}
-            >
-              <span className={isActive ? 'text-brand-600' : 'text-muted'}>{item.icon}</span>
-              {item.label}
-            </button>
-          );
-        })}
-      </nav>
+      {/* Navigation Sections */}
+      <div className="flex-1 px-4 py-2 space-y-6 overflow-y-auto">
+        {/* Active Role Category */}
+        <div>
+          <div className="px-3 pb-2 text-[10px] font-bold text-[#7A7B72] uppercase tracking-[0.18em]">
+            {activeRole === 'lead' ? 'Team Lead Workspace' : activeRole === 'departing' ? 'Departing Member' : 'Incoming Successor'}
+          </div>
+          <div className="space-y-1">
+            {navItems.map((item) => {
+              const isActive =
+                activeScreen === item.id ||
+                (item.id === 'create' && activeScreen === 'create') ||
+                (item.id === 'interview' && (activeScreen === 'questions' || activeScreen === 'my-handover-departing'));
 
-      {/* User info / Switch Role button */}
-      <div className="border-t border-[#E5EAF1] p-4 bg-slate-50/50">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">
-            {currentUser.avatar}
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveScreen(item.id)}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    isActive
+                      ? 'bg-[#5A5B4C] text-white shadow-soft font-semibold'
+                      : 'text-[#3A3B34] hover:bg-[#EAEAE2] hover:text-[#1F201B]'
+                  }`}
+                >
+                  <span className={isActive ? 'text-white' : 'text-[#7A7B72]'}>{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-navy-800 truncate">{currentUser.name}</p>
-            <p className="text-xs text-muted truncate">{currentUser.roleTitle}</p>
-          </div>
-          <button
-            onClick={() => {
-              setActiveScreen('role-select');
-            }}
-            className="p-1.5 rounded-md text-muted hover:text-brand-600 hover:bg-white border border-transparent hover:border-[#E5EAF1] transition-colors"
-            title="Switch demo persona"
-          >
-            <LogOut size={16} />
-          </button>
         </div>
-        <div className="mt-2 text-center">
+
+        {/* Global Access */}
+        <div>
+          <div className="px-3 pb-2 text-[10px] font-bold text-[#7A7B72] uppercase tracking-[0.18em]">
+            Governance
+          </div>
+          <div className="space-y-1">
+            <button
+              onClick={() => setActiveScreen('role-select')}
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#3A3B34] hover:bg-[#EAEAE2] transition-colors"
+            >
+              <Users size={17} className="text-[#7A7B72]" />
+              <span>Switch Persona</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* User info Card at bottom */}
+      <div className="p-4 border-t border-[#E6E6DE]">
+        <div className="bg-white rounded-2xl p-3 border border-[#E6E6DE] flex items-center justify-between shadow-2xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-[#EAEAE2] text-[#5A5B4C] flex items-center justify-center text-xs font-bold shrink-0">
+              {currentUser.avatar}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-[#1F201B] truncate leading-tight">
+                {currentUser.name}
+              </p>
+              <p className="text-[10px] text-[#7A7B72] truncate">{currentUser.roleTitle}</p>
+            </div>
+          </div>
           <button
             onClick={() => setActiveScreen('role-select')}
-            className="text-[11px] font-semibold text-brand-600 hover:underline inline-flex items-center gap-1"
+            className="p-1.5 text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] rounded-lg transition-colors"
+            title="Switch demo persona"
           >
-            ← Switch Demo Role
+            <LogOut size={14} />
           </button>
         </div>
       </div>
