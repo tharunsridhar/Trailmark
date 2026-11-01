@@ -2,7 +2,7 @@
 
 Backend: FastAPI. Local base URL `http://localhost:8000`. Interactive docs for the live endpoints are at `/docs`.
 
-Status column: **live** means it works now, **P3** means it arrives in Phase 3 of the Round 2 build. Planned endpoints already have their final shape, so build against the sample JSON.
+Status column: every endpoint listed here is **live**. Round 3 only (not built): follow-up questions, decision timeline, audit log.
 
 ## Rules for every request
 
@@ -12,7 +12,8 @@ Status column: **live** means it works now, **P3** means it arrives in Phase 3 o
 - Timestamps are ISO 8601 in UTC.
 - Evidence labels: `verified`, `unverified`, `missing`, `conflicting`.
 - Statement kinds: `decision`, `owner`, `unfinished`, `dependency`, `blocker`, `risk`, `recurring`, `contact`, `next_action`, `answer`.
-- Statement status: `draft`, `approved`, `rejected`, `accepted_gap`.
+- Once a handover is approved it is read-only: edits, answers, uploads and new analyses return `409`.
+- Statement status: `draft`, `approved`, `rejected`, `accepted_gap`, `answered` (a gap the departing member has answered, the answer is its own statement).
 
 ## Summary
 
@@ -32,19 +33,19 @@ Status column: **live** means it works now, **P3** means it arrives in Phase 3 o
 | GET | `/pieces/{piece_id}` | member allowed to see it | live |
 | POST | `/handovers/{id}/analyze` | lead | live |
 | GET | `/handovers/{id}/analysis` | lead | live |
-| GET | `/handovers/{id}/statements` | lead | P3 |
-| GET | `/statements/{id}` | lead | P3 |
-| PATCH | `/statements/{id}` | lead | P3 |
-| POST | `/statements/{id}/reject` | lead | P3 |
-| POST | `/statements/{id}/resolve` | lead | P3 |
-| POST | `/statements/{id}/accept-gap` | lead | P3 |
-| GET | `/statements/{id}/versions` | lead | P3 |
+| GET | `/handovers/{id}/statements` | lead | live |
+| GET | `/statements/{id}` | lead | live |
+| PATCH | `/statements/{id}` | lead | live |
+| POST | `/statements/{id}/reject` | lead | live |
+| POST | `/statements/{id}/resolve` | lead | live |
+| POST | `/statements/{id}/accept-gap` | lead | live |
+| GET | `/statements/{id}/versions` | lead | live |
 | GET | `/handovers/{id}/questions` | lead, departing | live |
-| POST | `/questions/{id}/answer` | departing | P3 |
-| POST | `/handovers/{id}/approve` | lead | P3 |
-| GET | `/handovers/{id}/handover-view` | incoming (lead can preview) | P3 |
-| POST | `/handovers/{id}/receipt` | incoming | P3 |
-| GET | `/handovers/{id}/receipt` | lead, incoming | P3 |
+| POST | `/questions/{id}/answer` | departing | live |
+| POST | `/handovers/{id}/approve` | lead | live |
+| GET | `/handovers/{id}/handover-view` | incoming (lead can preview) | live |
+| POST | `/handovers/{id}/receipt` | incoming | live |
+| GET | `/handovers/{id}/receipt` | lead, incoming | live |
 
 Round 3 only, not built now: follow-up questions, decision timeline, audit log.
 
@@ -211,7 +212,7 @@ Poll this until `status` is `done` (`running`, `done`, `failed`, or `not_started
 
 ---
 
-## Questions (list is live, answering is P3)
+## Questions
 
 ### GET /handovers/{id}/questions (lead, departing)
 
@@ -237,13 +238,17 @@ Highest risk first. `evidence` lists the source pieces that raised the question,
 { "action": "answer", "text": "Retries kept timing out on the free tier, so I added backoff." }
 ```
 
-`action` is `answer`, `skip` or `unknown`. `text` is required only for `answer`. An answer becomes an `unverified` statement. Skipped and unknown questions stay visible as open gaps.
+`action` is `answer`, `skip` or `unknown`. `text` is required only for `answer` (`422` otherwise).
+
+- An answer becomes a statement of kind `answer`, label `unverified`, linked to the same evidence that raised the question. The gap statement it covers changes to status `answered`.
+- `skip` and `unknown` leave the gap open, it stays visible in the handover.
+- `403` for anyone but the departing member, and for a question built from evidence the departing member may not see. `409` if already answered or the handover is approved.
 
 `200` returns the updated question.
 
 ---
 
-## Review (P3, lead only)
+## Review (lead only)
 
 A statement looks like this everywhere:
 
@@ -281,7 +286,7 @@ One statement.
 { "text": "Corrected wording", "reason": "Asha confirmed the date" }
 ```
 
-Saves a new version with the editor's name.
+Saves a new version with the editor's name. `409` for a rejected statement.
 
 ### POST /statements/{id}/reject
 
@@ -291,15 +296,15 @@ Saves a new version with the editor's name.
 
 ### POST /statements/{id}/resolve
 
-For `conflicting` statements. Pick one source, a written reason is required. The other source stays in the history, marked as not chosen.
+For `conflicting` statements. Pick one source, a written reason is required. The other source stays in the history, marked `chosen: false`. The statement becomes `verified`. `text` is optional new wording that matches the chosen source. `422` if `chosen_piece_id` is not one of the statement's sources, `409` if it is not an open conflict.
 
 ```json
-{ "chosen_piece_id": 41, "reason": "The chat is newer than the design doc" }
+{ "chosen_piece_id": 41, "reason": "The chat is newer than the design doc", "text": "Hosting is on Render" }
 ```
 
 ### POST /statements/{id}/accept-gap
 
-For `missing` statements the lead decides to leave as a known unknown.
+For `missing` statements the lead decides to leave as a known unknown. The statement gets status `accepted_gap` and is still shown to the incoming member as an open question. `409` if it is not an open gap.
 
 ```json
 { "reason": "Nobody knows, will be found out while working" }
@@ -316,44 +321,52 @@ For `missing` statements the lead decides to leave as a known unknown.
 
 ### POST /handovers/{id}/approve
 
-Marks the handover `approved` and the reviewed statements `approved`. Nothing reaches the incoming member before this. `409` if open conflicts are still unresolved.
+Marks the handover `approved` and every statement still in `draft` as `approved`. Rejected statements and answered gaps are not shared. Nothing reaches the incoming member before this. `409` if no analysis has run, if open conflicts are unresolved (resolve or reject them), or if already approved.
 
 `200` returns the handover object.
 
 ---
 
-## Incoming member (P3)
+## Incoming member
 
 ### GET /handovers/{id}/handover-view
 
-Only available once the handover is approved (`409` before that). Statements the caller may not fully see are left out, nothing is returned for them. The lead can call it to preview what the incoming member will get.
+Only available once the handover is approved (`409` before that). Always filtered as the incoming member: a statement is left out completely unless the incoming role may see every source behind it. The lead can call it to preview exactly what the incoming member will get. The departing member gets `403`.
+
+Text and quotes are **redacted** for this view: emails become `[redacted email]`, phone numbers `[redacted phone]`, API keys `[redacted secret]` and passwords `password is [redacted]`. This is pattern based, treat it as a safety net. In a resolved conflict only the chosen source is listed.
 
 ```json
 {
   "handover": { "id": 3, "title": "Asha is leaving", "project_name": "Campus Events App", "approved_at": "2026-11-02T14:00:00Z" },
-  "owns": [ { "id": 30, "kind": "owner", "text": "...", "label": "verified", "sources": [] } ],
+  "decisions": [ { "id": 21, "kind": "decision", "text": "...", "label": "verified", "status": "approved", "current_version": 2, "sources": [] } ],
+  "owns": [],
   "unfinished": [],
   "risks": [],
   "dependencies": [],
   "contacts": [],
-  "open_questions": [ { "id": 33, "text": "...", "label": "missing", "status": "accepted_gap" } ],
-  "next_actions": [ { "order": 1, "text": "Finish the login pull request", "statement_id": 34 } ],
+  "from_departing_member": [],
+  "open_questions": [ { "id": 33, "kind": "owner", "text": "Task T2 has no owner", "label": "missing", "status": "accepted_gap", "current_version": 2, "sources": [] } ],
+  "next_actions": [ { "order": 1, "text": "Finish the login pull request", "statement_id": 34, "label": "verified", "sources": [] } ],
   "receipt": null
 }
 ```
 
-Every statement uses the statement object above (`sources` filtered to what the caller can see). `next_actions` is a recommendation, say so on screen.
+- Each list holds statement objects (see Review). `risks` also holds `recurring` and `blocker` statements.
+- `from_departing_member` holds the leaver's answers, always labelled `unverified`. Show that.
+- `open_questions` holds gaps (`label: missing`) that nobody answered. `status` is `approved` or `accepted_gap`.
+- `next_actions` is in the recommended order. It is a suggestion for the lead and the incoming member to review, say so on screen.
+- `receipt` is filled in once the caller has confirmed receipt.
 
 ### POST /handovers/{id}/receipt (incoming)
 
 `201`
 
 ```json
-{ "handover_id": 3, "user_id": 4, "created_at": "2026-11-02T15:00:00Z" }
+{ "handover_id": 3, "user_id": 4, "user_name": "Ravi", "created_at": "2026-11-02T15:00:00Z" }
 ```
 
-`409` if already confirmed.
+`409` if already confirmed or not approved yet. `403` for anyone but the incoming member.
 
 ### GET /handovers/{id}/receipt (lead, incoming)
 
-`200` the receipt object, or `404` if not confirmed yet. The lead uses it to see whether the handover was received.
+`200` the receipt object, or `404` if not confirmed yet. The lead gets the first confirmed receipt, to see whether the handover was received. The departing member gets `403`.

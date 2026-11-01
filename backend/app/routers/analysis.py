@@ -7,7 +7,8 @@ from app.db import get_db
 from app.deps import get_llm, get_session_factory, require_roles
 from app.models import AnalysisRun, Handover, Membership, Question, Source, SourcePiece
 from app.pipeline.runner import run_analysis
-from app.schemas import AnalysisOut, EvidenceOut, QuestionOut
+from app.schemas import AnalysisOut, QuestionOut
+from app.services import question_out
 
 router = APIRouter(prefix="/handovers/{handover_id}", tags=["analysis"])
 
@@ -85,8 +86,5 @@ def list_questions(
         # a question is built from its evidence, so it is hidden when any of that is off limits
         if not can_user_see(membership.role, pieces):
             continue
-        shown.append(QuestionOut(
-            id=question.id, text=question.text, risk=question.risk, status=question.status,
-            evidence=[EvidenceOut(piece_id=l.piece_id, locator=l.piece.locator, quote=l.quote) for l in question.evidence],
-        ))
+        shown.append(question_out(question))
     return shown

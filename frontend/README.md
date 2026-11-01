@@ -25,7 +25,7 @@ Next.js (React, TypeScript). Deploy on Vercel.
 | Review and approval | lead | `GET /handovers/{id}/statements`, `GET /statements/{id}`, `PATCH /statements/{id}`, `POST /statements/{id}/reject`, `POST /statements/{id}/resolve`, `POST /statements/{id}/accept-gap`, `GET /statements/{id}/versions`, `POST /handovers/{id}/approve` |
 | Incoming member's handover | incoming | `GET /handovers/{id}/handover-view`, `GET /pieces/{id}` (source link), `POST /handovers/{id}/receipt`, `GET /handovers/{id}/receipt` |
 
-Some endpoints are not live yet. `docs/API.md` marks each one as live or planned and says which phase it arrives in.
+Every endpoint in the table is live. `docs/API.md` has the request and response for each one.
 
 ## Things the screens must do
 

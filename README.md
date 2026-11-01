@@ -36,7 +36,7 @@ When someone leaves a project, the files stay but much of what they knew leaves 
 
 ## Status
 
-Round 2 build. Done on the backend: sign-in with roles, handovers and members, source import (repository export, documents, chat, tasks), the AI analysis (reconstruct, quote check, separate verification call, labels, gaps and questions to the departing member), the saved-results and basic fallbacks, and the access check that hides any statement whose sources the viewer may not see. Still to come: answering questions, review and approval with versions, the incoming member's view with receipt, Docker and deployment. The frontend and the synthetic project are in progress (see `frontend/` and `data/`). Setup notes, testing notes, known limitations and a roadmap will keep growing here.
+Round 2 build. The backend now covers the whole workflow: sign-in with roles, handovers and members, source import (repository export, documents, chat, tasks), the AI analysis (reconstruct, quote check, separate verification call, labels, gaps and questions), the saved-results and basic fallbacks, the departing member's answers, the lead's review (edit, reject, resolve conflicts, accept gaps, version history), approval, the incoming member's redacted and permission-filtered handover, and the receipt. Still to do: Docker, deployment, running the AI on real data and tuning the prompts. The frontend and the synthetic project are in progress (see `frontend/` and `data/`). Setup notes, testing notes, known limitations and a roadmap will keep growing here.
 
 ## Running the backend
 
@@ -71,7 +71,8 @@ Locally the backend uses SQLite, so nothing else needs installing. Postgres come
 2. A second, separate model call sees only the claim and its quotes. Only a clear "supported" makes a statement `verified`, anything else stays `unverified`.
 3. Two sources that disagree become one `conflicting` statement that cites both.
 4. Missing information is reported as a `missing` gap with a question for the leaver, never filled in.
-5. If the AI service fails, the last good results are shown (marked as saved), and if there are none, a basic listing built only from structured fields such as task owners. The response always says which mode was used.
+5. Text shown to the incoming member has emails, phone numbers and secrets masked, and a statement is hidden unless they may see every source behind it.
+6. If the AI service fails, the last good results are shown (marked as saved), and if there are none, a basic listing built only from structured fields such as task owners. The response always says which mode was used.
 
 Set `LLM_API_KEY` in `.env` to turn the AI on. Without it the analysis runs in the saved or basic mode.
 

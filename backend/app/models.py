@@ -99,7 +99,7 @@ class Statement(Base):
     kind: Mapped[str] = mapped_column(String(20))
     text: Mapped[str] = mapped_column(Text)
     label: Mapped[str] = mapped_column(String(20))
-    # draft, approved, rejected, or accepted_gap
+    # draft, approved, rejected, accepted_gap, or answered (a gap the leaver answered)
     status: Mapped[str] = mapped_column(String(20), default="draft")
     current_version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

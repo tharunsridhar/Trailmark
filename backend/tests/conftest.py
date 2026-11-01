@@ -10,7 +10,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db import Base, get_db
+from app.deps import get_llm, get_session_factory
 from app.main import app
+from tests.helpers import create_team, sign_in, upload
 
 
 @pytest.fixture
@@ -45,3 +47,32 @@ def saved_results_in_tmp(tmp_path, monkeypatch):
     from app.config import get_settings
 
     monkeypatch.setattr(get_settings(), "saved_results_dir", str(tmp_path / "saved"))
+
+
+@pytest.fixture
+def team(client):
+    return create_team(client)
+
+
+@pytest.fixture
+def use_llm(client, db_session):
+    """Runs background analysis on the test database with a scripted AI."""
+    factory = sessionmaker(bind=db_session.get_bind(), autoflush=False, expire_on_commit=False)
+    app.dependency_overrides[get_session_factory] = lambda: factory
+
+    def set_llm(llm):
+        app.dependency_overrides[get_llm] = lambda: llm
+
+    set_llm(None)
+    return set_llm
+
+
+@pytest.fixture
+def loaded(client, team, db_session):
+    """Chat and design doc open to all, tasks open, an HR chat only the lead may see."""
+    sign_in(client, "Kishan")
+    upload(client, team, "chat", "chat.json", name="Team chat")
+    upload(client, team, "doc", "design.md", name="Design notes")
+    upload(client, team, "tasks", "tasks.csv", name="Task list")
+    upload(client, team, "chat", "chat.json", name="HR chat", roles=("lead",))
+    return team

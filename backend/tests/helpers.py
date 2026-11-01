@@ -70,3 +70,34 @@ def piece_id(db, source_name, locator):
         .join(Source, Source.id == SourcePiece.source_id)
         .where(Source.name == source_name, SourcePiece.locator == locator)
     )
+
+
+def good_replies(db):
+    render = piece_id(db, "Team chat", "chat message 1")
+    heroku = piece_id(db, "Design notes", "design.md paragraph 1")
+    retry = piece_id(db, "Team chat", "chat message 3")
+    t2 = piece_id(db, "Task list", "task T2")
+    hr = piece_id(db, "HR chat", "chat message 2")
+
+    extraction = {
+        "statements": [
+            {"kind": "decision", "text": "Hosting is on Render because the free tier is enough", "relation": "supported",
+             "evidence": [{"piece_id": render, "quote": "go with Render, the free tier is enough"}]},
+            {"kind": "decision", "text": "Sources disagree on the host", "relation": "conflicting",
+             "evidence": [{"piece_id": render, "quote": "go with Render"},
+                          {"piece_id": heroku, "quote": "We host the backend on Heroku"}]},
+            {"kind": "risk", "text": "Payment retry keeps timing out", "relation": "supported",
+             "evidence": [{"piece_id": retry, "quote": "keeps timing out"}]},
+            {"kind": "decision", "text": "Deploys go to Fly.io", "relation": "supported",
+             "evidence": [{"piece_id": render, "quote": "we deploy to Fly.io"}]},
+        ],
+        "gaps": [
+            {"kind": "owner", "text": "Task T2 has no owner", "question": "Who owns the deploy guide (T2)?", "risk": 3,
+             "evidence": [{"piece_id": t2, "quote": "owner: none"}]},
+            {"kind": "contact", "text": "Who has the Render login is only in the HR chat", "risk": 2,
+             "question": "Who holds the Render login?",
+             "evidence": [{"piece_id": hr, "quote": "I have the Render account login"}]},
+        ],
+    }
+    verifier = {"results": [{"id": 0, "verdict": "supported"}, {"id": 1, "verdict": "partly_supported"}]}
+    return extraction, verifier

@@ -1,73 +1,9 @@
 import pytest
 from sqlalchemy import select
-from sqlalchemy.orm import sessionmaker
 
-from app.deps import get_llm, get_session_factory
 from app.models import AnalysisRun, Question, Statement
 from app.pipeline.llm import LLMError
-from tests.helpers import FakeLLM, create_team, piece_id, sign_in, upload
-
-
-@pytest.fixture
-def team(client):
-    return create_team(client)
-
-
-@pytest.fixture
-def use_llm(client, db_session):
-    """Runs background analysis on the test database with a scripted AI."""
-    from app.main import app
-
-    factory = sessionmaker(bind=db_session.get_bind(), autoflush=False, expire_on_commit=False)
-    app.dependency_overrides[get_session_factory] = lambda: factory
-
-    def set_llm(llm):
-        app.dependency_overrides[get_llm] = lambda: llm
-
-    set_llm(None)
-    return set_llm
-
-
-@pytest.fixture
-def loaded(client, team, db_session):
-    """Chat and design doc open to all, tasks open, an HR chat only the lead may see."""
-    sign_in(client, "Kishan")
-    upload(client, team, "chat", "chat.json", name="Team chat")
-    upload(client, team, "doc", "design.md", name="Design notes")
-    upload(client, team, "tasks", "tasks.csv", name="Task list")
-    upload(client, team, "chat", "chat.json", name="HR chat", roles=("lead",))
-    return team
-
-
-def good_replies(db):
-    render = piece_id(db, "Team chat", "chat message 1")
-    heroku = piece_id(db, "Design notes", "design.md paragraph 1")
-    retry = piece_id(db, "Team chat", "chat message 3")
-    t2 = piece_id(db, "Task list", "task T2")
-    hr = piece_id(db, "HR chat", "chat message 2")
-
-    extraction = {
-        "statements": [
-            {"kind": "decision", "text": "Hosting is on Render because the free tier is enough", "relation": "supported",
-             "evidence": [{"piece_id": render, "quote": "go with Render, the free tier is enough"}]},
-            {"kind": "decision", "text": "Sources disagree on the host", "relation": "conflicting",
-             "evidence": [{"piece_id": render, "quote": "go with Render"},
-                          {"piece_id": heroku, "quote": "We host the backend on Heroku"}]},
-            {"kind": "risk", "text": "Payment retry keeps timing out", "relation": "supported",
-             "evidence": [{"piece_id": retry, "quote": "keeps timing out"}]},
-            {"kind": "decision", "text": "Deploys go to Fly.io", "relation": "supported",
-             "evidence": [{"piece_id": render, "quote": "we deploy to Fly.io"}]},
-        ],
-        "gaps": [
-            {"kind": "owner", "text": "Task T2 has no owner", "question": "Who owns the deploy guide (T2)?", "risk": 3,
-             "evidence": [{"piece_id": t2, "quote": "owner: none"}]},
-            {"kind": "contact", "text": "Who has the Render login is only in the HR chat", "risk": 2,
-             "question": "Who holds the Render login?",
-             "evidence": [{"piece_id": hr, "quote": "I have the Render account login"}]},
-        ],
-    }
-    verifier = {"results": [{"id": 0, "verdict": "supported"}, {"id": 1, "verdict": "partly_supported"}]}
-    return extraction, verifier
+from tests.helpers import FakeLLM, good_replies, sign_in, upload
 
 
 def statements(db):

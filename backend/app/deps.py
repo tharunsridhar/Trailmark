@@ -20,17 +20,21 @@ def current_user(request: Request, db: Session = Depends(get_db)) -> User:
     return user
 
 
+def member_of(db: Session, user_id: int, handover_id: int) -> Membership | None:
+    return db.scalar(
+        select(Membership).where(
+            Membership.handover_id == handover_id,
+            Membership.user_id == user_id,
+        )
+    )
+
+
 def get_membership(
     handover_id: int,
     user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ) -> Membership:
-    membership = db.scalar(
-        select(Membership).where(
-            Membership.handover_id == handover_id,
-            Membership.user_id == user.id,
-        )
-    )
+    membership = member_of(db, user.id, handover_id)
     # a missing handover and someone else's handover look the same on purpose
     if membership is None:
         raise HTTPException(status_code=403, detail="Not a member of this handover")

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import models  # noqa: F401  (registers the tables)
 from app.config import get_settings
 from app.db import Base, engine
-from app.routers import analysis, auth, handovers, health, sources
+from app.routers import analysis, auth, handovers, health, questions, review, sources, view
 
 
 @asynccontextmanager
@@ -33,3 +33,6 @@ app.include_router(handovers.router)
 app.include_router(sources.router)
 app.include_router(sources.pieces_router)
 app.include_router(analysis.router)
+app.include_router(questions.router)
+app.include_router(review.router)
+app.include_router(view.router)
