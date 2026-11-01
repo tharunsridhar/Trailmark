@@ -1,3 +1,8 @@
+import os
+
+# set before the app is imported so settings pick it up
+os.environ["JWT_SECRET"] = "test-secret-that-is-long-enough-for-hs256"
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
