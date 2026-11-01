@@ -2,266 +2,209 @@
 
 import React, { useState } from 'react';
 import { useHandover } from '@/context/HandoverContext';
-import { EvidenceBadge } from '@/components/EvidenceBadge';
+import { Question } from '@/types';
 import {
-  HelpCircle,
-  Sparkles,
-  Send,
-  Save,
+  MessageSquareText,
   CheckCircle2,
   SkipForward,
-  HelpCircle as QuestionMark,
-  Info,
-  ShieldAlert,
+  HelpCircle,
+  Save,
+  Send,
+  AlertTriangle,
+  Clock,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
-export function Screen2DepartingQuestions() {
-  const {
-    project,
-    saveAnswer,
-    markDontKnow,
-    skipQuestion,
-    submitDepartingAnswers,
-    setActiveScreen,
-    currentUser,
-  } = useHandover();
+// ─── Question Card ──────────────────────────────────────
+function QuestionCard({
+  question,
+  index,
+  onSave,
+  onSkip,
+  onDontKnow,
+}: {
+  question: Question;
+  index: number;
+  onSave: (id: string, answer: string) => void;
+  onSkip: (id: string) => void;
+  onDontKnow: (id: string) => void;
+}) {
+  const [answer, setAnswer] = useState(question.answer || '');
+  const [expanded, setExpanded] = useState(question.status === 'pending');
 
-  // Local draft states for each textarea
-  const [drafts, setDrafts] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
-    project.questions.forEach((q) => {
-      initial[q.id] = q.answer || '';
-    });
-    return initial;
-  });
-
-  const [savedFeedback, setSavedFeedback] = useState<Record<string, boolean>>({});
-
-  const answeredCount = project.questions.filter((q) => q.status === 'answered').length;
-  const totalCount = project.questions.length;
-  const progressPercent = Math.round((answeredCount / totalCount) * 100);
-
-  const handleTextChange = (id: string, value: string) => {
-    setDrafts((prev) => ({ ...prev, [id]: value }));
+  const statusConfig = {
+    pending: { icon: <Clock size={14} />, bg: 'bg-amber-50', text: 'text-amber-700', label: 'Pending' },
+    answered: { icon: <CheckCircle2 size={14} />, bg: 'bg-green-50', text: 'text-green-700', label: 'Answered' },
+    skipped: { icon: <SkipForward size={14} />, bg: 'bg-gray-50', text: 'text-gray-600', label: 'Skipped' },
+    unknown: { icon: <HelpCircle size={14} />, bg: 'bg-red-50', text: 'text-red-700', label: "Don't Know" },
   };
 
-  const handleSave = (id: string) => {
-    const text = drafts[id]?.trim();
-    if (text) {
-      saveAnswer(id, text);
-      setSavedFeedback((prev) => ({ ...prev, [id]: true }));
-      setTimeout(() => {
-        setSavedFeedback((prev) => ({ ...prev, [id]: false }));
-      }, 2000);
-    }
-  };
-
-  const handleDontKnow = (id: string) => {
-    markDontKnow(id);
-    setDrafts((prev) => ({ ...prev, [id]: 'Departing member does not know or has no recorded answer.' }));
-  };
-
-  const handleSkip = (id: string) => {
-    skipQuestion(id);
-  };
-
-  const handleSubmitAll = () => {
-    submitDepartingAnswers();
-    setActiveScreen('review');
-  };
+  const s = statusConfig[question.status];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Header & Role Info */}
-      <div className="p-6 rounded-2xl border border-slate-200 bg-white dark:border-navy-800 dark:bg-navy-900 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Targeted AI Knowledge Extraction</span>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-              Departing Member Handover Q&A
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1">
-              Project: <strong className="text-slate-800 dark:text-white">{project.name}</strong> • Role:{' '}
-              <span className="font-semibold text-brand-600 dark:text-blue-400">
-                {project.departingRole}
-              </span>{' '}
-              ({currentUser.name})
-            </p>
-          </div>
-
-          <div className="text-right sm:self-center">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Completion Progress
+    <div className="bg-white border border-[#E5EAF1] rounded-xl shadow-card overflow-hidden">
+      {/* Question Header */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full px-5 py-4 flex items-start gap-4 text-left hover:bg-gray-50/50 transition-colors"
+      >
+        <span className="w-7 h-7 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+          {index + 1}
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-navy-800 leading-relaxed">{question.question}</p>
+          <div className="flex items-center gap-3 mt-2">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${s.bg} ${s.text}`}>
+              {s.icon} {s.label}
             </span>
-            <div className="text-lg font-extrabold text-slate-900 dark:text-white">
-              {answeredCount} of {totalCount} answered
-            </div>
+            <span className="text-xs text-muted">{question.roleTarget}</span>
           </div>
         </div>
+        <span className="text-muted shrink-0 mt-1">
+          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </span>
+      </button>
 
-        {/* Progress Bar */}
-        <div className="w-full bg-slate-100 dark:bg-navy-950 rounded-full h-2.5 overflow-hidden">
-          <div
-            className="bg-brand-600 dark:bg-blue-500 h-2.5 rounded-full transition-all duration-500"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
+      {/* Expanded Content */}
+      {expanded && (
+        <div className="px-5 pb-5 border-t border-[#E5EAF1]">
+          {/* AI Reason */}
+          <div className="bg-brand-50/50 rounded-lg p-3 mt-4 mb-4">
+            <p className="text-xs font-medium text-brand-700 mb-1">Why this question was generated</p>
+            <p className="text-xs text-brand-600 leading-relaxed">{question.reason}</p>
+          </div>
 
-        {/* Verification Rule Notice */}
-        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300">
-          <ShieldAlert className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-          <p>
-            <strong>Core Verification Rule:</strong> Answers you provide here are preserved with the label{' '}
-            <strong className="underline decoration-amber-500">Unverified</strong> until reviewed and confirmed against project evidence by the Team Lead. This maintains honest uncertainty and transparency.
-          </p>
-        </div>
-      </div>
+          {/* Answer Area */}
+          {question.status !== 'unknown' && (
+            <div>
+              <label className="block text-sm font-medium text-navy-800 mb-1.5">Your Answer</label>
+              <textarea
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                rows={4}
+                className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5EAF1] text-sm bg-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-brand-600/20 focus:border-brand-500 transition-colors"
+                placeholder="Provide your answer with as much relevant context as possible..."
+                disabled={question.status === 'skipped'}
+              />
 
-      {/* Question Cards List */}
-      <div className="space-y-6">
-        {project.questions.map((q, index) => {
-          const isAnswered = q.status === 'answered';
-          const isUnknown = q.status === 'unknown';
-          const isSkipped = q.status === 'skipped';
-
-          return (
-            <div
-              key={q.id}
-              className={`p-6 rounded-2xl border transition-all duration-200 bg-white dark:bg-navy-900 ${
-                isAnswered
-                  ? 'border-emerald-200 dark:border-emerald-900/60 shadow-sm'
-                  : isUnknown
-                  ? 'border-rose-200 dark:border-rose-900/60 shadow-sm'
-                  : isSkipped
-                  ? 'border-slate-300 dark:border-navy-700 opacity-80'
-                  : 'border-slate-200 dark:border-navy-800 shadow-sm'
-              }`}
-            >
-              {/* Question Header & Why It's Asked */}
-              <div className="space-y-2 mb-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-2.5">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-brand-50 text-brand-700 dark:bg-navy-800 dark:text-blue-300 font-bold text-xs flex items-center justify-center">
-                      {index + 1}
-                    </span>
-                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                      {q.question}
-                    </h3>
-                  </div>
-
-                  {/* Status Badge */}
-                  <div className="flex-shrink-0">
-                    {isAnswered && (
-                      <EvidenceBadge status="unverified" />
-                    )}
-                    {isUnknown && (
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-300 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800">
-                        Marked Unknown (Gap)
-                      </span>
-                    )}
-                    {isSkipped && (
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-400">
-                        Skipped
-                      </span>
-                    )}
-                    {q.status === 'pending' && (
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-brand-700 dark:bg-navy-800 dark:text-blue-300">
-                        Needs Answer
-                      </span>
-                    )}
-                  </div>
+              {/* Actions */}
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onSkip(question.id)}
+                    className="px-3 py-2 rounded-lg text-xs font-medium text-muted hover:text-navy-800 hover:bg-gray-100 transition-colors flex items-center gap-1.5"
+                    disabled={question.status === 'answered'}
+                  >
+                    <SkipForward size={14} /> Skip
+                  </button>
+                  <button
+                    onClick={() => onDontKnow(question.id)}
+                    className="px-3 py-2 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors flex items-center gap-1.5"
+                  >
+                    <AlertTriangle size={14} /> I Don&apos;t Know
+                  </button>
                 </div>
-
-                {/* Explanation of Why It is Being Asked */}
-                <div className="flex items-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-800 text-xs text-slate-600 dark:text-slate-300">
-                  <Info className="w-4 h-4 text-brand-500 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                  <p>
-                    <strong className="text-slate-800 dark:text-slate-200">Why this was raised: </strong>
-                    {q.reason}
-                  </p>
-                </div>
-              </div>
-
-              {/* Answer Textarea */}
-              <div className="space-y-3">
-                <textarea
-                  rows={3}
-                  value={drafts[q.id] || ''}
-                  onChange={(e) => handleTextChange(q.id, e.target.value)}
-                  placeholder="Type your explanation, context, decisions made, or remaining unfinished tasks..."
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white dark:border-navy-700 dark:bg-navy-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
-                />
-
-                {/* Question Actions */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleDontKnow(q.id)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-300 dark:bg-navy-800 dark:hover:bg-rose-950/40 transition-colors"
-                    >
-                      <QuestionMark className="w-3.5 h-3.5" />
-                      <span>I Don't Know</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleSkip(q.id)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 dark:text-slate-400 dark:hover:text-slate-200 dark:bg-navy-800 dark:hover:bg-navy-750 transition-colors"
-                    >
-                      <SkipForward className="w-3.5 h-3.5" />
-                      <span>Skip for now</span>
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {savedFeedback[q.id] && (
-                      <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Saved!
-                      </span>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => handleSave(q.id)}
-                      disabled={!drafts[q.id]?.trim()}
-                      className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-brand-600 dark:hover:bg-brand-500 shadow-sm transition-all"
-                    >
-                      <Save className="w-3.5 h-3.5" />
-                      <span>Save Answer</span>
-                    </button>
-                  </div>
-                </div>
+                <button
+                  onClick={() => {
+                    if (answer.trim()) onSave(question.id, answer.trim());
+                  }}
+                  disabled={!answer.trim()}
+                  className="px-4 py-2 rounded-lg text-xs font-medium text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 shadow-sm"
+                >
+                  <Save size={14} /> Save Answer
+                </button>
               </div>
             </div>
-          );
-        })}
-      </div>
+          )}
 
-      {/* Bottom Submit Action */}
-      <div className="p-6 rounded-2xl border border-slate-200 bg-white dark:border-navy-800 dark:bg-navy-900 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-            Ready to hand over responses?
-          </h4>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-            Your answers will be compiled for the Team Lead's review and cross-referenced with repository sources.
-          </p>
+          {question.status === 'unknown' && (
+            <div className="bg-red-50 rounded-lg p-3 mt-4 flex items-start gap-2">
+              <AlertTriangle size={14} className="text-red-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-medium text-red-700">Marked as unknown</p>
+                <p className="text-xs text-red-600">This has been flagged as a gap for the Team Lead to review.</p>
+              </div>
+            </div>
+          )}
         </div>
-
-        <button
-          onClick={handleSubmitAll}
-          className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-brand-600 hover:bg-brand-700 dark:bg-brand-600 dark:hover:bg-brand-500 shadow-md transition-all flex-shrink-0"
-        >
-          <Send className="w-4 h-4" />
-          <span>Submit Answers to Team Lead</span>
-        </button>
-      </div>
+      )}
     </div>
   );
 }
 
+// ─── Main Screen ────────────────────────────────────────
+export function Screen2DepartingQuestions() {
+  const { project, saveAnswer, skipQuestion, markDontKnow, submitDepartingAnswers, setActiveScreen } = useHandover();
+
+  const questions = project.questions;
+  const answeredCount = questions.filter((q) => q.status === 'answered').length;
+  const pendingCount = questions.filter((q) => q.status === 'pending').length;
+  const totalCount = questions.length;
+  const progressPct = totalCount > 0 ? Math.round((answeredCount / totalCount) * 100) : 0;
+  const allDone = pendingCount === 0;
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-navy-800">AI-Generated Questions</h2>
+        <p className="text-sm text-muted mt-1">
+          Answer these questions about <span className="font-medium text-navy-700">{project.name}</span>. The AI generated them based on your project role and source analysis.
+        </p>
+      </div>
+
+      {/* Progress bar */}
+      <div className="bg-white border border-[#E5EAF1] rounded-xl shadow-card p-5 mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-navy-800">Your Progress</span>
+          <span className="text-sm font-semibold text-brand-600">{progressPct}%</span>
+        </div>
+        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-brand-600 rounded-full transition-all duration-500"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+        <div className="flex items-center gap-4 mt-3 text-xs text-muted">
+          <span className="flex items-center gap-1"><CheckCircle2 size={12} className="text-green-500" /> {answeredCount} answered</span>
+          <span className="flex items-center gap-1"><Clock size={12} className="text-amber-500" /> {pendingCount} pending</span>
+          <span className="flex items-center gap-1"><SkipForward size={12} className="text-gray-400" /> {questions.filter(q => q.status === 'skipped').length} skipped</span>
+          <span className="flex items-center gap-1"><AlertTriangle size={12} className="text-red-500" /> {questions.filter(q => q.status === 'unknown').length} unknown</span>
+        </div>
+      </div>
+
+      {/* Questions list */}
+      <div className="space-y-4">
+        {questions.map((q, i) => (
+          <QuestionCard
+            key={q.id}
+            question={q}
+            index={i}
+            onSave={saveAnswer}
+            onSkip={skipQuestion}
+            onDontKnow={markDontKnow}
+          />
+        ))}
+      </div>
+
+      {/* Submit */}
+      {allDone && (
+        <div className="mt-6 bg-white border border-[#E5EAF1] rounded-xl shadow-card p-5 text-center">
+          <CheckCircle2 size={32} className="text-green-500 mx-auto mb-2" />
+          <h3 className="text-base font-semibold text-navy-800">All questions addressed</h3>
+          <p className="text-sm text-muted mt-1 mb-4">Your responses have been saved. Submit for Team Lead review.</p>
+          <button
+            onClick={() => {
+              submitDepartingAnswers();
+              setActiveScreen('my-handover-departing');
+            }}
+            className="px-5 py-2.5 rounded-lg text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 shadow-sm transition-colors inline-flex items-center gap-2"
+          >
+            <Send size={16} /> Submit for Review
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
