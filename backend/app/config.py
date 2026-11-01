@@ -28,3 +28,9 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def check_settings(settings: Settings) -> None:
+    """COOKIE_SECURE=true means a real deployment, which must not use the default secret."""
+    if settings.cookie_secure and (settings.jwt_secret == "change-me" or len(settings.jwt_secret) < 32):
+        raise RuntimeError("Set JWT_SECRET to a random string of at least 32 characters")

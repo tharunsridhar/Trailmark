@@ -36,7 +36,7 @@ When someone leaves a project, the files stay but much of what they knew leaves 
 
 ## Status
 
-Round 2 build. The backend now covers the whole workflow: sign-in with roles, handovers and members, source import (repository export, documents, chat, tasks), the AI analysis (reconstruct, quote check, separate verification call, labels, gaps and questions), the saved-results and basic fallbacks, the departing member's answers, the lead's review (edit, reject, resolve conflicts, accept gaps, version history), approval, the incoming member's redacted and permission-filtered handover, and the receipt. Still to do: Docker, deployment, running the AI on real data and tuning the prompts. The frontend and the synthetic project are in progress (see `frontend/` and `data/`). Setup notes, testing notes, known limitations and a roadmap will keep growing here.
+Round 2 build. The backend now covers the whole workflow: sign-in with roles, handovers and members, source import (repository export, documents, chat, tasks), the AI analysis (reconstruct, quote check, separate verification call, labels, gaps and questions), the saved-results and basic fallbacks, the departing member's answers, the lead's review (edit, reject, resolve conflicts, accept gaps, version history), approval, the incoming member's redacted and permission-filtered handover, and the receipt. Docker and Render configuration are written. Still to do: build and deploy them, run the AI on real data and tune the prompts. The frontend and the synthetic project are in progress (see `frontend/` and `data/`). Setup notes, testing notes, known limitations and a roadmap will keep growing here.
 
 ## Running the backend
 
@@ -58,7 +58,27 @@ cd backend
 pytest
 ```
 
-Locally the backend uses SQLite, so nothing else needs installing. Postgres comes with the Docker setup.
+Locally the backend uses SQLite, so nothing else needs installing.
+
+## Running everything with Docker
+
+```bash
+docker compose up --build
+```
+
+This starts PostgreSQL and the backend at `http://localhost:8000` (if that port is taken, set `BACKEND_PORT=8010` first). Put your values in a `.env` file first (see `.env.example`), at least `JWT_SECRET` and `LLM_API_KEY`. The frontend joins with `docker compose --profile frontend up --build` once `frontend/` has its Dockerfile. Saved analysis results are written to `backend/saved_results/`.
+
+## Deploying
+
+`render.yaml` describes the backend and its database for Render, and the frontend goes on Vercel. Because they are on different domains, set `COOKIE_SECURE=true`, `COOKIE_SAMESITE=none` and `FRONTEND_ORIGIN` to the exact Vercel address. In a deployed setup the app refuses to start with a weak `JWT_SECRET`.
+
+## Documents
+
+- [`docs/API.md`](docs/API.md): every endpoint with sample requests and responses
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): components, data flow, access control, decisions
+- [`docs/TOOLS.md`](docs/TOOLS.md): APIs, models, libraries and services used
+- [`docs/TESTING.md`](docs/TESTING.md): what is tested, what is not
+- [`docs/ROUND2_SUBMISSION.md`](docs/ROUND2_SUBMISSION.md): features completed, changes from the plan, Round 3 commitments
 
 ## Changes from the Round 1 plan
 

@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.db import Base, get_db
+from app.db import Base, get_db, normalise_url
 from app.deps import get_llm, get_session_factory
 from app.main import app
 from tests.helpers import create_team, sign_in, upload
@@ -17,17 +17,24 @@ from tests.helpers import create_team, sign_in, upload
 
 @pytest.fixture
 def db_session():
-    # one in-memory database per test so tests never affect each other
-    engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
+    # one clean database per test so tests never affect each other
+    test_url = os.environ.get("TEST_DATABASE_URL")
+    if test_url:
+        # a real Postgres, for checking the app does not depend on SQLite quirks
+        engine = create_engine(normalise_url(test_url))
+        Base.metadata.drop_all(engine)
+    else:
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
     session = Session()
     yield session
     session.close()
+    engine.dispose()
 
 
 @pytest.fixture

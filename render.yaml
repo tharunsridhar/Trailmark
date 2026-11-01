@@ -1,0 +1,37 @@
+# Render blueprint for the backend and its database.
+# The frontend is deployed separately on Vercel.
+#
+# Because the frontend (Vercel) and backend (Render) are on different domains, the login
+# cookie needs COOKIE_SECURE=true and COOKIE_SAMESITE=none, and FRONTEND_ORIGIN must be
+# the exact Vercel address.
+
+databases:
+  - name: trailmark-db
+    plan: free
+
+services:
+  - type: web
+    name: trailmark-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: trailmark-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAMESITE
+        value: none
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: claude-sonnet-5-5
+      - key: LLM_FALLBACK_MODEL
+        sync: false

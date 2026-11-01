@@ -4,13 +4,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import models  # noqa: F401  (registers the tables)
-from app.config import get_settings
+from app.config import check_settings, get_settings
 from app.db import Base, engine
 from app.routers import analysis, auth, handovers, health, questions, review, sources, view
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    check_settings(get_settings())
     # fine for the event; a real deployment would use migrations
     Base.metadata.create_all(engine)
     yield

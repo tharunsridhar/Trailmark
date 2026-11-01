@@ -1,0 +1,59 @@
+# Start everything with:  docker compose up --build
+# The backend is then at http://localhost:8000 (docs at /docs).
+# Add the frontend with:  docker compose --profile frontend up --build
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      # local only, never reuse these anywhere real
+      POSTGRES_USER: trailmark
+      POSTGRES_PASSWORD: trailmark
+      POSTGRES_DB: trailmark
+    ports:
+      # so tests on your own machine can reach it (TEST_DATABASE_URL in docs/TESTING.md)
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trailmark"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://trailmark:trailmark@db:5432/trailmark
+      JWT_SECRET: ${JWT_SECRET:-local-only-secret-replace-before-deploying}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-claude-sonnet-5-5}
+      LLM_FALLBACK_MODEL: ${LLM_FALLBACK_MODEL:-}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      # saved analysis results land in the repo, so good ones can be committed for the demo
+      - ./backend/saved_results:/app/saved_results
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Kishan's frontend. Needs a Dockerfile in frontend/, so it only starts with --profile frontend.
+  frontend:
+    profiles: ["frontend"]
+    build: ./frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

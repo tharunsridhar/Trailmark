@@ -40,3 +40,7 @@ Every endpoint in the table is live. `docs/API.md` has the request and response 
 ## Not in this round
 
 Follow-up questions, the decision timeline and the audit log are the Round 3 improvements. Do not build them now.
+
+## Docker
+
+The root `docker-compose.yml` has a `frontend` service that builds `./frontend` and serves it on port 3000. It only starts with `docker compose --profile frontend up --build`, so add a `Dockerfile` here when you are ready (run `npm run build` and `npm start`).

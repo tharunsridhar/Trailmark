@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -11,6 +13,16 @@ from app.schemas import AnalysisOut, QuestionOut
 from app.services import question_out
 
 router = APIRouter(prefix="/handovers/{handover_id}", tags=["analysis"])
+
+# a run still "running" after this long was lost, for example the server restarted mid-run
+STALE_AFTER = timedelta(minutes=10)
+
+
+def is_stale(run: AnalysisRun) -> bool:
+    started = run.started_at
+    if started.tzinfo is None:  # SQLite hands back naive datetimes
+        started = started.replace(tzinfo=timezone.utc)
+    return datetime.now(timezone.utc) - started > STALE_AFTER
 
 
 def latest_run(db: Session, handover_id: int) -> AnalysisRun | None:
@@ -36,7 +48,11 @@ def analyze(
 
     current = latest_run(db, handover_id)
     if current is not None and current.status == "running":
-        raise HTTPException(status_code=409, detail="An analysis is already running")
+        if not is_stale(current):
+            raise HTTPException(status_code=409, detail="An analysis is already running")
+        current.status = "failed"
+        current.notice = "The analysis was lost and never finished."
+        current.finished_at = datetime.now(timezone.utc)
 
     has_pieces = db.scalar(
         select(func.count(SourcePiece.id))

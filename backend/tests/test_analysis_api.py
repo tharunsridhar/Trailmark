@@ -153,3 +153,21 @@ def test_approved_handover_cannot_be_reanalysed(client, loaded, db_session):
     db_session.get(Handover, loaded).status = "approved"
     db_session.commit()
     assert client.post(f"/handovers/{loaded}/analyze").status_code == 409
+
+
+def test_a_lost_run_does_not_block_new_analyses(client, loaded, db_session, use_llm):
+    from datetime import datetime, timedelta, timezone
+
+    stuck = AnalysisRun(
+        handover_id=loaded, status="running",
+        started_at=datetime.now(timezone.utc) - timedelta(minutes=30),
+    )
+    db_session.add(stuck)
+    db_session.commit()
+
+    use_llm(FakeLLM(*good_replies(db_session)))
+    assert client.post(f"/handovers/{loaded}/analyze").status_code == 202
+
+    db_session.expire_all()
+    assert db_session.get(AnalysisRun, stuck.id).status == "failed"
+    assert client.get(f"/handovers/{loaded}/analysis").json()["status"] == "done"
