@@ -308,7 +308,7 @@ const HandoverContext = createContext<HandoverContextType | undefined>(undefined
 
 export function HandoverProvider({ children }: { children: React.ReactNode }) {
   const [activeRole, setActiveRole] = useState<Role>('lead');
-  const [activeScreen, setActiveScreen] = useState<string>('role-select');
+  const [activeScreen, setActiveScreen] = useState<string>('dashboard');
   const [project, setProject] = useState<ProjectHandover>(INITIAL_PROJECT);
 
   // Load persisted demo state if available
