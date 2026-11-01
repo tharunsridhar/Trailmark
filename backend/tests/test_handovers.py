@@ -1,34 +1,11 @@
 import pytest
 
-PASSWORD = "correct-horse"
-
-
-def make_user(client, name):
-    email = f"{name.lower()}@example.com"
-    client.post("/auth/register", json={"email": email, "name": name, "password": PASSWORD})
-    client.post("/auth/logout")
-    return email
-
-
-def sign_in(client, name):
-    email = f"{name.lower()}@example.com"
-    response = client.post("/auth/login", json={"email": email, "password": PASSWORD})
-    assert response.status_code == 200
+from tests.helpers import create_team, make_user, sign_in
 
 
 @pytest.fixture
 def team(client):
-    """Kishan leads a handover, Asha is leaving, Ravi is taking over."""
-    for name in ("Kishan", "Asha", "Ravi", "Outsider"):
-        make_user(client, name)
-
-    sign_in(client, "Kishan")
-    created = client.post("/handovers", json={"title": "Asha leaves", "project_name": "Campus App"})
-    handover_id = created.json()["id"]
-    client.post(f"/handovers/{handover_id}/members", json={"email": "asha@example.com", "role": "departing"})
-    client.post(f"/handovers/{handover_id}/members", json={"email": "ravi@example.com", "role": "incoming"})
-    client.post("/auth/logout")
-    return handover_id
+    return create_team(client)
 
 
 def test_creator_becomes_lead(client):

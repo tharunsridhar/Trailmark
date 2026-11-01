@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     cookie_samesite: str = "lax"
     frontend_origin: str = "http://localhost:3000"
     llm_api_key: str = ""
+    llm_model: str = "claude-sonnet-5-5"
+    # tried if the main model keeps failing, leave empty to skip
+    llm_fallback_model: str = ""
+    llm_base_url: str = "https://api.anthropic.com"
+    # analysis results are saved here so the demo works without the AI service
+    saved_results_dir: str = "saved_results"
 
 
 @lru_cache

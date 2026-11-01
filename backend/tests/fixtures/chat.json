@@ -1,0 +1,7 @@
+{
+  "messages": [
+    {"id": 1, "time": "2026-09-01T10:15:00", "sender": "Asha", "text": "Let's go with Render, the free tier is enough for now"},
+    {"id": 2, "time": "2026-09-01T10:20:00", "sender": "Ravi", "text": "Fine by me. I have the Render account login."},
+    {"id": 3, "time": "2026-09-05T18:00:00", "sender": "Asha", "text": "The payment retry thing keeps timing out, I will fix it before I leave"}
+  ]
+}

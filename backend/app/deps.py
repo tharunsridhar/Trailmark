@@ -1,10 +1,10 @@
 from fastapi import Depends, HTTPException, Request
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db import get_db
-from sqlalchemy import select
-
+from app.db import SessionLocal, get_db
 from app.models import Membership, User
+from app.pipeline.llm import build_llm
 from app.security import COOKIE_NAME, decode_token
 
 
@@ -46,3 +46,13 @@ def require_roles(*roles: str):
         return membership
 
     return check
+
+
+def get_session_factory():
+    """Background jobs open their own session. Tests replace this."""
+    return SessionLocal
+
+
+def get_llm():
+    """The AI client, or None when no key is set. Tests replace this."""
+    return build_llm()

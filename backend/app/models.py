@@ -67,6 +67,8 @@ class Source(Base):
     allowed_roles: Mapped[list] = mapped_column(JSON)
     # ok, empty or unreadable, set by the importer
     status: Mapped[str] = mapped_column(String(20), default="ok")
+    # why a source is empty or unreadable
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
     pieces: Mapped[list["SourcePiece"]] = relationship(back_populates="source")
@@ -83,6 +85,8 @@ class SourcePiece(Base):
     content: Mapped[str] = mapped_column(Text)
     # copied from the source so every piece keeps its source's access level
     allowed_roles: Mapped[list] = mapped_column(JSON)
+    # structured fields from the importer (task owner, status, commit author...)
+    meta: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     source: Mapped[Source] = relationship(back_populates="pieces")
 
@@ -97,8 +101,6 @@ class Statement(Base):
     label: Mapped[str] = mapped_column(String(20))
     # draft, approved, rejected, or accepted_gap
     status: Mapped[str] = mapped_column(String(20), default="draft")
-    # exact quote the claim relies on, checked against the source piece
-    quote: Mapped[str | None] = mapped_column(Text, nullable=True)
     current_version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
@@ -115,6 +117,8 @@ class StatementSource(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     statement_id: Mapped[int] = mapped_column(ForeignKey("statements.id"), index=True)
     piece_id: Mapped[int] = mapped_column(ForeignKey("source_pieces.id"), index=True)
+    # exact words from the piece that the claim relies on, checked word for word
+    quote: Mapped[str | None] = mapped_column(Text, nullable=True)
     # for conflicts: True for the source the lead chose, False for the other, None if undecided
     chosen: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
 
@@ -147,12 +151,26 @@ class Question(Base):
     # the gap statement that raised this question
     gap_statement_id: Mapped[int | None] = mapped_column(ForeignKey("statements.id"), nullable=True)
     text: Mapped[str] = mapped_column(Text)
-    # the evidence shown next to the question
-    evidence: Mapped[str] = mapped_column(Text)
     risk: Mapped[int] = mapped_column(Integer, default=1)
     # open, answered, skipped or unknown
     status: Mapped[str] = mapped_column(String(20), default="open")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+    evidence: Mapped[list["QuestionPiece"]] = relationship()
+
+
+class QuestionPiece(Base):
+    """The source pieces that raised a question. Evidence is built from these at read
+    time, so a viewer never gets evidence text from a piece they may not see."""
+
+    __tablename__ = "question_pieces"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"), index=True)
+    piece_id: Mapped[int] = mapped_column(ForeignKey("source_pieces.id"))
+    quote: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    piece: Mapped[SourcePiece] = relationship()
 
 
 class Answer(Base):
@@ -175,3 +193,20 @@ class Receipt(Base):
     handover_id: Mapped[int] = mapped_column(ForeignKey("handovers.id"), index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class AnalysisRun(Base):
+    __tablename__ = "analysis_runs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    handover_id: Mapped[int] = mapped_column(ForeignKey("handovers.id"), index=True)
+    # running, done or failed
+    status: Mapped[str] = mapped_column(String(20), default="running")
+    # ai, saved or basic, set when the run finishes
+    mode: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    notice: Mapped[str | None] = mapped_column(Text, nullable=True)
+    counts: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # claims thrown away because their quote was not in the cited source
+    dropped: Mapped[int] = mapped_column(Integer, default=0)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

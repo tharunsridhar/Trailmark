@@ -2,7 +2,7 @@
 
 Backend: FastAPI. Local base URL `http://localhost:8000`. Interactive docs for the live endpoints are at `/docs`.
 
-Status column: **live** means it works now, **P2** and **P3** mean it arrives in Phase 2 or Phase 3 of the Round 2 build. Planned endpoints already have their final shape, so build against the sample JSON.
+Status column: **live** means it works now, **P3** means it arrives in Phase 3 of the Round 2 build. Planned endpoints already have their final shape, so build against the sample JSON.
 
 ## Rules for every request
 
@@ -27,11 +27,11 @@ Status column: **live** means it works now, **P2** and **P3** mean it arrives in
 | GET | `/handovers/{id}` | member | live |
 | GET | `/handovers/{id}/members` | lead | live |
 | POST | `/handovers/{id}/members` | lead | live |
-| POST | `/handovers/{id}/sources` | lead | P2 |
-| GET | `/handovers/{id}/sources` | lead | P2 |
-| GET | `/pieces/{piece_id}` | member allowed to see it | P2 |
-| POST | `/handovers/{id}/analyze` | lead | P2 |
-| GET | `/handovers/{id}/analysis` | lead | P2 |
+| POST | `/handovers/{id}/sources` | lead | live |
+| GET | `/handovers/{id}/sources` | lead | live |
+| GET | `/pieces/{piece_id}` | member allowed to see it | live |
+| POST | `/handovers/{id}/analyze` | lead | live |
+| GET | `/handovers/{id}/analysis` | lead | live |
 | GET | `/handovers/{id}/statements` | lead | P3 |
 | GET | `/statements/{id}` | lead | P3 |
 | PATCH | `/statements/{id}` | lead | P3 |
@@ -39,7 +39,7 @@ Status column: **live** means it works now, **P2** and **P3** mean it arrives in
 | POST | `/statements/{id}/resolve` | lead | P3 |
 | POST | `/statements/{id}/accept-gap` | lead | P3 |
 | GET | `/statements/{id}/versions` | lead | P3 |
-| GET | `/handovers/{id}/questions` | lead, departing | P2 |
+| GET | `/handovers/{id}/questions` | lead, departing | live |
 | POST | `/questions/{id}/answer` | departing | P3 |
 | POST | `/handovers/{id}/approve` | lead | P3 |
 | GET | `/handovers/{id}/handover-view` | incoming (lead can preview) | P3 |
@@ -139,7 +139,7 @@ The person must already have registered.
 
 ---
 
-## Sources (P2)
+## Sources (live)
 
 ### POST /handovers/{id}/sources (lead)
 
@@ -154,11 +154,12 @@ Multipart form upload. Fields: `type` (`repo`, `doc`, `chat`, `tasks`), `name`, 
   "name": "Team chat",
   "allowed_roles": ["lead", "departing", "incoming"],
   "status": "ok",
+  "note": null,
   "piece_count": 84
 }
 ```
 
-`status` is `ok`, `empty` or `unreadable`. Show a clear message for the last two, nothing is guessed from them.
+`status` is `ok`, `empty` or `unreadable`. For the last two the response has a `note` explaining why, show it. Nothing is guessed from an empty or unreadable file. A bad `type` or `allowed_roles` is `422`, a file over 5 MB is `413`, and uploading after approval is `409`.
 
 ### GET /handovers/{id}/sources (lead)
 
@@ -180,24 +181,29 @@ One source piece, for opening a citation. `403` if the caller's role may not see
 
 ---
 
-## Analysis (P2)
+## Analysis (live)
 
 ### POST /handovers/{id}/analyze (lead)
 
-Runs reconstruct, verify and gap detection. Returns right away, the work runs in the background.
+Runs reconstruct, verify and gap detection. Returns right away, the work runs in the background. Running it again replaces the earlier draft.
 
-`202` `{ "status": "running" }`
+`202` `{ "status": "running", ... }`
+
+`409` if there is no readable source yet, an analysis is already running, or the handover is approved.
 
 ### GET /handovers/{id}/analysis (lead)
 
-Poll this until `status` is `done` (`running`, `done`, `failed`).
+Poll this until `status` is `done` (`running`, `done`, `failed`, or `not_started` before the first run). `dropped` counts claims thrown away because their quote was not in the cited source.
 
 ```json
 {
   "status": "done",
   "mode": "ai",
   "notice": null,
-  "counts": { "verified": 12, "unverified": 3, "missing": 4, "conflicting": 2 }
+  "counts": { "verified": 12, "unverified": 3, "missing": 4, "conflicting": 2 },
+  "dropped": 1,
+  "started_at": "2026-11-02T10:00:00Z",
+  "finished_at": "2026-11-02T10:00:40Z"
 }
 ```
 
@@ -205,21 +211,20 @@ Poll this until `status` is `done` (`running`, `done`, `failed`).
 
 ---
 
-## Questions (P2 list, P3 answer)
+## Questions (list is live, answering is P3)
 
 ### GET /handovers/{id}/questions (lead, departing)
 
-Highest risk first. `evidence` is the text that raised the question, `pieces` are the citations behind it (only ones the caller may see).
+Highest risk first. `evidence` lists the source pieces that raised the question, with the quoted words. A question is left out completely for a viewer who may not see all of its evidence, so the departing member never gets restricted text through a question.
 
 ```json
 [
   {
     "id": 9,
     "text": "Commit a3f9c21 rewrote the payment retry logic but no reason is recorded. Why was it changed?",
-    "evidence": "commit a3f9c21: rewrite payment retry",
     "risk": 3,
     "status": "open",
-    "pieces": [{ "id": 12, "locator": "commit a3f9c21" }]
+    "evidence": [{ "piece_id": 12, "locator": "commit a3f9c21", "quote": "rewrite payment retry" }]
   }
 ]
 ```
@@ -249,10 +254,15 @@ A statement looks like this everywhere:
   "text": "The team chose Render for hosting because the free tier is enough.",
   "label": "verified",
   "status": "draft",
-  "quote": "let's go with Render, the free tier is enough for now",
   "current_version": 1,
   "sources": [
-    { "piece_id": 41, "locator": "chat message 14", "source_name": "Team chat", "chosen": null }
+    {
+      "piece_id": 41,
+      "locator": "chat message 14",
+      "source_name": "Team chat",
+      "quote": "let's go with Render, the free tier is enough for now",
+      "chosen": null
+    }
   ]
 }
 ```

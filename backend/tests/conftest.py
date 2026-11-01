@@ -37,3 +37,11 @@ def client(db_session):
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(autouse=True)
+def saved_results_in_tmp(tmp_path, monkeypatch):
+    """Keeps analysis results from tests out of the repo."""
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "saved_results_dir", str(tmp_path / "saved"))

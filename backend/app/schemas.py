@@ -51,3 +51,45 @@ class MemberOut(BaseModel):
     name: str
     email: str
     role: Role
+
+
+class SourceOut(BaseModel):
+    id: int
+    type: str
+    name: str
+    allowed_roles: list[Role]
+    status: str
+    note: str | None
+    piece_count: int
+
+
+class PieceOut(BaseModel):
+    id: int
+    source_id: int
+    source_name: str
+    locator: str
+    content: str
+
+
+class AnalysisOut(BaseModel):
+    status: str
+    mode: str | None = None
+    notice: str | None = None
+    counts: dict | None = None
+    dropped: int = 0
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+
+
+class EvidenceOut(BaseModel):
+    piece_id: int
+    locator: str
+    quote: str | None
+
+
+class QuestionOut(BaseModel):
+    id: int
+    text: str
+    risk: int
+    status: str
+    evidence: list[EvidenceOut]
