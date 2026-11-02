@@ -370,7 +370,10 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
   }, [activeHandoverId, activeRole, refreshSources]);
 
   const uploadSyntheticSources = useCallback(async () => {
-    if (!activeHandoverId) throw new Error('No active handover selected');
+    if (!activeHandoverId) {
+      setErrorMessage('Please create a handover first before uploading sources.');
+      return { success: 0, failed: 0, errors: ['Please create a handover first.'] };
+    }
     clearMessages();
     const result = await HandoverApiService.uploadSyntheticManifestSources(activeHandoverId);
     await refreshSources();

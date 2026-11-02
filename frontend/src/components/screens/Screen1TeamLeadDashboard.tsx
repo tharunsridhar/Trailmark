@@ -83,6 +83,10 @@ export function Screen1TeamLeadDashboard() {
   };
 
   const handleUploadSynthetic = async () => {
+    if (!activeHandoverId) {
+      setShowNewHandoverModal(true);
+      return;
+    }
     setIsUploading(true);
     setUploadResult(null);
     try {
@@ -326,13 +330,19 @@ export function Screen1TeamLeadDashboard() {
                 <button
                   type="button"
                   onClick={handleUploadSynthetic}
-                  disabled={isUploading}
-                  className="px-4 py-2 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] disabled:opacity-50 text-white text-xs font-semibold shadow-soft flex items-center gap-1.5 transition-all"
+                  disabled={!activeHandoverId || isUploading}
+                  title={!activeHandoverId ? 'Create a handover first before uploading sources' : 'Upload 9 synthetic files'}
+                  className="px-4 py-2 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-soft flex items-center gap-1.5 transition-all"
                 >
                   {isUploading ? (
                     <>
                       <Loader2 size={13} className="animate-spin" />
                       <span>Uploading 9 Files...</span>
+                    </>
+                  ) : !activeHandoverId ? (
+                    <>
+                      <AlertCircle size={13} />
+                      <span>Create a handover first</span>
                     </>
                   ) : (
                     <>
@@ -378,6 +388,22 @@ export function Screen1TeamLeadDashboard() {
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : !activeHandoverId ? (
+              <div className="border border-dashed border-[#DCDCD2] rounded-2xl p-6 text-center bg-[#FAF9F6] space-y-2.5">
+                <AlertCircle size={24} className="text-amber-600 mx-auto" />
+                <p className="text-xs font-semibold text-[#1F201B]">No handover created yet</p>
+                <p className="text-[11px] text-[#7A7B72] max-w-sm mx-auto">
+                  Please create a handover project first before uploading project sources or synthetic manifests.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowNewHandoverModal(true)}
+                  className="px-4 py-1.5 rounded-full bg-[#5A5B4C] text-white text-xs font-semibold hover:bg-[#4A4B3E] shadow-2xs inline-flex items-center gap-1.5 transition-colors"
+                >
+                  <Plus size={13} />
+                  <span>Create a handover first</span>
+                </button>
               </div>
             ) : (
               <div className="border border-dashed border-[#DCDCD2] rounded-2xl p-6 text-center bg-[#FAF9F6]">
