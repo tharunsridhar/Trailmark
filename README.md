@@ -25,18 +25,17 @@ When someone leaves a project, the files stay but much of what they knew leaves 
 - **Permission-aware:** summaries and derived statements inherit the restrictions of their sources, and restricted content is hidden or redacted.
 - **Human-controlled:** a person reviews, corrects and approves every handover.
 
-## Planned technology
+## Technology
 
-- Frontend: React (Next.js)
-- Backend: Python, FastAPI
-- Database: PostgreSQL with pgvector
-- AI: a large language model API, with structured output and claim-support checks
-- Containers: a minimal Docker setup
-- Hosting: Vercel (frontend) and Render (backend and database)
+- Frontend: React (Next.js), on Vercel
+- Backend: Python, FastAPI, on Render
+- Database: PostgreSQL in deployment, SQLite for local work (no pgvector, see the changes below)
+- AI: a large language model API, Gemini by default (Groq and Anthropic also supported), with structured output, quote checks and a separate claim-support check
+- Containers: Docker and Docker Compose
 
 ## Status
 
-Round 2 build. The backend now covers the whole workflow: sign-in with roles, handovers and members, source import (repository export, documents, chat, tasks), the AI analysis (reconstruct, quote check, separate verification call, labels, gaps and questions), the saved-results and basic fallbacks, the departing member's answers, the lead's review (edit, reject, resolve conflicts, accept gaps, version history), approval, the incoming member's redacted and permission-filtered handover, and the receipt. Docker and Render configuration are written. Still to do: build and deploy them, run the AI on real data and tune the prompts. The frontend and the synthetic project are in progress (see `frontend/` and `data/`). Setup notes, testing notes, known limitations and a roadmap will keep growing here.
+Round 2 build. The backend covers the whole workflow and is tested (143 tests on SQLite and PostgreSQL): sign-in with roles, handovers and members, source import, the AI analysis with quote and verification checks, the saved-results and basic fallbacks, the departing member's answers, the lead's review and approval, the incoming member's redacted and permission-filtered handover, and the receipt. The AI has been run on the synthetic project and the results are saved in `backend/saved_results/`. It finds about 24 of 32 planted cases and misses claims only the leaver makes, details in `docs/TESTING.md`. Docker and Render configuration are written, the deployment steps are in `docs/DEPLOY.md`. The frontend screens (Kishan) are being connected to the backend.
 
 ## Running the backend
 
@@ -95,6 +94,15 @@ This starts PostgreSQL and the backend at `http://localhost:8000` (if that port 
 6. If the AI service fails, the last good results are shown (marked as saved), and if there are none, a basic listing built only from structured fields such as task owners. The response always says which mode was used.
 
 Set `LLM_API_KEY` in `.env` to turn the AI on (a free Gemini key from Google AI Studio works, see `.env.example` for Groq and Anthropic). Without it the analysis runs in the saved or basic mode.
+
+## Privacy, security and responsible design
+
+- **Access is checked in the backend.** Every endpoint checks who you are and your role in that handover. A statement or question is shown only if the viewer may see every source behind it, so a summary of a restricted document inherits the restriction. The incoming member only sees what the lead approved.
+- **Logins** use argon2 password hashes and a signed token in an HTTP-only cookie. The AI key stays on the server and is never sent to the browser. A deployed server refuses to start with a weak `JWT_SECRET`.
+- **Redaction is pattern based.** Emails, phone numbers and secrets are masked for the incoming member, but pattern matching will miss some sensitive text. Do not rely on it for real data.
+- **The AI service sees everything the lead connects**, including sources only the lead may read. Connect only data you are allowed to send to the AI provider, and check the provider's terms, since free tiers may use submitted content. All demonstration data here is synthetic.
+- **The AI can be wrong, so the product shows its evidence.** Each statement links to a quote copied from its source, quotes that are not in the source are thrown away, and a separate check decides what counts as verified. Missing information is reported as a gap with a question, never filled in. A person reviews and approves every handover.
+- **Not built yet:** database row-level security, and the audit log (planned for Round 3).
 
 ## Team
 
