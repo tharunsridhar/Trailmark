@@ -105,11 +105,16 @@ export function Screen1TeamLeadDashboard() {
   };
 
   const handleCustomFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    const type = ext === 'json' ? 'chat' : ext === 'csv' ? 'tasks' : 'doc';
-    await uploadCustomSource(file, type, file.name);
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      const type = ext === 'json' ? 'chat' : ext === 'csv' ? 'tasks' : 'doc';
+      await uploadCustomSource(file, type, file.name);
+    }
+    setIsUploading(false);
   };
 
   return (
@@ -387,8 +392,8 @@ export function Screen1TeamLeadDashboard() {
             {/* Custom file upload input */}
             <div className="flex items-center justify-between pt-1">
               <label className="text-xs text-[#7A7B72] flex items-center gap-2 cursor-pointer hover:text-[#1F201B]">
-                <span className="underline font-semibold text-[#5A5B4C]">Upload additional custom file</span>
-                <input type="file" onChange={handleCustomFileUpload} className="hidden" />
+                <span className="underline font-semibold text-[#5A5B4C]">Upload additional custom files (pick one or many)</span>
+                <input type="file" multiple onChange={handleCustomFileUpload} className="hidden" />
               </label>
               <button
                 type="button"

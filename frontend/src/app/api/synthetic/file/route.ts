@@ -10,8 +10,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'path query parameter is required' }, { status: 400 });
     }
 
-    // 1. Resolve canonical base directory for data/synthetic
-    const baseDir = path.resolve(process.cwd(), '../data/synthetic');
+    // 1. Resolve canonical base directory (support Vercel public/synthetic first, then ../data/synthetic)
+    const publicSynthetic = path.resolve(process.cwd(), 'public/synthetic');
+    const externalSynthetic = path.resolve(process.cwd(), '../data/synthetic');
+    const baseDir = fs.existsSync(publicSynthetic) ? publicSynthetic : externalSynthetic;
 
     // 2. Resolve requested path against the base directory
     const fullPath = path.resolve(baseDir, relPath);

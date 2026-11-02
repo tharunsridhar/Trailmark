@@ -4,8 +4,12 @@ import fs from 'fs';
 
 export async function GET() {
   try {
-    const manifestPath = path.resolve(process.cwd(), '../data/synthetic/manifest.json');
-    if (!fs.existsSync(manifestPath)) {
+    const candidates = [
+      path.resolve(process.cwd(), 'public/synthetic/manifest.json'),
+      path.resolve(process.cwd(), '../data/synthetic/manifest.json'),
+    ];
+    const manifestPath = candidates.find((p) => fs.existsSync(p));
+    if (!manifestPath) {
       return NextResponse.json({ error: 'Manifest not found' }, { status: 404 });
     }
     const content = fs.readFileSync(manifestPath, 'utf8');
@@ -14,4 +18,3 @@ export async function GET() {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
-

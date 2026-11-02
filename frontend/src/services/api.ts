@@ -262,16 +262,40 @@ export const HandoverApiService = {
    * Helper that reads all synthetic sources from manifest and uploads each to the backend.
    */
   async uploadSyntheticManifestSources(handoverId: number | string): Promise<{ success: number; failed: number; errors: string[] }> {
-    const manifestRes = await fetch('/api/synthetic/manifest');
-    if (!manifestRes.ok) throw new Error('Could not read synthetic manifest');
-    const manifest = await manifestRes.json();
+    // Read from Vercel public static route /synthetic/manifest.json first, fallback to API
+    let manifest: any = null;
+    try {
+      const staticRes = await fetch('/synthetic/manifest.json');
+      if (staticRes.ok) {
+        manifest = await staticRes.json();
+      }
+    } catch {
+      // ignore
+    }
+
+    if (!manifest) {
+      const manifestRes = await fetch('/api/synthetic/manifest');
+      if (!manifestRes.ok) throw new Error('Could not read synthetic manifest');
+      manifest = await manifestRes.json();
+    }
+
     let success = 0;
     let failed = 0;
     const errors: string[] = [];
 
     for (const src of manifest.sources) {
       try {
-        const fileRes = await fetch(`/api/synthetic/file?path=${encodeURIComponent(src.file)}`);
+        let fileRes: Response | null = null;
+        try {
+          fileRes = await fetch(`/synthetic/${src.file}`);
+        } catch {
+          fileRes = null;
+        }
+
+        if (!fileRes || !fileRes.ok) {
+          fileRes = await fetch(`/api/synthetic/file?path=${encodeURIComponent(src.file)}`);
+        }
+
         if (!fileRes.ok) {
           failed++;
           errors.push(`Could not read ${src.file}`);

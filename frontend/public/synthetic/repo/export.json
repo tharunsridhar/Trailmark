@@ -1,0 +1,248 @@
+{
+  "commits": [
+    {
+      "sha": "9b1c201",
+      "author": "Deepak",
+      "date": "2026-07-15T09:30:00Z",
+      "message": "Initial repository setup with Poetry and FastAPI template",
+      "files": ["README.md", "pyproject.toml", ".gitignore"]
+    },
+    {
+      "sha": "c20a41f",
+      "author": "Asha",
+      "date": "2026-07-18T11:15:00Z",
+      "message": "Setup SQLite database connection with WAL mode enabled",
+      "files": ["app/db.py", "app/config.py"]
+    },
+    {
+      "sha": "d3810ef",
+      "author": "Neha",
+      "date": "2026-07-22T14:00:00Z",
+      "message": "Define Pydantic models for events and registrations",
+      "files": ["app/schemas/event.py", "app/schemas/ticket.py"]
+    },
+    {
+      "sha": "e4b1029",
+      "author": "Asha",
+      "date": "2026-07-27T16:45:00Z",
+      "message": "Store JWT in HTTP-only cookies instead of localStorage to prevent XSS credential theft",
+      "files": ["app/auth/cookies.py", "app/auth/jwt.py"]
+    },
+    {
+      "sha": "c18d402",
+      "author": "Asha",
+      "date": "2026-08-01T10:20:00Z",
+      "message": "Set ACCESS_TOKEN_EXPIRE_MINUTES = 60 for student sessions",
+      "files": ["app/auth/config.py"]
+    },
+    {
+      "sha": "f1092aa",
+      "author": "Neha",
+      "date": "2026-08-04T13:30:00Z",
+      "message": "Add student dashboard view components with Tailwind CSS",
+      "files": ["frontend/src/Dashboard.tsx", "frontend/tailwind.config.js"]
+    },
+    {
+      "sha": "a3f9c21",
+      "author": "Asha",
+      "date": "2026-08-08T15:10:00Z",
+      "message": "Implement exponential backoff for ticket webhook delivery to prevent campus server overload",
+      "files": ["app/services/webhooks.py", "app/api/payments.py"]
+    },
+    {
+      "sha": "2810cd4",
+      "author": "Ravi",
+      "date": "2026-08-12T09:45:00Z",
+      "message": "Add Dockerfile and render.yaml for automated staging deployment",
+      "files": ["Dockerfile", "render.yaml"]
+    },
+    {
+      "sha": "f710a34",
+      "author": "Asha",
+      "date": "2026-08-16T14:15:00Z",
+      "message": "Import campus_sms_sdk for automated SMS ticket dispatch",
+      "files": ["app/services/sms.py", "pyproject.toml"]
+    },
+    {
+      "sha": "88a104f",
+      "author": "Ravi",
+      "date": "2026-08-20T11:00:00Z",
+      "message": "Implement Celery worker for background PDF badge generation",
+      "files": ["deploy/worker_daemon.py", "app/services/pdf.py"]
+    },
+    {
+      "sha": "993c10a",
+      "author": "Asha",
+      "date": "2026-08-24T16:20:00Z",
+      "message": "Implement QR code encoding using UUID v4 identifier",
+      "files": ["app/services/tickets.py"]
+    },
+    {
+      "sha": "b881e05",
+      "author": "Asha",
+      "date": "2026-08-29T17:05:00Z",
+      "message": "Add placeholder refund_ticket function with NotImplementedError",
+      "files": ["app/api/tickets.py"]
+    },
+    {
+      "sha": "a90d3e4",
+      "author": "Ravi",
+      "date": "2026-08-31T10:35:00Z",
+      "message": "Pin celery version in requirements",
+      "files": ["requirements.txt"]
+    },
+    {
+      "sha": "71a2b09",
+      "author": "Neha",
+      "date": "2026-09-02T10:40:00Z",
+      "message": "Add event filter by campus building and department",
+      "files": ["frontend/src/EventFilters.tsx"]
+    },
+    {
+      "sha": "5be7c10",
+      "author": "Asha",
+      "date": "2026-09-04T09:50:00Z",
+      "message": "Fix typo in registration confirmation email template",
+      "files": ["app/templates/confirm.html"]
+    },
+    {
+      "sha": "5510de8",
+      "author": "Ravi",
+      "date": "2026-09-07T12:00:00Z",
+      "message": "Limit ReportLab memory buffers during PDF export",
+      "files": ["app/services/pdf.py"]
+    },
+    {
+      "sha": "c7714bd",
+      "author": "Neha",
+      "date": "2026-09-09T15:05:00Z",
+      "message": "Fix date formatting on event cards",
+      "files": ["frontend/src/EventCard.tsx"]
+    },
+    {
+      "sha": "44a102c",
+      "author": "Asha",
+      "date": "2026-09-11T15:30:00Z",
+      "message": "Alembic migration 004 for speaker profile fields",
+      "files": ["alembic/versions/004_speakers.py"]
+    },
+    {
+      "sha": "2f6e8a1",
+      "author": "Deepak",
+      "date": "2026-09-13T11:40:00Z",
+      "message": "Add CORS allowlist for the campus frontend origin",
+      "files": ["app/main.py"]
+    },
+    {
+      "sha": "3391f0d",
+      "author": "Deepak",
+      "date": "2026-09-15T09:15:00Z",
+      "message": "Update security middleware and sanitize user input headers",
+      "files": ["app/middleware/security.py"]
+    },
+    {
+      "sha": "2281a0b",
+      "author": "Asha",
+      "date": "2026-09-19T14:50:00Z",
+      "message": "Initial work on multi-tier ticket discounts and promo codes",
+      "files": ["app/models/discounts.py", "app/api/discounts.py"]
+    },
+    {
+      "sha": "1170e0f",
+      "author": "Neha",
+      "date": "2026-09-23T11:20:00Z",
+      "message": "Add student ticket QR presentation modal dialog",
+      "files": ["frontend/src/TicketModal.tsx"]
+    },
+    {
+      "sha": "e08b5c9",
+      "author": "Kiran",
+      "date": "2026-09-26T13:25:00Z",
+      "message": "Add pytest fixtures for event registration",
+      "files": ["tests/conftest.py"]
+    },
+    {
+      "sha": "0060d0a",
+      "author": "Asha",
+      "date": "2026-09-27T16:00:00Z",
+      "message": "Clean up unused database seeds ahead of handover to Kiran",
+      "files": ["scripts/seed_demo.py"]
+    }
+  ],
+  "pull_requests": [
+    {
+      "number": 1,
+      "title": "Setup initial FastAPI routers and models",
+      "author": "Asha",
+      "state": "merged",
+      "body": "Implements core database schema and FastAPI CRUD routers for events and attendee registrations.",
+      "comments": ["Deepak: Looks clean. Ensure WAL mode is active in db setup."]
+    },
+    {
+      "number": 2,
+      "title": "Add Google Calendar event integration",
+      "author": "Asha",
+      "state": "merged",
+      "body": "Allows students to sync registered campus events with Google Calendar using the service account key in keys/service_account.json.",
+      "comments": ["Ravi: Verified service account works in staging."]
+    },
+    {
+      "number": 3,
+      "title": "Switch auth tokens to HTTP-only secure cookies",
+      "author": "Asha",
+      "state": "merged",
+      "body": "Replaces localStorage token storage with HTTP-only SameSite cookies to protect student session tokens from XSS vulnerabilities.",
+      "comments": ["Deepak: Approved. Critical for campus security compliance."]
+    },
+    {
+      "number": 4,
+      "title": "Add multi-tier ticket tiering and student discounts",
+      "author": "Asha",
+      "state": "open",
+      "body": "WIP: Introducing VIP and General Admission ticket tiers with student discount validation. Still needs automated tests and migration script.",
+      "comments": ["Deepak: Asha, please resolve the merge conflict in app/api/discounts.py before you depart."]
+    },
+    {
+      "number": 5,
+      "title": "Enforce auditorium capacity check of 350 seats",
+      "author": "Neha",
+      "state": "open",
+      "body": "Limits auditorium bookings to 350 seats based on the updated Student Affairs seating chart.",
+      "comments": ["Deepak: Hold on, didn't architecture_overview.md specify maximum capacity is 500? We need to verify which count is valid."]
+    }
+  ],
+  "issues": [
+    {
+      "number": 6,
+      "title": "Bulk email dispatch occasionally drops last 10 recipients",
+      "author": "Arun",
+      "state": "open",
+      "body": "When dispatching announcement emails to batches over 50 users, the background task times out and truncates the final 10 recipients without error logs.",
+      "comments": ["Asha: Identified SMTP connection reuse issue. Needs connection pooling in services/mailer.py."]
+    },
+    {
+      "number": 7,
+      "title": "Worker OOM on PDF generation during orientation week",
+      "author": "Ravi",
+      "state": "open",
+      "body": "The Celery worker crashes with Out of Memory error when 100+ badges are generated concurrently in ReportLab.",
+      "comments": ["Asha: We should batch generation into chunks of 25."]
+    },
+    {
+      "number": 8,
+      "title": "Database is locked errors when 200+ students register simultaneously",
+      "author": "Deepak",
+      "state": "open",
+      "body": "SQLite throws operational error 'database is locked' during peak registration spikes even with WAL mode active.",
+      "comments": ["Ravi: We need to increase timeout to 15 seconds in SQLite connect args."]
+    },
+    {
+      "number": 9,
+      "title": "Render deploy fails on missing build dependencies",
+      "author": "Ravi",
+      "state": "closed",
+      "body": "Render build step failed because libpq-dev was missing from minimal image.",
+      "comments": ["Ravi: Fixed in commit 2810cd4."]
+    }
+  ]
+}
