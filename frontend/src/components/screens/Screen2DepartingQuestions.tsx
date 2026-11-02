@@ -93,21 +93,6 @@ export function Screen2DepartingQuestions() {
     };
   }, [isRecording]);
 
-  if (activeScreen === 'departing-intro') return <InterviewIntroduction />;
-  if (isCompletedMode) {
-    return (
-      <InterviewCompletion
-        onRevisitQuestion={(idx) => {
-          setIsCompletedMode(false);
-          setCurrentIndex(idx);
-        }}
-      />
-    );
-  }
-  if (!currentQuestion) return <InterviewIntroduction />;
-
-  const progressPct = ((currentIndex + 1) / totalQuestions) * 100;
-
   const fmtTime = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
@@ -172,6 +157,21 @@ export function Screen2DepartingQuestions() {
     setIsRecording(false);
     handleSaveCurrent({ hasVoice: true, durationSeconds });
   };
+
+  if (activeScreen === 'departing-intro') return <InterviewIntroduction />;
+  if (isCompletedMode) {
+    return (
+      <InterviewCompletion
+        onRevisitQuestion={(idx) => {
+          setIsCompletedMode(false);
+          setCurrentIndex(idx);
+        }}
+      />
+    );
+  }
+  if (!currentQuestion) return <InterviewIntroduction />;
+
+  const progressPct = ((currentIndex + 1) / totalQuestions) * 100;
 
   const slideClass =
     slideDir === 'left'

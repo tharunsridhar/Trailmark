@@ -7,6 +7,7 @@ import { Screen1TeamLeadDashboard } from '@/components/screens/Screen1TeamLeadDa
 import { Screen2DepartingQuestions } from '@/components/screens/Screen2DepartingQuestions';
 import { Screen3TeamLeadReview } from '@/components/screens/Screen3TeamLeadReview';
 import { Screen4IncomingHandover } from '@/components/screens/Screen4IncomingHandover';
+import { InterviewIntroduction } from '@/components/interview/InterviewIntroduction';
 
 export default function Home() {
   const { activeScreen } = useHandover();
@@ -18,9 +19,10 @@ export default function Home() {
     case 'create':
       return <Screen1TeamLeadDashboard />;
     case 'departing-intro':
+    case 'my-handover-departing':
+      return <InterviewIntroduction />;
     case 'interview':
     case 'questions':
-    case 'my-handover-departing':
       return <Screen2DepartingQuestions />;
     case 'review':
       return <Screen3TeamLeadReview />;
