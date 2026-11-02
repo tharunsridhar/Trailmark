@@ -10,24 +10,39 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'path query parameter is required' }, { status: 400 });
     }
 
-    // Prevent directory traversal
-    const safeRel = path.normalize(relPath).replace(/^(\.\.[\/\\])+/, '');
-    const fullPath = path.resolve(process.cwd(), '../data/synthetic', safeRel);
+    // 1. Resolve canonical base directory for data/synthetic
+    const baseDir = path.resolve(process.cwd(), '../data/synthetic');
+
+    // 2. Resolve requested path against the base directory
+    const fullPath = path.resolve(baseDir, relPath);
+
+    // 3. Strict confinement check: ensure target stays inside data/synthetic
+    const relative = path.relative(baseDir, fullPath);
+    if (
+      relative.startsWith('..') ||
+      path.isAbsolute(relative) ||
+      !fullPath.startsWith(baseDir + path.sep)
+    ) {
+      return NextResponse.json(
+        { error: 'Access denied: Requested path is outside the synthetic data directory' },
+        { status: 403 }
+      );
+    }
 
     if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) {
-      return NextResponse.json({ error: `File not found: ${safeRel}` }, { status: 404 });
+      return NextResponse.json({ error: `File not found: ${relPath}` }, { status: 404 });
     }
 
     const buffer = fs.readFileSync(fullPath);
     let contentType = 'application/octet-stream';
-    if (safeRel.endsWith('.json')) contentType = 'application/json';
-    else if (safeRel.endsWith('.csv')) contentType = 'text/csv';
-    else if (safeRel.endsWith('.md')) contentType = 'text/markdown';
+    if (fullPath.endsWith('.json')) contentType = 'application/json';
+    else if (fullPath.endsWith('.csv')) contentType = 'text/csv';
+    else if (fullPath.endsWith('.md')) contentType = 'text/markdown';
 
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': contentType,
-        'Content-Disposition': `attachment; filename="${path.basename(safeRel)}"`,
+        'Content-Disposition': `attachment; filename="${path.basename(fullPath)}"`,
       },
     });
   } catch (err: any) {
