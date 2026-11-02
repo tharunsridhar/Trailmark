@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useHandover } from '@/context/HandoverContext';
 import { Role } from '@/types';
+import { HandoverApiService } from '@/services/api';
+import { DEMO_USERS } from '@/context/HandoverContext';
 import { Shield, UserMinus, UserPlus, Compass, ArrowRight, Check } from 'lucide-react';
 
 interface RoleOption {
@@ -59,6 +61,11 @@ export function Screen0RoleSelection() {
   const handleSelectRole = (r: RoleOption) => {
     setSelectedRole(r.key);
     setActiveRole(r.key);
+
+    const user = DEMO_USERS[r.key];
+    if (user) {
+      HandoverApiService.ensureDemoAuth(user.email, user.name, 'password123').catch(() => {});
+    }
 
     setTimeout(() => {
       setActiveScreen(r.targetScreen);

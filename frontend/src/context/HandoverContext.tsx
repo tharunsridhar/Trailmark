@@ -13,6 +13,7 @@ import {
   QuestionCategory,
   FollowUpQuestion,
 } from '@/types';
+import { HandoverApiService } from '@/services/api';
 
 export const DEMO_USERS: Record<Role, UserProfile> = {
   lead: {
@@ -448,6 +449,14 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
 
   const currentUser = DEMO_USERS[activeRole];
 
+  useEffect(() => {
+    // Authenticate demo persona with backend and establish session cookie
+    if (currentUser?.email) {
+      HandoverApiService.ensureDemoAuth(currentUser.email, currentUser.name, 'password123')
+        .catch(() => {});
+    }
+  }, [activeRole, currentUser?.email, currentUser?.name]);
+
   const dashboardMetrics = {
     totalProjects: 3,
     pendingHandovers: project.isApproved ? 0 : 1,
@@ -507,6 +516,10 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       statements: updatedStatements,
       updatedAt: new Date().toISOString(),
     });
+
+    // Send answer to live backend API per docs/api.md POST /questions/{id}/answer
+    const numId = parseInt(questionId.replace(/\D/g, ''), 10) || 1;
+    HandoverApiService.answerQuestion(numId, 'answer', answer).catch(() => {});
   };
 
   const saveFollowUpAnswer = (questionId: string, followUpAnswer: string) => {
@@ -562,6 +575,9 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       gaps: [...project.gaps.filter((g) => g.id !== newGap.id), newGap],
       updatedAt: new Date().toISOString(),
     });
+
+    const numId = parseInt(questionId.replace(/\D/g, ''), 10) || 1;
+    HandoverApiService.answerQuestion(numId, 'unknown').catch(() => {});
   };
 
   const skipQuestion = (questionId: string) => {
@@ -578,6 +594,9 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       ...project,
       questions: updatedQuestions,
     });
+
+    const numId = parseInt(questionId.replace(/\D/g, ''), 10) || 1;
+    HandoverApiService.answerQuestion(numId, 'skip').catch(() => {});
   };
 
   const submitDepartingAnswers = () => {
@@ -597,6 +616,9 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       statements: updated,
       updatedAt: new Date().toISOString(),
     });
+
+    const numId = parseInt(statementId.replace(/\D/g, ''), 10) || 1;
+    HandoverApiService.editStatement(numId, newContent).catch(() => {});
   };
 
   const rejectStatement = (statementId: string) => {
@@ -606,6 +628,9 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       statements: updated,
       updatedAt: new Date().toISOString(),
     });
+
+    const numId = parseInt(statementId.replace(/\D/g, ''), 10) || 1;
+    HandoverApiService.rejectStatement(numId, 'Rejected during lead verification').catch(() => {});
   };
 
   const resolveGap = (gapId: string, reason: string) => {
@@ -617,6 +642,9 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       gaps: updated,
       updatedAt: new Date().toISOString(),
     });
+
+    const numId = parseInt(gapId.replace(/\D/g, ''), 10) || 1;
+    HandoverApiService.acceptGap(numId, reason).catch(() => {});
   };
 
   const flagGap = (gapId: string) => {
@@ -639,6 +667,9 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       approvedBy: currentUser.name,
       updatedAt: new Date().toISOString(),
     });
+
+    const numId = parseInt(project.id.replace(/\D/g, ''), 10) || 1;
+    HandoverApiService.approveHandover(numId).catch(() => {});
   };
 
   const acknowledgeReceipt = () => {
@@ -653,6 +684,9 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       },
       updatedAt: new Date().toISOString(),
     });
+
+    const numId = parseInt(project.id.replace(/\D/g, ''), 10) || 1;
+    HandoverApiService.confirmReceipt(numId).catch(() => {});
   };
 
   const createNewProject = (data: Partial<ProjectHandover>) => {
@@ -681,6 +715,8 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       receipt: { acknowledged: false },
     };
     persist(newProj);
+
+    HandoverApiService.createHandover(data.name || 'Campus Events App', data.name || 'Campus Events App').catch(() => {});
   };
 
   const resetDemoData = () => {
