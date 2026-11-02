@@ -22,6 +22,10 @@ import {
   FileText,
   Sparkles,
   ExternalLink,
+  AlertCircle,
+  Loader2,
+  Lock,
+  RefreshCw,
 } from 'lucide-react';
 
 // ─── Risk dot colour per evidence status ────────────────────────────────────
@@ -46,6 +50,13 @@ export function Screen2DepartingQuestions() {
   const {
     project,
     questions: backendQuestions,
+    questionsLoading,
+    loadQuestions,
+    activeHandover,
+    activeHandoverId,
+    errorMessage,
+    successMessage,
+    clearMessages,
     activeScreen,
     setActiveScreen,
     saveAnswer,
@@ -58,7 +69,7 @@ export function Screen2DepartingQuestions() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answerText, setAnswerText] = useState('');
   const [followUpText, setFollowUpText] = useState('');
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved');
   const [whyOpen, setWhyOpen] = useState(false);
   const [showVoice, setShowVoice] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -76,6 +87,11 @@ export function Screen2DepartingQuestions() {
   const totalQuestions = project.questions.length;
   const currentQuestion: Question | undefined = project.questions[currentIndex];
 
+  // Refetch questions on mount to ensure fresh authenticated data
+  useEffect(() => {
+    loadQuestions();
+  }, [loadQuestions]);
+
   // Sync answer state on question switch
   useEffect(() => {
     if (currentQuestion) {
@@ -85,7 +101,7 @@ export function Screen2DepartingQuestions() {
       setWhyOpen(false);
       setShowVoice(false);
     }
-  }, [currentIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentIndex, currentQuestion]);
 
   // Recording duration timer
   useEffect(() => {
@@ -108,13 +124,17 @@ export function Screen2DepartingQuestions() {
     setSaveStatus('unsaved');
   };
 
-  const handleSaveCurrent = (opts?: { hasVoice?: boolean; durationSeconds?: number }) => {
-    if (!currentQuestion) return;
+  const handleSaveCurrent = async (opts?: { hasVoice?: boolean; durationSeconds?: number }): Promise<boolean> => {
+    if (!currentQuestion) return false;
     setSaveStatus('saving');
-    setTimeout(() => {
-      saveAnswer(currentQuestion.id, answerText, opts);
+    const ok = await saveAnswer(currentQuestion.id, answerText, opts);
+    if (ok) {
       setSaveStatus('saved');
-    }, 200);
+      return true;
+    } else {
+      setSaveStatus('error');
+      return false;
+    }
   };
 
   const handleSaveFollowUp = () => {
@@ -123,9 +143,15 @@ export function Screen2DepartingQuestions() {
   };
 
   const navigate = useCallback(
-    (dir: 'next' | 'prev') => {
-      if (saveStatus === 'unsaved' && answerText.trim()) handleSaveCurrent();
+    async (dir: 'next' | 'prev') => {
       if (dir === 'next') {
+        if (saveStatus === 'unsaved' && answerText.trim()) {
+          const ok = await handleSaveCurrent();
+          if (!ok) {
+            // Stop navigation if backend rejected answer (e.g. 409 already approved)!
+            return;
+          }
+        }
         if (currentIndex < totalQuestions - 1) {
           setSlideDir('left');
           setSlideKey((k) => k + 1);
@@ -141,28 +167,57 @@ export function Screen2DepartingQuestions() {
         }
       }
     },
-    [saveStatus, answerText, currentIndex, totalQuestions] // eslint-disable-line react-hooks/exhaustive-deps
+    [saveStatus, answerText, currentIndex, totalQuestions, currentQuestion] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  const handleNext = () => navigate('next');
-  const handlePrevious = () => navigate('prev');
-
-  const handleSkip = () => {
-    if (!currentQuestion) return;
-    skipQuestion(currentQuestion.id);
-    handleNext();
+  const handleNext = async () => {
+    await navigate('next');
   };
 
-  const handleDontKnow = () => {
-    if (!currentQuestion) return;
-    markDontKnow(currentQuestion.id);
-    handleNext();
+  const handlePrevious = () => {
+    navigate('prev');
   };
 
-  const handleVoiceTranscription = (text: string, durationSeconds: number) => {
+  const handleSkip = async () => {
+    if (!currentQuestion) return;
+    setSaveStatus('saving');
+    const ok = await skipQuestion(currentQuestion.id);
+    if (ok) {
+      setSaveStatus('saved');
+      if (currentIndex < totalQuestions - 1) {
+        setSlideDir('left');
+        setSlideKey((k) => k + 1);
+        setTimeout(() => setCurrentIndex((p) => p + 1), 10);
+      } else {
+        setIsCompletedMode(true);
+      }
+    } else {
+      setSaveStatus('error');
+    }
+  };
+
+  const handleDontKnow = async () => {
+    if (!currentQuestion) return;
+    setSaveStatus('saving');
+    const ok = await markDontKnow(currentQuestion.id);
+    if (ok) {
+      setSaveStatus('saved');
+      if (currentIndex < totalQuestions - 1) {
+        setSlideDir('left');
+        setSlideKey((k) => k + 1);
+        setTimeout(() => setCurrentIndex((p) => p + 1), 10);
+      } else {
+        setIsCompletedMode(true);
+      }
+    } else {
+      setSaveStatus('error');
+    }
+  };
+
+  const handleVoiceTranscription = async (text: string, durationSeconds: number) => {
     setAnswerText(text);
     setIsRecording(false);
-    handleSaveCurrent({ hasVoice: true, durationSeconds });
+    await handleSaveCurrent({ hasVoice: true, durationSeconds });
   };
 
   if (activeScreen === 'departing-intro') return <InterviewIntroduction />;
@@ -176,7 +231,50 @@ export function Screen2DepartingQuestions() {
       />
     );
   }
-  if (!currentQuestion) return <InterviewIntroduction />;
+
+  // Loading state
+  if (questionsLoading && project.questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#F4F4F0] flex flex-col items-center justify-center p-8 select-none">
+        <Loader2 size={36} className="animate-spin text-[#5A5B4C] mb-4" />
+        <h3 className="text-base font-bold text-[#1F201B]">Loading Handover Questions...</h3>
+        <p className="text-xs text-[#7A7B72] mt-1">Authenticating session and fetching assigned questions.</p>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (!currentQuestion) {
+    return (
+      <div className="min-h-screen bg-[#F4F4F0] flex flex-col items-center justify-center p-8 select-none">
+        <div className="bg-white rounded-3xl p-8 border border-[#E6E6DE] shadow-soft max-w-md w-full text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center mx-auto">
+            <AlertCircle size={24} />
+          </div>
+          <h2 className="text-lg font-bold text-[#1F201B]">No Questions Available</h2>
+          <p className="text-xs text-[#7A7B72] leading-relaxed">
+            There are currently no interview questions generated for this handover. Ask Team Lead Deepak to upload sources and run AI Analysis.
+          </p>
+          <div className="pt-2 flex justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => loadQuestions()}
+              className="px-4 py-2 rounded-full border border-[#E6E6DE] text-xs font-semibold text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1.5"
+            >
+              <RefreshCw size={12} /> Refresh
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveScreen('role-select')}
+              className="px-4 py-2 rounded-full bg-[#5A5B4C] text-white text-xs font-semibold hover:bg-[#4A4B3E]"
+            >
+              Switch Role
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const progressPct = ((currentIndex + 1) / totalQuestions) * 100;
 
@@ -272,6 +370,37 @@ export function Screen2DepartingQuestions() {
             </button>
           </div>
         </header>
+
+        {/* Error notification banner */}
+        {errorMessage && (
+          <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 pt-4">
+            <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs font-semibold text-red-800 flex items-center justify-between shadow-2xs">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={16} className="text-red-600 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+              <button
+                type="button"
+                onClick={clearMessages}
+                className="text-xs text-red-700 underline hover:text-red-950 ml-3 shrink-0"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Handover Approved Locked Banner */}
+        {activeHandover?.status === 'approved' && (
+          <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 pt-4">
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800 flex items-center gap-2 shadow-2xs">
+              <Lock size={15} className="text-amber-700 shrink-0" />
+              <span>
+                This handover has been approved and published by Team Lead. Question responses are locked in read-only mode.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* ── Main Two-Column Split (Question Left | Answer Right) ─────────── */}
         <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-8 lg:py-12 pb-28 flex items-center">
@@ -393,7 +522,15 @@ export function Screen2DepartingQuestions() {
                     </span>
                   )}
                   {saveStatus === 'saving' && (
-                    <span className="text-xs text-[#7A7B72]">Saving...</span>
+                    <span className="text-xs text-[#7A7B72] flex items-center gap-1">
+                      <Loader2 size={12} className="animate-spin" /> Saving...
+                    </span>
+                  )}
+                  {saveStatus === 'error' && (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700">
+                      <AlertCircle size={13} />
+                      Not Saved
+                    </span>
                   )}
                 </div>
               </div>
@@ -441,6 +578,44 @@ export function Screen2DepartingQuestions() {
                     Recording {fmtTime(recordSecs)}
                   </div>
                 )}
+              </div>
+
+              {/* Direct Save Action & Status Notice */}
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-[11px] text-[#7A7B72]">
+                  {saveStatus === 'error' ? (
+                    <span className="text-red-600 font-semibold flex items-center gap-1">
+                      <AlertCircle size={12} /> Response not saved to backend.
+                    </span>
+                  ) : saveStatus === 'unsaved' ? (
+                    <span>Unsaved response</span>
+                  ) : answerText.trim() ? (
+                    <span className="text-emerald-700 flex items-center gap-1">
+                      <Check size={12} /> Saved in backend
+                    </span>
+                  ) : (
+                    <span>Type your answer above</span>
+                  )}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => handleSaveCurrent()}
+                  disabled={saveStatus === 'saving' || !answerText.trim() || activeHandover?.status === 'approved'}
+                  className="px-4 py-1.5 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] disabled:opacity-40 text-white text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5"
+                >
+                  {saveStatus === 'saving' ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={12} />
+                      <span>Save Answer</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Inline Voice Recorder (Expands non-destructively) */}

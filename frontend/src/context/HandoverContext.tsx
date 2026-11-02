@@ -152,10 +152,10 @@ interface HandoverContextType {
     awaitingApproval: number;
     completedHandovers: number;
   };
-  saveAnswer: (questionId: string | number, answer: string, options?: { hasVoice?: boolean; durationSeconds?: number }) => Promise<void>;
+  saveAnswer: (questionId: string | number, answer: string, options?: { hasVoice?: boolean; durationSeconds?: number }) => Promise<boolean>;
   saveFollowUpAnswer: (questionId: string | number, answer: string) => void;
-  markDontKnow: (questionId: string | number) => Promise<void>;
-  skipQuestion: (questionId: string | number) => Promise<void>;
+  markDontKnow: (questionId: string | number) => Promise<boolean>;
+  skipQuestion: (questionId: string | number) => Promise<boolean>;
   submitDepartingAnswers: () => void;
   editStatement: (statementId: string | number, newContent: string) => Promise<void>;
   rejectStatement: (statementId: string | number) => Promise<void>;
@@ -260,7 +260,6 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
 
   const switchDemoRole = useCallback(async (role: Role) => {
     clearMessages();
-    setActiveRole(role);
     const cred = DEMO_CREDENTIALS[role];
     if (cred) {
       const user = await HandoverApiService.ensureDemoAuth(cred.email, cred.name, 'password123');
@@ -268,7 +267,54 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
         setAuthUser(user);
       }
     }
-  }, [clearMessages]);
+    setActiveRole(role);
+
+    // Explicitly refetch handovers and role-specific data with the freshly authenticated cookie
+    try {
+      const res = await HandoverApiService.listHandovers();
+      if (res.data && res.data.length > 0) {
+        setHandovers(res.data);
+        const targetId = activeHandoverId && res.data.some((h) => h.id === activeHandoverId)
+          ? activeHandoverId
+          : res.data[0].id;
+        setActiveHandoverId(targetId);
+        const match = res.data.find((h) => h.id === targetId) || res.data[0];
+        setActiveHandover(match);
+
+        if (role === 'departing' || role === 'lead') {
+          setQuestionsLoading(true);
+          const qRes = await HandoverApiService.listQuestions(targetId);
+          if (qRes.data) {
+            setBackendQuestions(qRes.data);
+          }
+          setQuestionsLoading(false);
+        }
+        if (role === 'incoming') {
+          setHandoverViewLoading(true);
+          const vRes = await HandoverApiService.getHandoverView(targetId);
+          if (vRes.data) {
+            setHandoverView(vRes.data);
+          } else if (vRes.status === 409) {
+            setHandoverView(null);
+            setHandoverViewError('Handover has not been approved by the Team Lead yet. Once approved, the knowledge base will be unlocked.');
+          }
+          const rRes = await HandoverApiService.getReceipt(targetId);
+          setReceipt(rRes.data || null);
+          setHandoverViewLoading(false);
+        }
+        if (role === 'lead') {
+          setStatementsLoading(true);
+          const sRes = await HandoverApiService.listStatements(targetId);
+          if (sRes.data) {
+            setBackendStatements(sRes.data);
+          }
+          setStatementsLoading(false);
+        }
+      }
+    } catch (e) {
+      console.warn('Post-login refetch notice:', e);
+    }
+  }, [activeHandoverId, clearMessages]);
 
   // ─── HANDOVERS (docs/api.md) ───────────────────────────────────────────────
 
@@ -715,11 +761,12 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
 
   // Compatibility action handlers
   const saveAnswer = useCallback(
-    async (questionId: string | number, answer: string) => {
+    async (questionId: string | number, answer: string): Promise<boolean> => {
       const numId = typeof questionId === 'number' ? questionId : parseInt(questionId, 10);
       if (!isNaN(numId)) {
-        await answerQuestionApi(numId, 'answer', answer);
+        return await answerQuestionApi(numId, 'answer', answer);
       }
+      return false;
     },
     [answerQuestionApi]
   );
@@ -727,21 +774,23 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
   const saveFollowUpAnswer = useCallback((_qId: string | number, _ans: string) => {}, []);
 
   const markDontKnow = useCallback(
-    async (questionId: string | number) => {
+    async (questionId: string | number): Promise<boolean> => {
       const numId = typeof questionId === 'number' ? questionId : parseInt(questionId, 10);
       if (!isNaN(numId)) {
-        await answerQuestionApi(numId, 'unknown');
+        return await answerQuestionApi(numId, 'unknown');
       }
+      return false;
     },
     [answerQuestionApi]
   );
 
   const skipQuestion = useCallback(
-    async (questionId: string | number) => {
+    async (questionId: string | number): Promise<boolean> => {
       const numId = typeof questionId === 'number' ? questionId : parseInt(questionId, 10);
       if (!isNaN(numId)) {
-        await answerQuestionApi(numId, 'skip');
+        return await answerQuestionApi(numId, 'skip');
       }
+      return false;
     },
     [answerQuestionApi]
   );
