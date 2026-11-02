@@ -41,7 +41,7 @@ export function InterviewCompletion({ onRevisitQuestion }: InterviewCompletionPr
               Handover Knowledge Submitted
             </h2>
             <p className="text-xs text-[#7A7B72] mt-1 max-w-md mx-auto leading-relaxed">
-              Your responses have been recorded and sent to <strong className="text-[#1F201B]">Kishan S (Team Lead)</strong> for verification against repository code and ADR documents.
+              Your responses have been recorded and sent to <strong className="text-[#1F201B]">Deepak (Team Lead)</strong> for verification against repository code and documentation.
             </p>
           </div>
 
@@ -87,7 +87,7 @@ export function InterviewCompletion({ onRevisitQuestion }: InterviewCompletionPr
         <div>
           <h1 className="text-xl font-bold tracking-tight text-[#1F201B]">Review Before Submission</h1>
           <p className="text-xs text-[#7A7B72] mt-0.5">
-            Verify your answers before forwarding the knowledge handover to Kishan S.
+            Verify your answers before forwarding the knowledge handover to Deepak.
           </p>
         </div>
         <button

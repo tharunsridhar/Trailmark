@@ -27,67 +27,73 @@ const ROLE_QUESTION_TEMPLATES: Record<string, { category: QuestionCategory; shor
   'Backend Developer': [
     {
       category: 'Backend Architecture',
-      shortTitle: 'Payment Retry Architecture',
-      question: 'Why was the payment and insurance retry policy rewritten to exponential backoff without a circuit breaker?',
-      reason: 'Identified in commit c8e92a1 on PR #104. No Architecture Decision Record (ADR) documented why the circuit breaker was dropped.',
+      shortTitle: 'SQLite WAL Database Choice',
+      question: 'Why was the database configured as SQLite in WAL mode instead of PostgreSQL for the initial campus launch?',
+      reason: 'Identified in docs/architecture_overview.md section 1. Team chose SQLite with WAL mode to avoid database hosting costs during student pilot.',
+    },
+    {
+      category: 'Technical Decisions',
+      shortTitle: 'Render vs Heroku Hosting',
+      question: 'Why did the engineering team select Render over Heroku for hosting the API and worker daemons?',
+      reason: 'Identified in chat/chat.json message 5. Team chose Render over Heroku because of the free tier and cheaper background workers.',
     },
     {
       category: 'API Development',
-      shortTitle: 'Emergency Token Expiration',
-      question: 'What is the token expiration strategy for emergency clinical access endpoints and how is security maintained?',
-      reason: 'Conflicting timestamps detected between PR #88 (15 mins) and Slack sync discussion #dev-core (1 hour request).',
-    },
-    {
-      category: 'Dependencies & Credentials',
-      shortTitle: 'Celery Workers & AWS S3 IAM',
-      question: 'Who owns the Celery worker deployment scripts and AWS S3 credentials for HIPAA archives?',
-      reason: 'Unowned cron jobs found in deploy/workers/celery.sh referencing restricted bucket `med-archive-vault-prod`.',
+      shortTitle: 'Session Token Expiry Conflict',
+      question: 'What is the token expiration strategy for student sessions, and why is there a conflict between commit c18d402 (60 mins) and Deepak\'s mandate (15 mins)?',
+      reason: 'Conflicting values detected: commit c18d402 set ACCESS_TOKEN_EXPIRE_MINUTES = 60, while chat message 17 mandates 15 minutes.',
     },
     {
       category: 'Pending Tasks',
-      shortTitle: 'HL7-to-FHIR Transformer Status',
-      question: 'What is the current status of the HL7-to-FHIR payload conversion parser, and what remains unfinished?',
-      reason: 'Task card #342 was marked "In Progress" for 3 weeks with no subsequent commit linked in main branch.',
+      shortTitle: 'Multi-tier Ticket PR #4',
+      question: 'What is the current status of the multi-tier ticket tiering and student discounts feature in PR #4?',
+      reason: 'PR #4 has been open since late August with unaddressed merge conflicts in app/api/discounts.py.',
+    },
+    {
+      category: 'Dependencies & Credentials',
+      shortTitle: 'Unowned Task T05: S3 Backups',
+      question: 'Who owns task T05 (automated daily database backup to S3) and where are the AWS credentials stored?',
+      reason: 'Task T05 is unassigned on the task board and no S3 backup script exists in the repository.',
     },
     {
       category: 'Risks & Vulnerabilities',
-      shortTitle: 'Staging Twilio Credentials',
-      question: 'Are there any unencrypted staging credentials in the notification dispatch service that require rotation before departure?',
-      reason: 'Found placeholder comment "// TODO: Migrate Twilio dev keys to Vault" in services/notify.py:44.',
+      shortTitle: 'Mobile QR Scanner Benchmark',
+      question: 'What is the verification status of the mobile QR ticket scanner benchmark where you claimed 5,000 scans per minute with zero errors?',
+      reason: 'Claimed in chat message 32 that scanner handled 5,000 scans/min, but no benchmark script or log exists in repo.',
     },
   ],
   'Frontend Developer': [
     {
       category: 'Backend Architecture',
-      shortTitle: 'Next.js App Router State Hydration',
-      question: 'How are clinical session states synchronized between Next.js client components and backend WebSocket streams?',
-      reason: 'PR #112 altered real-time vital update subscriptions without client-side reconnect throttling.',
+      shortTitle: 'Tailwind CSS Migration',
+      question: 'Why was the student portal redesigned with Tailwind CSS instead of Chakra UI, and are there legacy components?',
+      reason: 'docs/meeting_notes_august.md notes decision to switch to Tailwind to eliminate runtime Emotion CSS overhead.',
     },
     {
       category: 'API Development',
-      shortTitle: 'FHIR Client Form Validation',
-      question: 'Which custom validation hooks govern patient intake forms before sending payloads to the FastAPI endpoints?',
-      reason: 'Issue #204 noted validation mismatches between frontend schemas and FHIR R4 schema definitions.',
+      shortTitle: 'Ticket QR Code Scanner Integration',
+      question: 'How does the mobile check-in view handle HMAC-SHA256 verification when validating attendee QR tokens offline?',
+      reason: 'Contradiction found between raw UUID v4 in task T08 and HMAC payload in architecture_overview.md.',
     },
     {
       category: 'Pending Tasks',
-      shortTitle: 'Unfinished Patient Discharge Screen',
-      question: 'What work remains on the multi-step patient discharge workflow before Priya takes over the frontend repo?',
-      reason: 'Branch `feat/discharge-flow` has 3 unmerged PR comments and pending mock fixtures.',
+      shortTitle: 'Auditorium Seating Selector',
+      question: 'What remains to be completed on the 350-seat auditorium visual layout selector in PR #5?',
+      reason: 'PR #5 caps capacity at 350 while architecture doc specifies 500 attendees.',
     },
   ],
   'DevOps Engineer': [
     {
       category: 'Dependencies & Credentials',
-      shortTitle: 'Ansible Vault & Secret Rotation',
-      question: 'Where are master decryption keys for staging and production Ansible vaults stored, and who has access?',
-      reason: 'Automated scan detected deploy scripts relying on local developer environment variables.',
+      shortTitle: 'Render Worker Daemon & Celery',
+      question: 'How is the ReportLab PDF badge rendering worker managed on Render, and what happens if Redis restarts?',
+      reason: 'Worker daemon script deploy/worker_daemon.py does not define an automatic restart watchdog in Render config.',
     },
     {
-      category: 'Technical Decisions',
-      shortTitle: 'Redis Cluster Failover & Backup',
-      question: 'How is automated failover configured for the Redis vitals streaming broker in production Kubernetes pods?',
-      reason: 'Codebase ADR-02 outlines single-node fallback without replication monitoring.',
+      category: 'Risks & Vulnerabilities',
+      shortTitle: 'CAMPUS_PAY_SECRET Missing Secret',
+      question: 'Where is CAMPUS_PAY_SECRET provisioned for payment webhook verification, and why is it absent from deployment_guide.md?',
+      reason: 'api/payments.py reads CAMPUS_PAY_SECRET from env, but no instructions or key rotation notes exist.',
     },
   ],
 };
@@ -232,7 +238,7 @@ export function Screen1TeamLeadDashboard() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Smart Healthcare Management System"
+                  placeholder="e.g. Campus Events App"
                   className="w-full px-4 py-2.5 rounded-xl border border-[#E6E6DE] bg-white text-xs text-[#1F201B] placeholder-[#A2A399] focus:outline-none focus:ring-1 focus:ring-[#5A5B4C] transition-all"
                 />
               </div>
@@ -243,7 +249,7 @@ export function Screen1TeamLeadDashboard() {
                   type="text"
                   value={formData.techStack}
                   onChange={(e) => setFormData({ ...formData, techStack: e.target.value })}
-                  placeholder="e.g. Python, FastAPI, PostgreSQL, Redis, Celery"
+                  placeholder="e.g. Python, FastAPI, SQLite (WAL), Render, Celery, ReportLab"
                   className="w-full px-4 py-2.5 rounded-xl border border-[#E6E6DE] bg-white text-xs text-[#1F201B] placeholder-[#A2A399] focus:outline-none focus:ring-1 focus:ring-[#5A5B4C] transition-all"
                 />
               </div>
@@ -299,7 +305,7 @@ export function Screen1TeamLeadDashboard() {
                   type="url"
                   value={formData.githubRepo}
                   onChange={(e) => setFormData({ ...formData, githubRepo: e.target.value })}
-                  placeholder="https://github.com/trailmark-org/smart-healthcare-core"
+                  placeholder="https://github.com/campus-synthetic/events-app"
                   className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#E6E6DE] bg-white text-xs text-[#1F201B] placeholder-[#A2A399] focus:outline-none focus:ring-1 focus:ring-[#5A5B4C]"
                 />
               </div>
@@ -312,7 +318,7 @@ export function Screen1TeamLeadDashboard() {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
-                placeholder="Describe critical services, HIPAA mandates, and transition milestones..."
+                placeholder="Describe critical backend services, ticket webhook retries, and transition milestones..."
                 className="w-full px-4 py-2.5 rounded-xl border border-[#E6E6DE] bg-white text-xs text-[#1F201B] placeholder-[#A2A399] focus:outline-none focus:ring-1 focus:ring-[#5A5B4C] resize-none leading-relaxed"
               />
             </div>
@@ -328,7 +334,7 @@ export function Screen1TeamLeadDashboard() {
                   Upload project files, or <span className="underline text-[#5A5B4C]">browse</span>
                 </p>
                 <p className="text-[11px] text-[#A2A399] mt-0.5">
-                  Loaded: ADR-04.md, Patient_Ingestion_SOP.pdf, Slack_Export.json
+                  Loaded: architecture_overview.md, deployment_guide.md, meeting_notes_august.md, tasks.csv, chat.json
                 </p>
               </div>
             </div>

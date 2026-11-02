@@ -74,7 +74,7 @@ export function Screen4IncomingHandover() {
           <Clock size={36} className="text-[#5A5B4C] mx-auto mb-3" />
           <h2 className="text-lg font-bold text-[#1F201B] mb-2">Handover In Progress</h2>
           <p className="text-xs text-[#7A7B72] max-w-md mx-auto leading-relaxed">
-            Team Lead Kishan S has not yet approved the handover package. Once approved, the verified architecture records and remaining gaps will be unlocked here for your inspection.
+            Team Lead Deepak has not yet approved the handover package. Once approved, the verified architecture records and remaining gaps will be unlocked here for your inspection.
           </p>
           <div className="mt-6 p-4 rounded-2xl bg-[#F4F4F0] border border-[#E6E6DE] text-xs max-w-sm mx-auto">
             <p className="font-bold text-[#1F201B]">{project.name}</p>
