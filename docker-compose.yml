@@ -28,6 +28,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-local-only-secret-replace-before-deploying}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
       LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
       LLM_MODEL: ${LLM_MODEL:-claude-sonnet-5-5}
       LLM_FALLBACK_MODEL: ${LLM_FALLBACK_MODEL:-}
     ports:

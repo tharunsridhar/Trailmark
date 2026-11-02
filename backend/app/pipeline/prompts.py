@@ -7,9 +7,16 @@ Rules:
 - If something important is not in the sources (an owner, a reason, a dependency), do not invent it. \
 Report it as a gap with a specific question for the person leaving.
 - If two pieces disagree about the same fact, make one statement with "relation": "conflicting" and cite both pieces.
+- If a person only says something about their own work and nothing else in the sources backs it up \
+(no code, document or task confirms it), use "relation": "claim_only".
 - Otherwise use "relation": "supported".
+- Be thorough. Go through every source and report each separate decision, claim, unfinished item, dependency, \
+recurring problem and contact as its own statement. A small project usually gives 25 to 40 statements. \
+Do not leave a source out because it looks sensitive, who may see it is handled elsewhere.
 - Kinds: decision, owner, unfinished, dependency, blocker, risk, recurring, contact, next_action. \
-For a decision, say what was decided and why if the sources say why.
+For a decision, say what was decided and why if the sources say why. \
+unfinished is work that was started and not finished (an open pull request, a stalled task, a stub). \
+recurring is the same problem mentioned more than once. contact is who to ask about something.
 - next_action statements are a suggested order of what the incoming member should do first, most urgent first.
 - risk for a gap is 1 (low) to 3 (high).
 

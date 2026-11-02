@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 from app.pipeline.analyze import analyze, parse_json, quote_in_piece
-from app.pipeline.llm import AnthropicClient, LLMError
+from app.pipeline.llm import AnthropicClient, ChatCompletionsClient, LLMError, build_llm
 from tests.helpers import FakeLLM
 
 
@@ -44,6 +44,13 @@ def test_supported_claim_with_real_quote_is_verified():
     assert [(d.label, d.text) for d in result.drafts] == [("verified", "Hosting is on Render")]
     assert result.drafts[0].evidence[0].quote == "go with Render"
     assert result.dropped == 0
+
+
+def test_claim_only_stays_unverified_and_skips_the_verifier():
+    llm = FakeLLM({"statements": [statement(relation="claim_only")], "gaps": []})
+    result = analyze(llm, PIECES)
+    assert [(d.label, d.text) for d in result.drafts] == [("unverified", "Hosting is on Render")]
+    assert len(llm.prompts) == 1
 
 
 def test_fabricated_quote_drops_the_claim():
@@ -139,9 +146,10 @@ def test_wrong_shape_raises():
 
 
 class FakeResponse:
-    def __init__(self, status_code, body=None):
+    def __init__(self, status_code, body=None, headers=None):
         self.status_code = status_code
         self._body = body or {}
+        self.headers = headers or {}
 
     def json(self):
         return self._body
@@ -182,3 +190,79 @@ def test_client_gives_up_with_llm_error(monkeypatch):
     monkeypatch.setattr(AnthropicClient, "sleep", staticmethod(lambda s: None))
     with pytest.raises(LLMError):
         AnthropicClient("key", ["main"]).complete("s", "u")
+
+
+def chat_reply(text):
+    return FakeResponse(200, {"choices": [{"message": {"content": text}}]})
+
+
+def test_groq_client_sends_chat_format_and_reads_reply(monkeypatch):
+    seen = {}
+
+    def fake_post(url, **kwargs):
+        seen["url"] = url
+        seen["headers"] = kwargs["headers"]
+        seen["body"] = kwargs["json"]
+        return chat_reply("hello")
+
+    monkeypatch.setattr("app.pipeline.llm.httpx.post", fake_post)
+    assert ChatCompletionsClient("gsk_test", ["main"]).complete("be brief", "hi") == "hello"
+    assert seen["url"].endswith("/chat/completions")
+    assert seen["headers"]["Authorization"] == "Bearer gsk_test"
+    assert seen["body"]["messages"] == [
+        {"role": "system", "content": "be brief"},
+        {"role": "user", "content": "hi"},
+    ]
+
+
+def test_groq_client_strips_reasoning_block(monkeypatch):
+    monkeypatch.setattr(
+        "app.pipeline.llm.httpx.post", lambda url, **kw: chat_reply("<think>let me see\nhmm</think>\n{\"a\": 1}")
+    )
+    assert ChatCompletionsClient("k", ["main"]).complete("s", "u") == '{"a": 1}'
+
+
+def test_groq_client_waits_after_rate_limit_then_succeeds(monkeypatch):
+    waits = []
+    replies = [FakeResponse(429, headers={"retry-after": "7"}), chat_reply("fine")]
+    monkeypatch.setattr("app.pipeline.llm.httpx.post", lambda url, **kw: replies.pop(0))
+    monkeypatch.setattr(ChatCompletionsClient, "sleep", staticmethod(waits.append))
+    assert ChatCompletionsClient("k", ["main"]).complete("s", "u") == "fine"
+    assert waits == [7]
+
+
+def test_groq_rate_limit_wait_is_capped(monkeypatch):
+    waits = []
+    replies = [FakeResponse(429, headers={"retry-after": "600"}), chat_reply("fine")]
+    monkeypatch.setattr("app.pipeline.llm.httpx.post", lambda url, **kw: replies.pop(0))
+    monkeypatch.setattr(ChatCompletionsClient, "sleep", staticmethod(waits.append))
+    ChatCompletionsClient("k", ["main"]).complete("s", "u")
+    assert waits == [20]
+
+
+def test_groq_client_odd_reply_shape_is_an_error(monkeypatch):
+    monkeypatch.setattr("app.pipeline.llm.httpx.post", lambda url, **kw: FakeResponse(200, {"choices": []}))
+    monkeypatch.setattr(ChatCompletionsClient, "sleep", staticmethod(lambda s: None))
+    with pytest.raises(LLMError):
+        ChatCompletionsClient("k", ["main"]).complete("s", "u")
+
+
+def test_build_llm_picks_client_from_provider(monkeypatch):
+    def settings(**overrides):
+        base = dict(llm_api_key="k", llm_provider="anthropic", llm_model="m", llm_fallback_model="", llm_base_url="")
+        return SimpleNamespace(**{**base, **overrides})
+
+    monkeypatch.setattr("app.pipeline.llm.get_settings", lambda: settings(llm_provider="groq", llm_fallback_model="b"))
+    client = build_llm()
+    assert isinstance(client, ChatCompletionsClient) and client.models == ["m", "b"]
+    assert client.base_url.startswith("https://api.groq.com")
+
+    monkeypatch.setattr("app.pipeline.llm.get_settings", lambda: settings(llm_provider="gemini"))
+    gemini = build_llm()
+    assert isinstance(gemini, ChatCompletionsClient) and "generativelanguage.googleapis.com" in gemini.base_url
+
+    monkeypatch.setattr("app.pipeline.llm.get_settings", lambda: settings())
+    assert isinstance(build_llm(), AnthropicClient)
+
+    monkeypatch.setattr("app.pipeline.llm.get_settings", lambda: settings(llm_api_key=""))
+    assert build_llm() is None

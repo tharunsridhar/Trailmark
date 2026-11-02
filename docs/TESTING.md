@@ -77,4 +77,4 @@ Being honest about the gaps:
 
 ## Structured feedback
 
-None collected yet. To add before submission: a short walkthrough with one or two people outside the team using the synthetic project, with what confused them and what changed afterwards.
+None collected yet. The script, questions and a table to fill in are in [`FEEDBACK.md`](FEEDBACK.md). To add before submission: a short walkthrough with one or two people outside the team using the synthetic project, with what confused them and what changed afterwards.

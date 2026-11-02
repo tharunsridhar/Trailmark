@@ -285,9 +285,9 @@
     {
       "id": "C32",
       "type": "derived_restricted",
-      "source_file": "chat/chat.json",
+      "source_file": "chat/lead_private_chat.json",
       "location": "chat message 56",
-      "description": "Chat message quotes confidential hr_private_notes paragraph 2 stating exit bonus is contingent on handover signoff; inherits restricted visibility",
+      "description": "Lead-only 1-on-1 chat message quotes confidential hr_private_notes paragraph 2 stating exit bonus is contingent on handover signoff; stays restricted to the lead",
       "expected_label": "verified",
       "expected_visible_to": ["lead"]
     }

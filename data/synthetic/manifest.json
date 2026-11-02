@@ -1,11 +1,31 @@
 {
   "project_name": "Campus Events App",
   "people": [
-    { "name": "Asha", "role": "leaver", "email": "asha@campus-synthetic.internal" },
-    { "name": "Deepak", "role": "lead", "email": "deepak-lead@campus-synthetic.internal" },
-    { "name": "Kiran", "role": "successor", "email": "kiran@campus-synthetic.internal" },
-    { "name": "Ravi", "role": "member", "email": "ravi@campus-synthetic.internal" },
-    { "name": "Neha", "role": "member", "email": "neha@campus-synthetic.internal" }
+    {
+      "name": "Asha",
+      "role": "leaver",
+      "email": "asha@campus-synthetic.internal"
+    },
+    {
+      "name": "Deepak",
+      "role": "lead",
+      "email": "deepak-lead@campus-synthetic.internal"
+    },
+    {
+      "name": "Kiran",
+      "role": "successor",
+      "email": "kiran@campus-synthetic.internal"
+    },
+    {
+      "name": "Ravi",
+      "role": "member",
+      "email": "ravi@campus-synthetic.internal"
+    },
+    {
+      "name": "Neha",
+      "role": "member",
+      "email": "neha@campus-synthetic.internal"
+    }
   ],
   "sources": [
     {
@@ -19,6 +39,12 @@
       "type": "chat",
       "name": "Team Chat Archive",
       "allowed_roles": ["lead", "departing", "incoming"]
+    },
+    {
+      "file": "chat/lead_private_chat.json",
+      "type": "chat",
+      "name": "Lead 1-on-1 Chat (Confidential)",
+      "allowed_roles": ["lead"]
     },
     {
       "file": "tasks/tasks.csv",

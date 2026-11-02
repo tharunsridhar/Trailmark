@@ -129,6 +129,9 @@ def analyze(llm, pieces) -> AnalysisResult:
         # a conflict needs two real pieces that disagree, one piece cannot conflict with itself
         if item.get("relation") == "conflicting" and len(evidence) >= 2:
             draft.label = "conflicting"
+        elif item.get("relation") == "claim_only":
+            # nobody but the person backs it up, so it stays unverified whatever the quote says
+            pass
         else:
             to_verify.append(draft)
         drafts.append(draft)

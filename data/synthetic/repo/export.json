@@ -85,11 +85,25 @@
       "files": ["app/api/tickets.py"]
     },
     {
+      "sha": "a90d3e4",
+      "author": "Ravi",
+      "date": "2026-08-31T10:35:00Z",
+      "message": "Pin celery version in requirements",
+      "files": ["requirements.txt"]
+    },
+    {
       "sha": "71a2b09",
       "author": "Neha",
       "date": "2026-09-02T10:40:00Z",
       "message": "Add event filter by campus building and department",
       "files": ["frontend/src/EventFilters.tsx"]
+    },
+    {
+      "sha": "5be7c10",
+      "author": "Asha",
+      "date": "2026-09-04T09:50:00Z",
+      "message": "Fix typo in registration confirmation email template",
+      "files": ["app/templates/confirm.html"]
     },
     {
       "sha": "5510de8",
@@ -99,11 +113,25 @@
       "files": ["app/services/pdf.py"]
     },
     {
+      "sha": "c7714bd",
+      "author": "Neha",
+      "date": "2026-09-09T15:05:00Z",
+      "message": "Fix date formatting on event cards",
+      "files": ["frontend/src/EventCard.tsx"]
+    },
+    {
       "sha": "44a102c",
       "author": "Asha",
       "date": "2026-09-11T15:30:00Z",
       "message": "Alembic migration 004 for speaker profile fields",
       "files": ["alembic/versions/004_speakers.py"]
+    },
+    {
+      "sha": "2f6e8a1",
+      "author": "Deepak",
+      "date": "2026-09-13T11:40:00Z",
+      "message": "Add CORS allowlist for the campus frontend origin",
+      "files": ["app/main.py"]
     },
     {
       "sha": "3391f0d",
@@ -125,6 +153,13 @@
       "date": "2026-09-23T11:20:00Z",
       "message": "Add student ticket QR presentation modal dialog",
       "files": ["frontend/src/TicketModal.tsx"]
+    },
+    {
+      "sha": "e08b5c9",
+      "author": "Kiran",
+      "date": "2026-09-26T13:25:00Z",
+      "message": "Add pytest fixtures for event registration",
+      "files": ["tests/conftest.py"]
     },
     {
       "sha": "0060d0a",
