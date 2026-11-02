@@ -258,6 +258,43 @@ export const HandoverApiService = {
     return request<SourceOut[]>(`/handovers/${handoverId}/sources`);
   },
 
+  /**
+   * Helper that reads all synthetic sources from manifest and uploads each to the backend.
+   */
+  async uploadSyntheticManifestSources(handoverId: number | string): Promise<{ success: number; failed: number; errors: string[] }> {
+    const manifestRes = await fetch('/api/synthetic/manifest');
+    if (!manifestRes.ok) throw new Error('Could not read synthetic manifest');
+    const manifest = await manifestRes.json();
+    let success = 0;
+    let failed = 0;
+    const errors: string[] = [];
+
+    for (const src of manifest.sources) {
+      try {
+        const fileRes = await fetch(`/api/synthetic/file?path=${encodeURIComponent(src.file)}`);
+        if (!fileRes.ok) {
+          failed++;
+          errors.push(`Could not read ${src.file}`);
+          continue;
+        }
+        const blob = await fileRes.blob();
+        const filename = src.file.split('/').pop() || src.file;
+        const file = new File([blob], filename);
+        const uploadRes = await this.uploadSource(handoverId, file, src.type, src.name, src.allowed_roles);
+        if (uploadRes.error) {
+          failed++;
+          errors.push(`${src.name}: ${uploadRes.error}`);
+        } else {
+          success++;
+        }
+      } catch (err: any) {
+        failed++;
+        errors.push(`${src.name}: ${err.message}`);
+      }
+    }
+    return { success, failed, errors };
+  },
+
   async getPiece(pieceId: number | string) {
     return request<PieceOut>(`/pieces/${pieceId}`);
   },

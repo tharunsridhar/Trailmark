@@ -1,395 +1,150 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Role,
-  ProjectHandover,
   UserProfile,
+  ProjectHandover,
   Question,
-  Gap,
   Statement,
-  EvidenceStatus,
+  Gap,
   EvidencePiece,
+  EvidenceStatus,
+  QuestionStatus,
   QuestionCategory,
-  FollowUpQuestion,
+  HandoverReceipt as TypesHandoverReceipt,
 } from '@/types';
-import { HandoverApiService } from '@/services/api';
+import {
+  HandoverApiService,
+  UserOut,
+  HandoverOut,
+  MemberOut,
+  SourceOut,
+  AnalysisOut,
+  ApiQuestion,
+  ApiStatement,
+  StatementVersion,
+  HandoverView,
+  HandoverReceipt,
+  PieceOut,
+} from '@/services/api';
+
+export const DEMO_CREDENTIALS: Record<Role, { name: string; email: string; role: Role; roleTitle: string; avatar: string }> = {
+  lead: {
+    name: 'Deepak',
+    email: 'deepak-lead@campus-synthetic.internal',
+    role: 'lead',
+    roleTitle: 'Engineering Lead & Reviewer',
+    avatar: 'D',
+  },
+  departing: {
+    name: 'Asha',
+    email: 'asha@campus-synthetic.internal',
+    role: 'departing',
+    roleTitle: 'Senior Backend Developer (Leaver)',
+    avatar: 'A',
+  },
+  incoming: {
+    name: 'Kiran',
+    email: 'kiran@campus-synthetic.internal',
+    role: 'incoming',
+    roleTitle: 'Software Engineer (Successor)',
+    avatar: 'K',
+  },
+};
 
 export const DEMO_USERS: Record<Role, UserProfile> = {
   lead: {
     id: 'user-lead',
-    name: 'Deepak',
+    name: DEMO_CREDENTIALS.lead.name,
     role: 'lead',
-    roleTitle: 'Engineering Lead & Reviewer',
-    avatar: 'D',
-    email: 'deepak-lead@campus-synthetic.internal',
+    roleTitle: DEMO_CREDENTIALS.lead.roleTitle,
+    avatar: DEMO_CREDENTIALS.lead.avatar,
+    email: DEMO_CREDENTIALS.lead.email,
   },
   departing: {
     id: 'user-departing',
-    name: 'Asha',
+    name: DEMO_CREDENTIALS.departing.name,
     role: 'departing',
-    roleTitle: 'Senior Backend Developer (Leaver)',
-    avatar: 'A',
-    email: 'asha@campus-synthetic.internal',
+    roleTitle: DEMO_CREDENTIALS.departing.roleTitle,
+    avatar: DEMO_CREDENTIALS.departing.avatar,
+    email: DEMO_CREDENTIALS.departing.email,
   },
   incoming: {
     id: 'user-incoming',
-    name: 'Kiran',
+    name: DEMO_CREDENTIALS.incoming.name,
     role: 'incoming',
-    roleTitle: 'Software Engineer (Successor)',
-    avatar: 'K',
-    email: 'kiran@campus-synthetic.internal',
+    roleTitle: DEMO_CREDENTIALS.incoming.roleTitle,
+    avatar: DEMO_CREDENTIALS.incoming.avatar,
+    email: DEMO_CREDENTIALS.incoming.email,
   },
-};
-
-const SYNTHETIC_PROJECT: ProjectHandover = {
-  id: 'proj-campus-01',
-  name: 'Campus Events App',
-  description:
-    'Campus event ticketing, live student registration portal, and background ReportLab badge dispatch system for university student activities.',
-  objectives:
-    'Transition backend services to Kiran: SQLite WAL database, Render worker queues, ticket webhooks with exponential backoff, and resolve unowned tasks and PR conflicts.',
-  techStack: 'Python, FastAPI, SQLite (WAL), Render, Celery, ReportLab, Tailwind CSS',
-  status: 'Active Handover',
-  departingMember: 'Asha',
-  departingRole: 'Backend Developer',
-  incomingMember: 'Kiran',
-  githubRepo: 'https://github.com/campus-synthetic/events-app',
-  documents: [
-    'architecture_overview.md',
-    'deployment_guide.md',
-    'meeting_notes_august.md',
-    'tasks.csv',
-    'chat.json',
-    'hr_private_notes.md',
-  ],
-  createdAt: '2026-07-16T10:00:00Z',
-  updatedAt: '2026-09-28T16:30:00Z',
-  isApproved: false,
-  receipt: {
-    acknowledged: false,
-  },
-  questions: [
-    {
-      id: 'q-1',
-      category: 'Backend Architecture',
-      shortTitle: 'SQLite WAL Database Choice',
-      question:
-        'Why was the database configured as SQLite in WAL mode instead of PostgreSQL for the initial campus launch?',
-      reason:
-        'Identified in docs/architecture_overview.md section 1. Team chose SQLite with WAL mode to avoid database hosting costs and simplify zero-configuration deployment during the student pilot.',
-      roleTarget: 'Backend Developer',
-      status: 'answered',
-      answer:
-        'We chose SQLite with WAL mode over PostgreSQL for the initial campus MVP to avoid database hosting costs and simplify zero-configuration deployment during the student pilot. WAL mode allows concurrent readers alongside the registration writer.',
-      evidenceStatus: 'verified',
-      updatedAt: '2026-09-24T14:20:00Z',
-      followUp: {
-        id: 'fu-q-1',
-        question:
-          'What is the busy timeout setting configured in app/db.py to prevent "database is locked" errors during 200+ registration surges?',
-        answer:
-          'We added a busy_timeout of 15,000ms (15 seconds) in PR #1 connect args so write locks wait gracefully.',
-        status: 'answered',
-        answeredAt: '2026-09-24T14:25:00Z',
-      },
-    },
-    {
-      id: 'q-2',
-      category: 'Technical Decisions',
-      shortTitle: 'Render vs Heroku Hosting',
-      question:
-        'Why did the engineering team select Render over Heroku for hosting the API and worker daemons?',
-      reason:
-        'Identified in chat/chat.json message 5. Team chose Render over Heroku because of the free tier and cheaper background workers for our student budget.',
-      roleTarget: 'Backend Developer',
-      status: 'answered',
-      answer:
-        'Team chose Render over Heroku because of the free tier and cheaper background workers for our student budget, plus direct integration with our GitHub repository preview branches.',
-      evidenceStatus: 'verified',
-      updatedAt: '2026-09-24T15:00:00Z',
-    },
-    {
-      id: 'q-3',
-      category: 'API Development',
-      shortTitle: 'Session Token Expiry Conflict',
-      question:
-        'What is the token expiration strategy for student sessions, and why is there a conflict between commit c18d402 (60 mins) and Deepak\'s mandate (15 mins)?',
-      reason:
-        'Conflicting values detected: commit c18d402 set ACCESS_TOKEN_EXPIRE_MINUTES = 60, while chat message 17 mandates 15 minutes for campus compliance.',
-      roleTarget: 'Backend Developer',
-      status: 'answered',
-      answer:
-        'I set it to 60 mins in commit c18d402 so students don\'t get logged out mid-checkout, but Deepak requested 15 mins for security compliance. We should add a background refresh endpoint before Kiran releases to production.',
-      evidenceStatus: 'unverified',
-      updatedAt: '2026-09-24T16:15:00Z',
-      followUp: {
-        id: 'fu-q-3',
-        question:
-          'How are refresh tokens stored and revoked when a student logs out on a shared lab computer?',
-        status: 'pending',
-      },
-    },
-    {
-      id: 'q-4',
-      category: 'Pending Tasks',
-      shortTitle: 'Multi-tier Ticket PR #4',
-      question:
-        'What is the current status of the multi-tier ticket tiering and student discounts feature in PR #4?',
-      reason:
-        'PR #4 has been open since late August with unaddressed merge conflicts in app/api/discounts.py and failing type checks.',
-      roleTarget: 'Backend Developer',
-      status: 'answered',
-      answer:
-        'The discount calculation logic is implemented, but there is a merge conflict with master branch in app/api/discounts.py that needs to be resolved before merging. The schema models are in app/models/discounts.py.',
-      evidenceStatus: 'unverified',
-      updatedAt: '2026-09-25T11:00:00Z',
-    },
-    {
-      id: 'q-5',
-      category: 'Dependencies & Credentials',
-      shortTitle: 'Unowned Task T05: S3 Backups',
-      question:
-        'Who owns task T05 (automated daily database backup to S3) and where are the AWS credentials stored?',
-      reason:
-        'Task T05 is unassigned on the task board and no S3 backup script exists in the repository.',
-      roleTarget: 'Backend Developer',
-      status: 'answered',
-      answer:
-        'Task T05 is currently unowned because I did not have AWS IAM credentials for the campus S3 bucket. Deepak needs to provision IAM keys for Kiran before launch.',
-      evidenceStatus: 'unverified',
-      updatedAt: '2026-09-25T12:30:00Z',
-    },
-    {
-      id: 'q-6',
-      category: 'Risks & Vulnerabilities',
-      shortTitle: 'Mobile QR Scanner Benchmark',
-      question:
-        'What is the verification status of the mobile QR ticket scanner benchmark where you claimed 5,000 scans per minute with zero errors?',
-      reason:
-        'Asha claimed in chat message 32 that the scanner was tested at 5,000 scans/min, but no benchmark script or test log exists in the repo.',
-      roleTarget: 'Backend Developer',
-      status: 'answered',
-      answer:
-        'I ran the test locally against a mock server from a scratch file that was not pushed to git. A reproducible benchmark script still needs to be created by Kiran.',
-      evidenceStatus: 'unverified',
-      updatedAt: '2026-09-25T14:45:00Z',
-    },
-    {
-      id: 'q-7',
-      category: 'Technical Decisions',
-      shortTitle: 'Auditorium Capacity Discrepancy',
-      question:
-        'Why is there a discrepancy in auditorium capacity between PR #5 (350 seats) and architecture_overview.md (500 seats)?',
-      reason:
-        'Contradiction detected: PR #5 limits auditorium bookings to 350 seats, while architecture_overview.md specifies a hard cap of 500 seats.',
-      roleTarget: 'Backend Developer',
-      status: 'pending',
-      evidenceStatus: 'unverified',
-    },
-    {
-      id: 'q-8',
-      category: 'Dependencies & Credentials',
-      shortTitle: 'Undocumented campus_sms_sdk',
-      question:
-        'Where are the credentials and configuration instructions for campus_sms_sdk imported in commit f710a34?',
-      reason:
-        'Commit f710a34 added the SMS dispatch library, but no setup notes or API keys exist in deployment_guide.md.',
-      roleTarget: 'Backend Developer',
-      status: 'pending',
-      evidenceStatus: 'unverified',
-    },
-  ],
-  evidencePieces: [
-    {
-      id: 'ev-01',
-      title: 'PR #3: HTTP-Only Secure Cookies',
-      type: 'commit',
-      sourceRef: 'repo/export.json commit e4b1029',
-      quote: 'Store JWT in HTTP-only cookies instead of localStorage to prevent XSS credential theft',
-      timestamp: '2026-07-27 16:45 UTC',
-      author: 'Asha',
-    },
-    {
-      id: 'ev-02',
-      title: 'Architecture Overview: Database Decision',
-      type: 'doc',
-      sourceRef: 'docs/architecture_overview.md paragraph 1',
-      quote: 'We chose SQLite with WAL mode over PostgreSQL for the initial campus MVP to avoid database hosting costs and simplify zero-configuration deployment',
-      timestamp: '2026-07-20 10:00 UTC',
-      author: 'Asha',
-    },
-    {
-      id: 'ev-03',
-      title: 'Chat Message #5: Hosting Selection',
-      type: 'chat',
-      sourceRef: 'chat/chat.json message 5',
-      quote: 'Team chose Render over Heroku because of the free tier and cheaper background workers for our student budget',
-      timestamp: '2026-07-17 09:42 UTC',
-      author: 'Asha',
-    },
-    {
-      id: 'ev-04',
-      title: 'Commit a3f9c21: Webhook Retry Policy',
-      type: 'commit',
-      sourceRef: 'repo/export.json commit a3f9c21',
-      quote: 'Implement exponential backoff for ticket webhook delivery to prevent campus server overload',
-      timestamp: '2026-08-08 15:10 UTC',
-      author: 'Asha',
-    },
-    {
-      id: 'ev-05',
-      title: 'Meeting Notes: Frontend Tailwind Decision',
-      type: 'doc',
-      sourceRef: 'docs/meeting_notes_august.md paragraph 1',
-      quote: 'The team agreed to adopt Tailwind CSS instead of Chakra UI for the frontend rebuild to reduce build bundle size and eliminate runtime emotion CSS overhead',
-      timestamp: '2026-08-15 14:00 UTC',
-      author: 'Engineering Team',
-    },
-  ],
-  statements: [
-    {
-      id: 'st-01',
-      category: 'decision',
-      title: 'SQLite Database in WAL Mode for Pilot',
-      content:
-        'SQLite in WAL mode was selected over PostgreSQL to eliminate database server operational costs during the student pilot while supporting concurrent read access.',
-      evidenceStatus: 'verified',
-      evidenceId: 'ev-02',
-      evidenceQuote:
-        'We chose SQLite with WAL mode over PostgreSQL for the initial campus MVP to avoid database hosting costs and simplify zero-configuration deployment',
-      sourceLabel: 'docs/architecture_overview.md',
-      departingAnswer: 'Confirmed: WAL mode supports concurrent student checkouts with 15s timeout.',
-    },
-    {
-      id: 'st-02',
-      category: 'decision',
-      title: 'Render Cloud Deployment Platform',
-      content:
-        'Render was chosen over Heroku for hosting the FastAPI backend and Celery worker due to the free tier and cheaper background worker instances.',
-      evidenceStatus: 'verified',
-      evidenceId: 'ev-03',
-      evidenceQuote:
-        'Team chose Render over Heroku because of the free tier and cheaper background workers for our student budget',
-      sourceLabel: 'chat/chat.json message 5',
-      departingAnswer: 'Confirmed: Render links directly to GitHub preview branches.',
-    },
-    {
-      id: 'st-03',
-      category: 'decision',
-      title: 'HTTP-Only SameSite Cookie Authentication',
-      content:
-        'JWT tokens are stored strictly in HTTP-only SameSite cookies rather than browser localStorage to protect student authentication tokens from cross-site scripting (XSS).',
-      evidenceStatus: 'verified',
-      evidenceId: 'ev-01',
-      evidenceQuote:
-        'Store JWT in HTTP-only cookies instead of localStorage to prevent XSS credential theft',
-      sourceLabel: 'repo/export.json PR #3',
-      departingAnswer: 'Confirmed: Standardized on HTTP-only SameSite=Lax cookies.',
-    },
-    {
-      id: 'st-04',
-      category: 'decision',
-      title: 'Exponential Backoff Webhook Retries',
-      content:
-        'Ticket purchase webhooks utilize exponential backoff to prevent cascading failures when the university accounting portal is congested.',
-      evidenceStatus: 'verified',
-      evidenceId: 'ev-04',
-      evidenceQuote:
-        'Implement exponential backoff for ticket webhook delivery to prevent campus server overload',
-      sourceLabel: 'repo/export.json commit a3f9c21',
-      departingAnswer: 'Confirmed: Backoff up to 5 retries implemented in services/webhooks.py.',
-    },
-    {
-      id: 'st-05',
-      category: 'risk',
-      title: 'QR Scanner 5,000 Scans/Min Benchmark Claim',
-      content:
-        'Asha stated the mobile QR scanner was stress-tested up to 5,000 scans per minute with zero errors, but no reproducible script or test log exists in repository.',
-      evidenceStatus: 'unverified',
-      sourceLabel: 'chat/chat.json message 32 (Asha Claim)',
-      departingAnswer: 'Tested locally from a scratch file that was not pushed to git.',
-    },
-    {
-      id: 'st-06',
-      category: 'risk',
-      title: 'Redis Sunday 3 AM Auto-Purge Claim',
-      content:
-        'Asha stated Redis cache automatically purges inactive event sessions at 3 AM every Sunday, but no cron schedule or TTL policy is configured in codebase.',
-      evidenceStatus: 'unverified',
-      sourceLabel: 'chat/chat.json message 46 (Asha Claim)',
-      departingAnswer: 'Configured manually via Redis CLI eviction policy on staging.',
-    },
-    {
-      id: 'st-07',
-      category: 'dependency',
-      title: 'ReportLab PDF Worker Background Daemon',
-      content:
-        'Ticket PDF badge rendering relies strictly on Ravi\'s background Celery worker daemon (deploy/worker_daemon.py). If worker is offline, registration succeeds but badge generation hangs.',
-      evidenceStatus: 'verified',
-      evidenceId: 'ev-05',
-      sourceLabel: 'docs/meeting_notes_august.md',
-    },
-  ],
-  gaps: [
-    {
-      id: 'gap-01',
-      title: 'Auditorium Capacity Conflict (350 vs 500 Seats)',
-      description:
-        'PR #5 limits auditorium event bookings to 350 seats per Student Affairs request, whereas architecture_overview.md specifies a hard limit of 500 attendees.',
-      category: 'conflicting',
-      risk: 'High',
-      sourcesInConflict: ['PR #5', 'docs/architecture_overview.md paragraph 2'],
-      status: 'open',
-    },
-    {
-      id: 'gap-02',
-      title: 'JWT Token Expiry Policy Discrepancy',
-      description:
-        'Commit c18d402 sets 60-minute token expiry for student convenience, but chat message 17 from Deepak mandates a strict 15-minute expiration.',
-      category: 'conflicting',
-      risk: 'Medium',
-      sourcesInConflict: ['commit c18d402', 'chat/chat.json message 17'],
-      status: 'resolved',
-      resolutionReason: 'Approved as 15-minute token with auto-refresh endpoint per campus safety compliance.',
-    },
-    {
-      id: 'gap-03',
-      title: 'Ticket QR Code Format Discrepancy',
-      description:
-        'Task T08 states QR codes use raw UUID v4 strings, while architecture_overview.md specifies an HMAC-SHA256 signed JSON payload.',
-      category: 'conflicting',
-      risk: 'Medium',
-      sourcesInConflict: ['tasks.csv task T08', 'docs/architecture_overview.md paragraph 3'],
-      status: 'open',
-    },
-    {
-      id: 'gap-04',
-      title: 'Unowned Task T05: Automated S3 Database Backups',
-      description:
-        'Daily backup to Amazon S3 has no assigned developer and lacks AWS IAM credentials in repository secrets.',
-      category: 'missing',
-      risk: 'High',
-      status: 'open',
-    },
-    {
-      id: 'gap-05',
-      title: 'Missing CAMPUS_PAY_SECRET Environment Variable',
-      description:
-        'api/payments.py reads environment variable CAMPUS_PAY_SECRET, but it is omitted from deployment_guide.md and example env files.',
-      category: 'missing',
-      risk: 'High',
-      status: 'open',
-    },
-  ],
 };
 
 interface HandoverContextType {
+  // Auth state
+  currentUser: UserProfile;
+  authUser: UserOut | null;
+  authLoading: boolean;
   activeRole: Role;
   setActiveRole: (role: Role) => void;
   activeScreen: string;
   setActiveScreen: (screen: string) => void;
-  currentUser: UserProfile;
+  login: (email: string, password?: string) => Promise<boolean>;
+  register: (email: string, name: string, password?: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  switchDemoRole: (role: Role) => Promise<void>;
+
+  // Handovers state
+  handovers: HandoverOut[];
+  activeHandoverId: number | null;
+  activeHandover: HandoverOut | null;
+  selectHandover: (id: number) => Promise<void>;
+  createHandover: (title: string, projectName: string) => Promise<number | null>;
+  members: MemberOut[];
+  addMember: (email: string, role: Role) => Promise<boolean>;
+  refreshHandovers: () => Promise<void>;
+
+  // Sources & Analysis
+  sources: SourceOut[];
+  analysis: AnalysisOut | null;
+  isAnalyzing: boolean;
+  uploadSyntheticSources: () => Promise<{ success: number; failed: number; errors: string[] }>;
+  uploadCustomSource: (file: File, type: 'repo' | 'doc' | 'chat' | 'tasks', name: string, allowedRoles?: string[]) => Promise<boolean>;
+  triggerAnalysis: () => Promise<void>;
+  refreshSources: () => Promise<void>;
+
+  // Questions (Departing)
+  questions: ApiQuestion[];
+  questionsLoading: boolean;
+  loadQuestions: () => Promise<void>;
+  answerQuestionApi: (questionId: number, action: 'answer' | 'skip' | 'unknown', text?: string) => Promise<boolean>;
+
+  // Statements (Review)
+  statements: ApiStatement[];
+  statementsLoading: boolean;
+  loadStatements: () => Promise<void>;
+  editStatementApi: (statementId: number, text: string, reason?: string) => Promise<boolean>;
+  rejectStatementApi: (statementId: number, reason: string) => Promise<boolean>;
+  resolveStatementApi: (statementId: number, chosenPieceId: number, reason: string, text?: string) => Promise<boolean>;
+  acceptGapApi: (statementId: number, reason: string) => Promise<boolean>;
+  getVersionsApi: (statementId: number) => Promise<StatementVersion[]>;
+  approveHandoverApi: () => Promise<boolean>;
+
+  // Handover View (Incoming)
+  handoverView: HandoverView | null;
+  handoverViewLoading: boolean;
+  handoverViewError: string | null;
+  receipt: HandoverReceipt | null;
+  loadHandoverView: () => Promise<void>;
+  confirmReceiptApi: () => Promise<boolean>;
+  getPiece: (pieceId: number) => Promise<PieceOut | null>;
+
+  // Notification and Error state
+  errorMessage: string | null;
+  successMessage: string | null;
+  clearMessages: () => void;
+
+  // Compatibility adapters for existing screens
   project: ProjectHandover;
   dashboardMetrics: {
     totalProjects: number;
@@ -397,333 +152,669 @@ interface HandoverContextType {
     awaitingApproval: number;
     completedHandovers: number;
   };
-  saveAnswer: (
-    questionId: string,
-    answer: string,
-    options?: { hasVoice?: boolean; durationSeconds?: number }
-  ) => void;
-  saveFollowUpAnswer: (questionId: string, answer: string) => void;
-  markDontKnow: (questionId: string) => void;
-  skipQuestion: (questionId: string) => void;
+  saveAnswer: (questionId: string | number, answer: string, options?: { hasVoice?: boolean; durationSeconds?: number }) => Promise<void>;
+  saveFollowUpAnswer: (questionId: string | number, answer: string) => void;
+  markDontKnow: (questionId: string | number) => Promise<void>;
+  skipQuestion: (questionId: string | number) => Promise<void>;
   submitDepartingAnswers: () => void;
-  editStatement: (statementId: string, newContent: string) => void;
-  rejectStatement: (statementId: string) => void;
-  resolveGap: (gapId: string, reason: string) => void;
-  flagGap: (gapId: string) => void;
-  approveHandover: () => void;
-  acknowledgeReceipt: () => void;
-  createNewProject: (data: Partial<ProjectHandover>) => void;
-  resetDemoData: () => void;
+  editStatement: (statementId: string | number, newContent: string) => Promise<void>;
+  rejectStatement: (statementId: string | number) => Promise<void>;
+  resolveGap: (gapId: string | number, reason: string, chosenPieceId?: number) => Promise<void>;
+  flagGap: (gapId: string | number) => void;
+  approveHandover: () => Promise<void>;
+  acknowledgeReceipt: () => Promise<void>;
+  createNewProject: (data: Partial<ProjectHandover>) => Promise<void>;
+  resetDemoData: () => Promise<void>;
 }
 
 const HandoverContext = createContext<HandoverContextType | undefined>(undefined);
 
 export function HandoverProvider({ children }: { children: React.ReactNode }) {
+  // Auth & Screen State
   const [activeRole, setActiveRole] = useState<Role>('lead');
   const [activeScreen, setActiveScreen] = useState<string>('role-select');
-  const [project, setProject] = useState<ProjectHandover>(SYNTHETIC_PROJECT);
+  const [authUser, setAuthUser] = useState<UserOut | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // Handover data
+  const [handovers, setHandovers] = useState<HandoverOut[]>([]);
+  const [activeHandoverId, setActiveHandoverId] = useState<number | null>(null);
+  const [activeHandover, setActiveHandover] = useState<HandoverOut | null>(null);
+  const [members, setMembers] = useState<MemberOut[]>([]);
+
+  // Sources & Analysis
+  const [sources, setSources] = useState<SourceOut[]>([]);
+  const [analysis, setAnalysis] = useState<AnalysisOut | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // Questions
+  const [backendQuestions, setBackendQuestions] = useState<ApiQuestion[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+
+  // Statements
+  const [backendStatements, setBackendStatements] = useState<ApiStatement[]>([]);
+  const [statementsLoading, setStatementsLoading] = useState(false);
+
+  // Handover View & Receipt
+  const [handoverView, setHandoverView] = useState<HandoverView | null>(null);
+  const [handoverViewLoading, setHandoverViewLoading] = useState(false);
+  const [handoverViewError, setHandoverViewError] = useState<string | null>(null);
+  const [receipt, setReceipt] = useState<HandoverReceipt | null>(null);
+
+  // Messages
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const clearMessages = useCallback(() => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+  }, []);
+
+  // ─── AUTHENTICATION (docs/api.md) ──────────────────────────────────────────
+
+  const checkCurrentUser = useCallback(async () => {
+    setAuthLoading(true);
+    const res = await HandoverApiService.me();
+    if (res.data) {
+      setAuthUser(res.data);
+    } else {
+      setAuthUser(null);
+    }
+    setAuthLoading(false);
+  }, []);
 
   useEffect(() => {
-    // Clear old localStorage if project was the previous healthcare one
-    const saved = localStorage.getItem('trailmark_project_state');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.name === 'Campus Events App') {
-          setProject(parsed);
-        } else {
-          setProject(SYNTHETIC_PROJECT);
-        }
-      } catch {
-        setProject(SYNTHETIC_PROJECT);
+    checkCurrentUser();
+  }, [checkCurrentUser]);
+
+  const login = useCallback(async (email: string, password = 'password123'): Promise<boolean> => {
+    clearMessages();
+    const res = await HandoverApiService.login(email, password);
+    if (res.data) {
+      setAuthUser(res.data);
+      return true;
+    }
+    setErrorMessage(res.error || 'Login failed. Please check credentials.');
+    return false;
+  }, [clearMessages]);
+
+  const register = useCallback(async (email: string, name: string, password = 'password123'): Promise<boolean> => {
+    clearMessages();
+    const res = await HandoverApiService.register(email, name, password);
+    if (res.data) {
+      setAuthUser(res.data);
+      return true;
+    }
+    setErrorMessage(res.error || 'Registration failed.');
+    return false;
+  }, [clearMessages]);
+
+  const logout = useCallback(async () => {
+    await HandoverApiService.logout();
+    setAuthUser(null);
+    setActiveScreen('role-select');
+    setHandovers([]);
+    setActiveHandoverId(null);
+    setActiveHandover(null);
+  }, []);
+
+  const switchDemoRole = useCallback(async (role: Role) => {
+    clearMessages();
+    setActiveRole(role);
+    const cred = DEMO_CREDENTIALS[role];
+    if (cred) {
+      const user = await HandoverApiService.ensureDemoAuth(cred.email, cred.name, 'password123');
+      if (user) {
+        setAuthUser(user);
       }
+    }
+  }, [clearMessages]);
+
+  // ─── HANDOVERS (docs/api.md) ───────────────────────────────────────────────
+
+  const refreshHandovers = useCallback(async () => {
+    const res = await HandoverApiService.listHandovers();
+    if (res.data) {
+      setHandovers(res.data);
+      if (res.data.length > 0) {
+        const match = res.data.find((h) => h.id === activeHandoverId);
+        if (match) {
+          setActiveHandover(match);
+        } else {
+          setActiveHandoverId(res.data[0].id);
+          setActiveHandover(res.data[0]);
+        }
+      }
+    }
+  }, [activeHandoverId]);
+
+  useEffect(() => {
+    if (authUser) {
+      refreshHandovers();
+    }
+  }, [authUser, refreshHandovers]);
+
+  const selectHandover = useCallback(async (id: number) => {
+    setActiveHandoverId(id);
+    const res = await HandoverApiService.getHandover(id);
+    if (res.data) {
+      setActiveHandover(res.data);
     }
   }, []);
 
-  const persist = (updated: ProjectHandover) => {
-    setProject(updated);
-    try {
-      localStorage.setItem('trailmark_project_state', JSON.stringify(updated));
-    } catch {}
-  };
+  const createHandover = useCallback(async (title: string, projectName: string): Promise<number | null> => {
+    clearMessages();
+    const res = await HandoverApiService.createHandover(title, projectName);
+    if (res.data) {
+      const newId = res.data.id;
+      setActiveHandoverId(newId);
+      setActiveHandover(res.data);
+      setSuccessMessage(`Handover #${newId} created successfully.`);
 
-  const currentUser = DEMO_USERS[activeRole];
+      // Automatically register & invite Asha (departing) and Kiran (incoming) to this handover
+      try {
+        await HandoverApiService.ensureDemoAuth(DEMO_CREDENTIALS.departing.email, DEMO_CREDENTIALS.departing.name, 'password123');
+        await HandoverApiService.ensureDemoAuth(DEMO_CREDENTIALS.incoming.email, DEMO_CREDENTIALS.incoming.name, 'password123');
+        // Re-authenticate as Deepak (lead) to add members
+        await HandoverApiService.login(DEMO_CREDENTIALS.lead.email, 'password123');
+        await HandoverApiService.addMember(newId, DEMO_CREDENTIALS.departing.email, 'departing');
+        await HandoverApiService.addMember(newId, DEMO_CREDENTIALS.incoming.email, 'incoming');
+      } catch (err) {
+        console.warn('Member auto-add notice:', err);
+      }
+
+      await refreshHandovers();
+      return newId;
+    }
+    setErrorMessage(res.error || 'Failed to create handover.');
+    return null;
+  }, [clearMessages, refreshHandovers]);
+
+  const addMember = useCallback(async (email: string, role: Role): Promise<boolean> => {
+    if (!activeHandoverId) return false;
+    clearMessages();
+    const res = await HandoverApiService.addMember(activeHandoverId, email, role);
+    if (res.data) {
+      setSuccessMessage(`Added ${res.data.name} as ${role}.`);
+      const membersRes = await HandoverApiService.listMembers(activeHandoverId);
+      if (membersRes.data) setMembers(membersRes.data);
+      return true;
+    }
+    setErrorMessage(res.error || 'Failed to add member.');
+    return false;
+  }, [activeHandoverId, clearMessages]);
+
+  // Load members when active handover changes
+  useEffect(() => {
+    if (activeHandoverId && activeRole === 'lead') {
+      HandoverApiService.listMembers(activeHandoverId).then((res) => {
+        if (res.data) setMembers(res.data);
+      });
+    }
+  }, [activeHandoverId, activeRole]);
+
+  // ─── SOURCES & ANALYSIS (docs/api.md) ──────────────────────────────────────
+
+  const refreshSources = useCallback(async () => {
+    if (!activeHandoverId) return;
+    const res = await HandoverApiService.listSources(activeHandoverId);
+    if (res.data) {
+      setSources(res.data);
+    }
+  }, [activeHandoverId]);
 
   useEffect(() => {
-    // Authenticate demo persona with backend and establish session cookie
-    if (currentUser?.email) {
-      HandoverApiService.ensureDemoAuth(currentUser.email, currentUser.name, 'password123')
-        .catch(() => {});
+    if (activeHandoverId && activeRole === 'lead') {
+      refreshSources();
     }
-  }, [activeRole, currentUser?.email, currentUser?.name]);
+  }, [activeHandoverId, activeRole, refreshSources]);
 
-  const dashboardMetrics = {
-    totalProjects: 3,
-    pendingHandovers: project.isApproved ? 0 : 1,
-    awaitingApproval: !project.isApproved && project.questions.some((q) => q.status === 'answered') ? 1 : 0,
-    completedHandovers: project.receipt.acknowledged ? 2 : 1,
-  };
+  const uploadSyntheticSources = useCallback(async () => {
+    if (!activeHandoverId) throw new Error('No active handover selected');
+    clearMessages();
+    const result = await HandoverApiService.uploadSyntheticManifestSources(activeHandoverId);
+    await refreshSources();
+    if (result.failed > 0) {
+      setErrorMessage(`Uploaded ${result.success} sources, ${result.failed} failed: ${result.errors.join(', ')}`);
+    } else {
+      setSuccessMessage(`All ${result.success} synthetic sources uploaded successfully.`);
+    }
+    return result;
+  }, [activeHandoverId, clearMessages, refreshSources]);
 
-  const saveAnswer = (
-    questionId: string,
-    answer: string,
-    options?: { hasVoice?: boolean; durationSeconds?: number }
-  ) => {
-    const updatedQuestions = project.questions.map((q) => {
-      if (q.id === questionId) {
-        return {
-          ...q,
-          answer,
-          status: 'answered' as const,
-          evidenceStatus: 'unverified' as EvidenceStatus,
-          hasVoiceRecording: options?.hasVoice ?? q.hasVoiceRecording,
-          audioDurationSeconds: options?.durationSeconds ?? q.audioDurationSeconds,
-          updatedAt: new Date().toISOString(),
-        };
+  const uploadCustomSource = useCallback(
+    async (file: File, type: 'repo' | 'doc' | 'chat' | 'tasks', name: string, allowedRoles = ['lead', 'departing', 'incoming']): Promise<boolean> => {
+      if (!activeHandoverId) return false;
+      clearMessages();
+      const res = await HandoverApiService.uploadSource(activeHandoverId, file, type, name, allowedRoles);
+      if (res.data) {
+        setSuccessMessage(`Uploaded ${name} (${res.data.piece_count} pieces extracted).`);
+        await refreshSources();
+        return true;
       }
-      return q;
-    });
+      setErrorMessage(res.error || 'Failed to upload source file.');
+      return false;
+    },
+    [activeHandoverId, clearMessages, refreshSources]
+  );
 
-    const q = project.questions.find((item) => item.id === questionId);
-    let updatedStatements = [...project.statements];
-    if (q) {
-      const existingIdx = updatedStatements.findIndex((s) => s.id === `st-${questionId}`);
-      const newStatement: Statement = {
-        id: `st-${questionId}`,
-        category: 'decision',
-        title: q.question.slice(0, 45) + '...',
-        content: answer,
-        evidenceStatus: 'unverified',
-        sourceLabel: `Departing Answer (${options?.hasVoice ? 'Voice' : 'Text'})`,
-        departingAnswer: answer,
-      };
-
-      if (existingIdx >= 0) {
-        updatedStatements[existingIdx] = {
-          ...updatedStatements[existingIdx],
-          content: answer,
-          departingAnswer: answer,
-          evidenceStatus: 'unverified',
-        };
-      } else {
-        updatedStatements.push(newStatement);
-      }
+  const triggerAnalysis = useCallback(async () => {
+    if (!activeHandoverId) return;
+    clearMessages();
+    setIsAnalyzing(true);
+    const res = await HandoverApiService.triggerAnalysis(activeHandoverId);
+    if (res.error) {
+      setIsAnalyzing(false);
+      setErrorMessage(res.error);
+      return;
     }
 
-    persist({
-      ...project,
-      questions: updatedQuestions,
-      statements: updatedStatements,
-      updatedAt: new Date().toISOString(),
-    });
-
-    // Send answer to live backend API per docs/api.md POST /questions/{id}/answer
-    const numId = parseInt(questionId.replace(/\D/g, ''), 10) || 1;
-    HandoverApiService.answerQuestion(numId, 'answer', answer).catch(() => {});
-  };
-
-  const saveFollowUpAnswer = (questionId: string, followUpAnswer: string) => {
-    const updatedQuestions = project.questions.map((q) => {
-      if (q.id === questionId && q.followUp) {
-        return {
-          ...q,
-          followUp: {
-            ...q.followUp,
-            answer: followUpAnswer,
-            status: 'answered' as const,
-            answeredAt: new Date().toISOString(),
-          },
-          updatedAt: new Date().toISOString(),
-        };
+    // Poll until done or failed
+    const pollInterval = setInterval(async () => {
+      const pollRes = await HandoverApiService.getAnalysis(activeHandoverId);
+      if (pollRes.data) {
+        setAnalysis(pollRes.data);
+        if (pollRes.data.status === 'done' || pollRes.data.status === 'failed') {
+          clearInterval(pollInterval);
+          setIsAnalyzing(false);
+          if (pollRes.data.status === 'done') {
+            setSuccessMessage(`AI Analysis completed (${pollRes.data.counts?.verified || 0} verified, ${pollRes.data.counts?.conflicting || 0} conflicting).`);
+            // Refresh questions and statements
+            const qRes = await HandoverApiService.listQuestions(activeHandoverId);
+            if (qRes.data) setBackendQuestions(qRes.data);
+            const sRes = await HandoverApiService.listStatements(activeHandoverId);
+            if (sRes.data) setBackendStatements(sRes.data);
+          } else {
+            setErrorMessage(pollRes.data.notice || 'AI analysis failed.');
+          }
+        }
       }
-      return q;
-    });
+    }, 2000);
+  }, [activeHandoverId, clearMessages]);
 
-    persist({
-      ...project,
-      questions: updatedQuestions,
-      updatedAt: new Date().toISOString(),
-    });
-  };
+  // ─── QUESTIONS (docs/api.md) ───────────────────────────────────────────────
 
-  const markDontKnow = (questionId: string) => {
-    const q = project.questions.find((item) => item.id === questionId);
-    const updatedQuestions = project.questions.map((item) =>
-      item.id === questionId
-        ? {
-            ...item,
-            status: 'unknown' as const,
-            answer: 'Departing member indicated no knowledge or record of this item.',
-            evidenceStatus: 'missing_conflicting' as EvidenceStatus,
-            updatedAt: new Date().toISOString(),
-          }
-        : item
-    );
+  const loadQuestions = useCallback(async () => {
+    if (!activeHandoverId) return;
+    setQuestionsLoading(true);
+    const res = await HandoverApiService.listQuestions(activeHandoverId);
+    if (res.data) {
+      setBackendQuestions(res.data);
+    }
+    setQuestionsLoading(false);
+  }, [activeHandoverId]);
 
-    const newGap: Gap = {
-      id: `gap-unk-${questionId}`,
-      title: q?.shortTitle || q?.question || 'Unknown project question',
-      description: `Asha indicated no knowledge of "${q?.question}". Flagged as open knowledge gap for Kiran.`,
-      category: 'missing',
-      risk: 'Medium',
-      status: 'open',
-    };
+  useEffect(() => {
+    if (activeHandoverId && (activeRole === 'departing' || activeRole === 'lead')) {
+      loadQuestions();
+    }
+  }, [activeHandoverId, activeRole, loadQuestions]);
 
-    persist({
-      ...project,
-      questions: updatedQuestions,
-      gaps: [...project.gaps.filter((g) => g.id !== newGap.id), newGap],
-      updatedAt: new Date().toISOString(),
-    });
+  const answerQuestionApi = useCallback(
+    async (questionId: number, action: 'answer' | 'skip' | 'unknown', text?: string): Promise<boolean> => {
+      clearMessages();
+      const res = await HandoverApiService.answerQuestion(questionId, action, text);
+      if (res.data) {
+        setSuccessMessage(action === 'answer' ? 'Answer saved.' : action === 'skip' ? 'Question skipped.' : 'Marked as unknown.');
+        await loadQuestions();
+        if (activeHandoverId) {
+          const sRes = await HandoverApiService.listStatements(activeHandoverId);
+          if (sRes.data) setBackendStatements(sRes.data);
+        }
+        return true;
+      }
+      setErrorMessage(res.error || 'Failed to submit response.');
+      return false;
+    },
+    [activeHandoverId, clearMessages, loadQuestions]
+  );
 
-    const numId = parseInt(questionId.replace(/\D/g, ''), 10) || 1;
-    HandoverApiService.answerQuestion(numId, 'unknown').catch(() => {});
-  };
+  // ─── STATEMENTS & REVIEW (docs/api.md) ──────────────────────────────────────
 
-  const skipQuestion = (questionId: string) => {
-    const updatedQuestions = project.questions.map((q) =>
-      q.id === questionId
-        ? {
-            ...q,
-            status: 'skipped' as const,
-            updatedAt: new Date().toISOString(),
-          }
-        : q
-    );
-    persist({
-      ...project,
-      questions: updatedQuestions,
-    });
+  const loadStatements = useCallback(async () => {
+    if (!activeHandoverId || activeRole !== 'lead') return;
+    setStatementsLoading(true);
+    const res = await HandoverApiService.listStatements(activeHandoverId);
+    if (res.data) {
+      setBackendStatements(res.data);
+    }
+    setStatementsLoading(false);
+  }, [activeHandoverId, activeRole]);
 
-    const numId = parseInt(questionId.replace(/\D/g, ''), 10) || 1;
-    HandoverApiService.answerQuestion(numId, 'skip').catch(() => {});
-  };
+  useEffect(() => {
+    if (activeHandoverId && activeRole === 'lead') {
+      loadStatements();
+    }
+  }, [activeHandoverId, activeRole, loadStatements]);
 
-  const submitDepartingAnswers = () => {
-    persist({
-      ...project,
-      status: 'Active Handover',
-      updatedAt: new Date().toISOString(),
-    });
-  };
+  const editStatementApi = useCallback(
+    async (statementId: number, text: string, reason?: string): Promise<boolean> => {
+      clearMessages();
+      const res = await HandoverApiService.editStatement(statementId, text, reason);
+      if (res.data) {
+        setSuccessMessage('Statement updated successfully.');
+        await loadStatements();
+        return true;
+      }
+      setErrorMessage(res.error || 'Failed to edit statement.');
+      return false;
+    },
+    [clearMessages, loadStatements]
+  );
 
-  const editStatement = (statementId: string, newContent: string) => {
-    const updated = project.statements.map((s) =>
-      s.id === statementId ? { ...s, content: newContent } : s
-    );
-    persist({
-      ...project,
-      statements: updated,
-      updatedAt: new Date().toISOString(),
-    });
+  const rejectStatementApi = useCallback(
+    async (statementId: number, reason: string): Promise<boolean> => {
+      clearMessages();
+      const res = await HandoverApiService.rejectStatement(statementId, reason);
+      if (res.data) {
+        setSuccessMessage('Statement rejected.');
+        await loadStatements();
+        return true;
+      }
+      setErrorMessage(res.error || 'Failed to reject statement.');
+      return false;
+    },
+    [clearMessages, loadStatements]
+  );
 
-    const numId = parseInt(statementId.replace(/\D/g, ''), 10) || 1;
-    HandoverApiService.editStatement(numId, newContent).catch(() => {});
-  };
+  const resolveStatementApi = useCallback(
+    async (statementId: number, chosenPieceId: number, reason: string, text?: string): Promise<boolean> => {
+      clearMessages();
+      const res = await HandoverApiService.resolveStatement(statementId, chosenPieceId, reason, text);
+      if (res.data) {
+        setSuccessMessage('Conflict resolved and marked verified.');
+        await loadStatements();
+        return true;
+      }
+      setErrorMessage(res.error || 'Failed to resolve conflict.');
+      return false;
+    },
+    [clearMessages, loadStatements]
+  );
 
-  const rejectStatement = (statementId: string) => {
-    const updated = project.statements.filter((s) => s.id !== statementId);
-    persist({
-      ...project,
-      statements: updated,
-      updatedAt: new Date().toISOString(),
-    });
+  const acceptGapApi = useCallback(
+    async (statementId: number, reason: string): Promise<boolean> => {
+      clearMessages();
+      const res = await HandoverApiService.acceptGap(statementId, reason);
+      if (res.data) {
+        setSuccessMessage('Gap accepted as known unknown.');
+        await loadStatements();
+        return true;
+      }
+      setErrorMessage(res.error || 'Failed to accept gap.');
+      return false;
+    },
+    [clearMessages, loadStatements]
+  );
 
-    const numId = parseInt(statementId.replace(/\D/g, ''), 10) || 1;
-    HandoverApiService.rejectStatement(numId, 'Rejected during lead verification').catch(() => {});
-  };
+  const getVersionsApi = useCallback(async (statementId: number): Promise<StatementVersion[]> => {
+    const res = await HandoverApiService.getStatementVersions(statementId);
+    return res.data || [];
+  }, []);
 
-  const resolveGap = (gapId: string, reason: string) => {
-    const updated = project.gaps.map((g) =>
-      g.id === gapId ? { ...g, status: 'resolved' as const, resolutionReason: reason } : g
-    );
-    persist({
-      ...project,
-      gaps: updated,
-      updatedAt: new Date().toISOString(),
-    });
+  const approveHandoverApi = useCallback(async (): Promise<boolean> => {
+    if (!activeHandoverId) return false;
+    clearMessages();
+    const res = await HandoverApiService.approveHandover(activeHandoverId);
+    if (res.data) {
+      setSuccessMessage('Handover approved and published to Incoming Member!');
+      setActiveHandover(res.data);
+      await refreshHandovers();
+      return true;
+    }
+    setErrorMessage(res.error || 'Failed to approve handover.');
+    return false;
+  }, [activeHandoverId, clearMessages, refreshHandovers]);
 
-    const numId = parseInt(gapId.replace(/\D/g, ''), 10) || 1;
-    HandoverApiService.acceptGap(numId, reason).catch(() => {});
-  };
+  // ─── INCOMING MEMBER VIEW & RECEIPT (docs/api.md) ──────────────────────────
 
-  const flagGap = (gapId: string) => {
-    const updated = project.gaps.map((g) =>
-      g.id === gapId ? { ...g, status: 'flagged' as const } : g
-    );
-    persist({
-      ...project,
-      gaps: updated,
-      updatedAt: new Date().toISOString(),
-    });
-  };
+  const loadHandoverView = useCallback(async () => {
+    if (!activeHandoverId) return;
+    setHandoverViewLoading(true);
+    setHandoverViewError(null);
 
-  const approveHandover = () => {
-    persist({
-      ...project,
-      isApproved: true,
-      status: 'Approved',
-      approvedAt: new Date().toISOString(),
-      approvedBy: currentUser.name,
-      updatedAt: new Date().toISOString(),
-    });
+    const res = await HandoverApiService.getHandoverView(activeHandoverId);
+    if (res.data) {
+      setHandoverView(res.data);
+    } else if (res.status === 409) {
+      setHandoverView(null);
+      setHandoverViewError('Handover has not been approved by the Team Lead yet. Once approved, the knowledge base will be unlocked.');
+    } else {
+      setHandoverViewError(res.error || 'Could not load handover view.');
+    }
 
-    const numId = parseInt(project.id.replace(/\D/g, ''), 10) || 1;
-    HandoverApiService.approveHandover(numId).catch(() => {});
-  };
+    // Also check receipt
+    const receiptRes = await HandoverApiService.getReceipt(activeHandoverId);
+    if (receiptRes.data) {
+      setReceipt(receiptRes.data);
+    } else {
+      setReceipt(null);
+    }
 
-  const acknowledgeReceipt = () => {
-    persist({
-      ...project,
-      status: 'Completed',
+    setHandoverViewLoading(false);
+  }, [activeHandoverId]);
+
+  useEffect(() => {
+    if (activeHandoverId && activeRole === 'incoming') {
+      loadHandoverView();
+    }
+  }, [activeHandoverId, activeRole, loadHandoverView]);
+
+  const confirmReceiptApi = useCallback(async (): Promise<boolean> => {
+    if (!activeHandoverId) return false;
+    clearMessages();
+    const res = await HandoverApiService.confirmReceipt(activeHandoverId);
+    if (res.data) {
+      setReceipt(res.data);
+      setSuccessMessage('Handover receipt acknowledged successfully.');
+      return true;
+    }
+    setErrorMessage(res.error || 'Failed to confirm receipt.');
+    return false;
+  }, [activeHandoverId, clearMessages]);
+
+  const getPiece = useCallback(async (pieceId: number): Promise<PieceOut | null> => {
+    const res = await HandoverApiService.getPiece(pieceId);
+    return res.data;
+  }, []);
+
+  // ─── COMPATIBILITY ADAPTERS FOR EXISTING UI ───────────────────────────────
+
+  const adaptedQuestions: Question[] = useMemo(() => {
+    if (backendQuestions.length > 0) {
+      return backendQuestions.map((bq) => {
+        const primaryEvidence = bq.evidence[0];
+        return {
+          id: String(bq.id),
+          category: 'Backend Architecture' as QuestionCategory,
+          shortTitle: bq.text.slice(0, 40) + '...',
+          question: bq.text,
+          reason: primaryEvidence ? `${primaryEvidence.locator}: "${primaryEvidence.quote}"` : 'Identified during source analysis',
+          roleTarget: 'Backend Developer',
+          status: bq.status as QuestionStatus,
+          evidenceStatus: (bq.risk >= 3 ? 'missing_conflicting' : bq.risk === 2 ? 'unverified' : 'verified') as EvidenceStatus,
+        };
+      });
+    }
+    return [];
+  }, [backendQuestions]);
+
+  const adaptedStatements: Statement[] = useMemo(() => {
+    if (backendStatements.length > 0) {
+      return backendStatements.map((bs) => ({
+        id: String(bs.id),
+        category: (bs.kind === 'decision' ? 'decision' : bs.kind === 'owner' ? 'ownership' : bs.kind === 'unfinished' ? 'unfinished' : 'risk') as any,
+        title: bs.text.slice(0, 45) + '...',
+        content: bs.text,
+        evidenceStatus: (bs.label === 'conflicting' ? 'missing_conflicting' : bs.label) as EvidenceStatus,
+        sourceLabel: bs.sources[0]?.source_name || bs.sources[0]?.locator,
+        evidenceQuote: bs.sources[0]?.quote || undefined,
+        departingAnswer: bs.kind === 'answer' ? bs.text : undefined,
+      }));
+    }
+    return [];
+  }, [backendStatements]);
+
+  const adaptedGaps: Gap[] = useMemo(() => {
+    return backendStatements
+      .filter((bs) => bs.label === 'missing' || bs.label === 'conflicting')
+      .map((bs) => ({
+        id: String(bs.id),
+        title: bs.text.slice(0, 50),
+        description: bs.text,
+        category: (bs.label === 'conflicting' ? 'conflicting' : 'missing') as 'missing' | 'conflicting',
+        risk: bs.label === 'conflicting' ? 'High' : 'Medium',
+        status: (bs.status === 'approved' || bs.status === 'accepted_gap' ? 'resolved' : 'open') as any,
+        sourcesInConflict: bs.sources.map((s) => `${s.source_name} (${s.locator}): "${s.quote}"`),
+      }));
+  }, [backendStatements]);
+
+  const currentProjectHandover: ProjectHandover = useMemo(() => {
+    const isApproved = activeHandover?.status === 'approved';
+    return {
+      id: activeHandoverId ? String(activeHandoverId) : '1',
+      name: activeHandover?.project_name || 'Campus Events App',
+      description: activeHandover?.title || 'Campus event ticketing, live student registration portal, and ReportLab badge dispatch system.',
+      objectives: 'Transition backend services to successor: SQLite WAL database, Render worker queues, ticket webhooks with exponential backoff, and resolve unowned tasks.',
+      techStack: 'Python, FastAPI, SQLite (WAL), Render, Celery, ReportLab, Tailwind CSS',
+      status: isApproved ? 'Approved' : 'Active Handover',
+      departingMember: 'Asha',
+      departingRole: 'Backend Developer',
+      incomingMember: 'Kiran',
+      githubRepo: 'https://github.com/campus-synthetic/events-app',
+      documents: sources.map((s) => s.name),
+      createdAt: activeHandover?.created_at || new Date().toISOString(),
+      updatedAt: activeHandover?.approved_at || new Date().toISOString(),
+      isApproved,
+      approvedAt: activeHandover?.approved_at || undefined,
+      approvedBy: isApproved ? 'Deepak' : undefined,
       receipt: {
-        acknowledged: true,
-        acknowledgedBy: currentUser.name,
-        acknowledgedAt: new Date().toISOString(),
-        notes: 'Handover received and reviewed. All open gaps and evidence trail verified.',
+        acknowledged: !!receipt,
+        acknowledgedBy: receipt?.user_name,
+        acknowledgedAt: receipt?.created_at,
+        notes: receipt ? 'Confirmed receipt of project handover.' : undefined,
       },
-      updatedAt: new Date().toISOString(),
-    });
-
-    const numId = parseInt(project.id.replace(/\D/g, ''), 10) || 1;
-    HandoverApiService.confirmReceipt(numId).catch(() => {});
-  };
-
-  const createNewProject = (data: Partial<ProjectHandover>) => {
-    const newProj: ProjectHandover = {
-      ...SYNTHETIC_PROJECT,
-      id: `proj-${Date.now()}`,
-      name: data.name || 'Campus Events App',
-      description: data.description || '',
-      objectives: data.objectives || '',
-      techStack: data.techStack || 'Python, FastAPI, SQLite (WAL), Render, Celery, ReportLab',
-      status: (data.status as any) || 'Active Handover',
-      departingMember: data.departingMember || 'Asha',
-      departingRole: data.departingRole || 'Backend Developer',
-      incomingMember: data.incomingMember || 'Kiran',
-      githubRepo: data.githubRepo || 'https://github.com/campus-synthetic/events-app',
-      documents: data.documents || [
-        'architecture_overview.md',
-        'deployment_guide.md',
-        'meeting_notes_august.md',
-        'tasks.csv',
-        'chat.json',
-      ],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isApproved: false,
-      receipt: { acknowledged: false },
+      questions: adaptedQuestions,
+      statements: adaptedStatements,
+      evidencePieces: [],
+      gaps: adaptedGaps,
     };
-    persist(newProj);
+  }, [activeHandover, activeHandoverId, adaptedGaps, adaptedQuestions, adaptedStatements, receipt, sources]);
 
-    HandoverApiService.createHandover(data.name || 'Campus Events App', data.name || 'Campus Events App').catch(() => {});
-  };
+  const dashboardMetrics = useMemo(() => {
+    return {
+      totalProjects: handovers.length || 1,
+      pendingHandovers: activeHandover?.status === 'draft' ? 1 : 0,
+      awaitingApproval: activeHandover?.status === 'draft' && backendQuestions.some((q) => q.status === 'answered') ? 1 : 0,
+      completedHandovers: receipt ? 1 : 0,
+    };
+  }, [activeHandover?.status, backendQuestions, handovers.length, receipt]);
 
-  const resetDemoData = () => {
-    localStorage.removeItem('trailmark_project_state');
-    setProject(SYNTHETIC_PROJECT);
+  // Compatibility action handlers
+  const saveAnswer = useCallback(
+    async (questionId: string | number, answer: string) => {
+      const numId = typeof questionId === 'number' ? questionId : parseInt(questionId, 10);
+      if (!isNaN(numId)) {
+        await answerQuestionApi(numId, 'answer', answer);
+      }
+    },
+    [answerQuestionApi]
+  );
+
+  const saveFollowUpAnswer = useCallback((_qId: string | number, _ans: string) => {}, []);
+
+  const markDontKnow = useCallback(
+    async (questionId: string | number) => {
+      const numId = typeof questionId === 'number' ? questionId : parseInt(questionId, 10);
+      if (!isNaN(numId)) {
+        await answerQuestionApi(numId, 'unknown');
+      }
+    },
+    [answerQuestionApi]
+  );
+
+  const skipQuestion = useCallback(
+    async (questionId: string | number) => {
+      const numId = typeof questionId === 'number' ? questionId : parseInt(questionId, 10);
+      if (!isNaN(numId)) {
+        await answerQuestionApi(numId, 'skip');
+      }
+    },
+    [answerQuestionApi]
+  );
+
+  const submitDepartingAnswers = useCallback(() => {}, []);
+
+  const editStatement = useCallback(
+    async (statementId: string | number, newContent: string) => {
+      const numId = typeof statementId === 'number' ? statementId : parseInt(statementId, 10);
+      if (!isNaN(numId)) {
+        await editStatementApi(numId, newContent);
+      }
+    },
+    [editStatementApi]
+  );
+
+  const rejectStatement = useCallback(
+    async (statementId: string | number) => {
+      const numId = typeof statementId === 'number' ? statementId : parseInt(statementId, 10);
+      if (!isNaN(numId)) {
+        await rejectStatementApi(numId, 'Rejected during lead verification');
+      }
+    },
+    [rejectStatementApi]
+  );
+
+  const resolveGap = useCallback(
+    async (gapId: string | number, reason: string, chosenPieceId?: number) => {
+      const numId = typeof gapId === 'number' ? gapId : parseInt(gapId, 10);
+      if (!isNaN(numId)) {
+        if (chosenPieceId !== undefined) {
+          await resolveStatementApi(numId, chosenPieceId, reason);
+        } else {
+          await acceptGapApi(numId, reason);
+        }
+      }
+    },
+    [acceptGapApi, resolveStatementApi]
+  );
+
+  const flagGap = useCallback((_gapId: string | number) => {}, []);
+
+  const approveHandover = useCallback(async () => {
+    await approveHandoverApi();
+  }, [approveHandoverApi]);
+
+  const acknowledgeReceipt = useCallback(async () => {
+    await confirmReceiptApi();
+  }, [confirmReceiptApi]);
+
+  const createNewProject = useCallback(
+    async (data: Partial<ProjectHandover>) => {
+      const title = data.description ? data.description.slice(0, 100) : `${data.departingMember || 'Asha'} is leaving`;
+      const projName = data.name || 'Campus Events App';
+      await createHandover(title, projName);
+    },
+    [createHandover]
+  );
+
+  const resetDemoData = useCallback(async () => {
+    clearMessages();
     setActiveScreen('role-select');
-  };
+    await switchDemoRole('lead');
+  }, [clearMessages, switchDemoRole]);
+
+  const userProfile = useMemo(() => {
+    const cred = DEMO_CREDENTIALS[activeRole];
+    return {
+      id: authUser ? String(authUser.id) : `user-${activeRole}`,
+      name: authUser?.name || cred.name,
+      email: authUser?.email || cred.email,
+      role: activeRole,
+      roleTitle: cred.roleTitle,
+      avatar: cred.avatar,
+    };
+  }, [activeRole, authUser]);
 
   return (
     <HandoverContext.Provider
@@ -732,8 +823,59 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
         setActiveRole,
         activeScreen,
         setActiveScreen,
-        currentUser,
-        project,
+        currentUser: userProfile,
+        authUser,
+        authLoading,
+        login,
+        register,
+        logout,
+        switchDemoRole,
+
+        handovers,
+        activeHandoverId,
+        activeHandover,
+        selectHandover,
+        createHandover,
+        members,
+        addMember,
+        refreshHandovers,
+
+        sources,
+        analysis,
+        isAnalyzing,
+        uploadSyntheticSources,
+        uploadCustomSource,
+        triggerAnalysis,
+        refreshSources,
+
+        questions: backendQuestions,
+        questionsLoading,
+        loadQuestions,
+        answerQuestionApi,
+
+        statements: backendStatements,
+        statementsLoading,
+        loadStatements,
+        editStatementApi,
+        rejectStatementApi,
+        resolveStatementApi,
+        acceptGapApi,
+        getVersionsApi,
+        approveHandoverApi,
+
+        handoverView,
+        handoverViewLoading,
+        handoverViewError,
+        receipt,
+        loadHandoverView,
+        confirmReceiptApi,
+        getPiece,
+
+        errorMessage,
+        successMessage,
+        clearMessages,
+
+        project: currentProjectHandover,
         dashboardMetrics,
         saveAnswer,
         saveFollowUpAnswer,

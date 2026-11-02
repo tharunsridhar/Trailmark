@@ -6,6 +6,7 @@ import { Question } from '@/types';
 import { VoiceRecorder } from '@/components/interview/VoiceRecorder';
 import { InterviewIntroduction } from '@/components/interview/InterviewIntroduction';
 import { InterviewCompletion } from '@/components/interview/InterviewCompletion';
+import { PieceOut } from '@/services/api';
 import {
   Compass,
   ChevronDown,
@@ -20,6 +21,7 @@ import {
   HelpCircle,
   FileText,
   Sparkles,
+  ExternalLink,
 } from 'lucide-react';
 
 // ─── Risk dot colour per evidence status ────────────────────────────────────
@@ -43,12 +45,14 @@ type SlideDir = 'left' | 'right' | 'none';
 export function Screen2DepartingQuestions() {
   const {
     project,
+    questions: backendQuestions,
     activeScreen,
     setActiveScreen,
     saveAnswer,
     saveFollowUpAnswer,
     skipQuestion,
     markDontKnow,
+    getPiece,
   } = useHandover();
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -64,6 +68,9 @@ export function Screen2DepartingQuestions() {
   const [isCompletedMode, setIsCompletedMode] = useState(false);
   const [slideDir, setSlideDir] = useState<SlideDir>('none');
   const [slideKey, setSlideKey] = useState(0);
+  const [inspectPiece, setInspectPiece] = useState<PieceOut | null>(null);
+  const [inspectPieceLoading, setInspectPieceLoading] = useState(false);
+  const [pieceError, setPieceError] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const totalQuestions = project.questions.length;
@@ -180,10 +187,24 @@ export function Screen2DepartingQuestions() {
       ? 'animate-slide-in-right'
       : '';
 
+  const currentBackendQuestion = backendQuestions[currentIndex];
+  const backendEvidence = currentBackendQuestion?.evidence || [];
   const isRestricted = currentQuestion.evidenceStatus === 'missing_conflicting';
   const sourceQuotes = currentQuestion.reason
     ? currentQuestion.reason.split('|').map((s) => s.trim()).filter(Boolean)
     : [];
+
+  const handleInspectEvidence = async (pieceId: number) => {
+    setInspectPieceLoading(true);
+    setPieceError(null);
+    const p = await getPiece(pieceId);
+    if (p) {
+      setInspectPiece(p);
+    } else {
+      setPieceError('Source evidence for this item is restricted under project access controls.');
+    }
+    setInspectPieceLoading(false);
+  };
 
   return (
     <>
@@ -295,9 +316,28 @@ export function Screen2DepartingQuestions() {
                 {whyOpen && (
                   <div className="mt-3.5 p-4 sm:p-5 rounded-2xl bg-white border border-[#E6E6DE] shadow-soft space-y-3">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A7B72]">
-                      Grounded Source Context
+                      Grounded Source Context &amp; Evidence
                     </p>
-                    {isRestricted ? (
+                    {backendEvidence.length > 0 ? (
+                      <div className="space-y-2.5">
+                        {backendEvidence.map((ev, idx) => (
+                          <div key={idx} className="border-l-2 border-[#5A5B4C] pl-3.5 text-xs space-y-1">
+                            <p className="italic text-[#3A3B34]">&ldquo;{ev.quote}&rdquo;</p>
+                            <div className="flex items-center gap-2 text-[11px]">
+                              <span className="font-mono text-[#7A7B72]">{ev.locator}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleInspectEvidence(ev.piece_id)}
+                                className="text-[#5A5B4C] hover:underline flex items-center gap-1 font-semibold"
+                              >
+                                <span>Inspect Source Piece #{ev.piece_id}</span>
+                                <ExternalLink size={10} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : isRestricted ? (
                       <p className="text-xs text-[#7A7B72] italic leading-relaxed">
                         Source evidence for this item is restricted to Lead review.
                       </p>
@@ -568,6 +608,59 @@ export function Screen2DepartingQuestions() {
                   className="px-4 py-2 rounded-full bg-[#5A5B4C] text-white text-xs font-semibold shadow-soft hover:bg-[#4A4B3E] transition-colors"
                 >
                   Save &amp; Exit
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Evidence Piece Inspection Modal ──────────────────────────────── */}
+        {(inspectPiece || pieceError) && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+            <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full border border-[#E6E6DE] shadow-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText size={16} className="text-[#5A5B4C]" />
+                  <h3 className="text-sm font-bold text-[#1F201B]">
+                    {inspectPiece ? inspectPiece.source_name : 'Evidence Restricted'}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => {
+                    setInspectPiece(null);
+                    setPieceError(null);
+                  }}
+                  className="text-[#7A7B72] hover:text-[#1F201B]"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {inspectPiece ? (
+                <>
+                  <div className="text-xs text-[#7A7B72] font-mono bg-[#F4F4F0] px-3 py-1.5 rounded-lg w-fit">
+                    Locator: {inspectPiece.locator} (Piece #{inspectPiece.id})
+                  </div>
+                  <div className="p-4 rounded-2xl bg-[#F8F8F4] border border-[#E6E6DE] text-xs text-[#1F201B] font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
+                    {inspectPiece.content}
+                  </div>
+                </>
+              ) : (
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
+                  {pieceError}
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInspectPiece(null);
+                    setPieceError(null);
+                  }}
+                  className="px-4 py-2 rounded-full bg-[#5A5B4C] text-white text-xs font-semibold hover:bg-[#4A4B3E]"
+                >
+                  Close
                 </button>
               </div>
             </div>
