@@ -111,10 +111,12 @@ function IncomingStatementCard({
                 <button
                   type="button"
                   onClick={() => onInspect(src.piece_id)}
+                  title={`Inspect source piece #${src.piece_id}`}
+                  aria-label={`Inspect source piece #${src.piece_id}`}
                   className="text-[10px] text-[#5A5B4C] hover:underline flex items-center gap-1 font-semibold shrink-0"
                 >
                   <span>Inspect Piece #{src.piece_id}</span>
-                  <ExternalLink size={10} />
+                  <ExternalLink size={10} aria-hidden="true" />
                 </button>
               </div>
 
@@ -521,10 +523,12 @@ export function Screen4IncomingHandover() {
                           <button
                             type="button"
                             onClick={() => openPieceInspection(src.piece_id)}
+                            title={`Inspect piece #${src.piece_id}`}
+                            aria-label={`Inspect piece #${src.piece_id}`}
                             className="text-[10px] text-[#5A5B4C] hover:underline flex items-center gap-0.5 font-semibold shrink-0"
                           >
                             <span>Inspect Piece</span>
-                            <ExternalLink size={9} />
+                            <ExternalLink size={9} aria-hidden="true" />
                           </button>
                         </div>
                         {src.quote && (
@@ -551,8 +555,15 @@ export function Screen4IncomingHandover() {
                 <FileText size={16} className="text-[#5A5B4C]" />
                 <h3 className="text-sm font-bold text-[#1F201B]">{inspectPiece.source_name}</h3>
               </div>
-              <button onClick={() => setInspectPiece(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
-                <X size={16} />
+              <button
+                type="button"
+                onClick={() => setInspectPiece(null)}
+                aria-label="Close modal"
+                title="Close"
+                className="p-1.5 rounded-lg text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors"
+              >
+                <X size={16} aria-hidden="true" />
+                <span className="sr-only sm:not-sr-only">Close</span>
               </button>
             </div>
 

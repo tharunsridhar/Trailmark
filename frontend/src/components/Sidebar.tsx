@@ -127,12 +127,14 @@ export function Sidebar() {
             </div>
           </div>
           <button
+            type="button"
             onClick={() => setActiveScreen('role-select')}
-            className="p-1.5 text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] rounded-lg transition-colors"
+            className="px-2 py-1 text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] rounded-lg transition-colors flex items-center gap-1 text-xs font-medium"
             title="Switch demo persona"
             aria-label="Switch demo persona"
           >
-            <LogOut size={14} />
+            <LogOut size={13} aria-hidden="true" />
+            <span className="text-[11px] font-semibold">Switch</span>
           </button>
         </div>
       </div>

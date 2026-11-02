@@ -545,8 +545,15 @@ export function Screen2DepartingQuestions() {
             <div className="relative w-80 bg-white h-full shadow-elevated border-l border-[#E6E6DE] p-5 flex flex-col">
               <div className="flex items-center justify-between pb-4 border-b border-[#E6E6DE] mb-4">
                 <h3 className="text-sm font-bold text-[#1F201B]">All Questions</h3>
-                <button aria-label="Close" onClick={() => setShowNavDrawer(false)}>
-                  <X size={16} className="text-[#7A7B72]" />
+                <button
+                  type="button"
+                  aria-label="Close question drawer"
+                  title="Close"
+                  onClick={() => setShowNavDrawer(false)}
+                  className="p-1.5 rounded-lg text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors"
+                >
+                  <X size={16} className="text-[#7A7B72]" aria-hidden="true" />
+                  <span className="sr-only sm:not-sr-only">Close</span>
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto space-y-2">
@@ -625,14 +632,18 @@ export function Screen2DepartingQuestions() {
                     {inspectPiece ? inspectPiece.source_name : 'Evidence Restricted'}
                   </h3>
                 </div>
-                <button aria-label="Close"
+                <button
+                  type="button"
+                  aria-label="Close inspection"
+                  title="Close"
                   onClick={() => {
                     setInspectPiece(null);
                     setPieceError(null);
                   }}
-                  className="text-[#7A7B72] hover:text-[#1F201B]"
+                  className="p-1.5 rounded-lg text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors"
                 >
-                  <X size={16} />
+                  <X size={16} aria-hidden="true" />
+                  <span className="sr-only sm:not-sr-only">Close</span>
                 </button>
               </div>
 

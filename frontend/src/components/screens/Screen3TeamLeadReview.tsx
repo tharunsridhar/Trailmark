@@ -290,11 +290,12 @@ export function Screen3TeamLeadReview() {
           <button
             type="button"
             onClick={loadStatements}
-            className="p-2 rounded-full bg-white border border-[#E6E6DE] text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#EAEAE2] transition-colors"
+            className="px-3 py-2 rounded-full bg-white border border-[#E6E6DE] text-xs font-semibold text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#EAEAE2] flex items-center gap-1.5 transition-colors shadow-2xs"
             title="Refresh statements"
             aria-label="Refresh statements"
           >
-            <RefreshCw size={14} />
+            <RefreshCw size={13} />
+            <span>Refresh</span>
           </button>
         </div>
       </div>
@@ -553,8 +554,9 @@ export function Screen3TeamLeadReview() {
                 <Split size={18} className="text-rose-600" />
                 <h3 className="text-base font-bold text-[#1F201B]">Resolve Conflicting Sources</h3>
               </div>
-              <button aria-label="Close" onClick={() => setResolvingStatement(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
-                <X size={16} />
+              <button aria-label="Close" onClick={() => setResolvingStatement(null)} className="p-1.5 rounded-lg text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors">
+                <X size={16} aria-hidden="true" />
+                <span className="sr-only sm:not-sr-only">Close</span>
               </button>
             </div>
 
@@ -650,8 +652,9 @@ export function Screen3TeamLeadReview() {
           <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full border border-[#E6E6DE] shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-[#1F201B]">Edit Statement #{editingStatement.id}</h3>
-              <button aria-label="Close" onClick={() => setEditingStatement(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
-                <X size={16} />
+              <button aria-label="Close" onClick={() => setEditingStatement(null)} className="p-1.5 rounded-lg text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors">
+                <X size={16} aria-hidden="true" />
+                <span className="sr-only sm:not-sr-only">Close</span>
               </button>
             </div>
 
@@ -706,8 +709,9 @@ export function Screen3TeamLeadReview() {
           <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full border border-[#E6E6DE] shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-red-900">Reject Statement #{rejectingStatement.id}</h3>
-              <button aria-label="Close" onClick={() => setRejectingStatement(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
-                <X size={16} />
+              <button aria-label="Close" onClick={() => setRejectingStatement(null)} className="p-1.5 rounded-lg text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors">
+                <X size={16} aria-hidden="true" />
+                <span className="sr-only sm:not-sr-only">Close</span>
               </button>
             </div>
 
@@ -757,8 +761,9 @@ export function Screen3TeamLeadReview() {
           <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full border border-[#E6E6DE] shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-purple-900">Accept Knowledge Gap</h3>
-              <button aria-label="Close" onClick={() => setAcceptingGap(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
-                <X size={16} />
+              <button aria-label="Close" onClick={() => setAcceptingGap(null)} className="p-1.5 rounded-lg text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors">
+                <X size={16} aria-hidden="true" />
+                <span className="sr-only sm:not-sr-only">Close</span>
               </button>
             </div>
 
@@ -813,8 +818,9 @@ export function Screen3TeamLeadReview() {
                   Version Audit: Statement #{versionsStatement.id}
                 </h3>
               </div>
-              <button aria-label="Close" onClick={() => setVersionsStatement(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
-                <X size={16} />
+              <button aria-label="Close" onClick={() => setVersionsStatement(null)} className="p-1.5 rounded-lg text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors">
+                <X size={16} aria-hidden="true" />
+                <span className="sr-only sm:not-sr-only">Close</span>
               </button>
             </div>
 
@@ -871,8 +877,15 @@ export function Screen3TeamLeadReview() {
                 <FileText size={16} className="text-[#5A5B4C]" />
                 <h3 className="text-sm font-bold text-[#1F201B]">{inspectPiece.source_name}</h3>
               </div>
-              <button aria-label="Close" onClick={() => setInspectPiece(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
-                <X size={16} />
+              <button
+                type="button"
+                aria-label="Close inspection"
+                title="Close"
+                onClick={() => setInspectPiece(null)}
+                className="p-1.5 rounded-lg text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors"
+              >
+                <X size={16} aria-hidden="true" />
+                <span className="sr-only sm:not-sr-only">Close</span>
               </button>
             </div>
 

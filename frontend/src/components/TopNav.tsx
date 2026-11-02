@@ -43,12 +43,13 @@ export function TopNav() {
         {/* Bell Notification Pill */}
         <button
           type="button"
-          className="w-9 h-9 rounded-full bg-white border border-[#E6E6DE] flex items-center justify-center text-[#3A3B34] hover:bg-[#EAEAE2] transition-colors shadow-2xs relative"
+          className="h-9 px-3 rounded-full bg-white border border-[#E6E6DE] flex items-center gap-1.5 text-[#3A3B34] hover:bg-[#EAEAE2] transition-colors shadow-2xs relative"
           title="Notifications"
           aria-label="Notifications"
         >
-          <Bell size={15} />
-          <span className="w-1.5 h-1.5 rounded-full bg-[#5A5B4C] absolute top-2 right-2" />
+          <Bell size={14} aria-hidden="true" />
+          <span className="text-xs font-semibold">Alerts</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#5A5B4C]" />
         </button>
 
         {/* Reset Demo Pill */}
