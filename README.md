@@ -94,7 +94,7 @@ This starts PostgreSQL and the backend at `http://localhost:8000` (if that port 
 5. Text shown to the incoming member has emails, phone numbers and secrets masked, and a statement is hidden unless they may see every source behind it.
 6. If the AI service fails, the last good results are shown (marked as saved), and if there are none, a basic listing built only from structured fields such as task owners. The response always says which mode was used.
 
-Set `LLM_API_KEY` in `.env` to turn the AI on. Without it the analysis runs in the saved or basic mode.
+Set `LLM_API_KEY` in `.env` to turn the AI on (a free Gemini key from Google AI Studio works, see `.env.example` for Groq and Anthropic). Without it the analysis runs in the saved or basic mode.
 
 ## Team
 

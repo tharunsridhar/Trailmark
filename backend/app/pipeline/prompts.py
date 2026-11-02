@@ -7,9 +7,14 @@ Rules:
 - If something important is not in the sources (an owner, a reason, a dependency), do not invent it. \
 Report it as a gap with a specific question for the person leaving.
 - If two pieces disagree about the same fact, make one statement with "relation": "conflicting" and cite both pieces.
-- If a person only says something about their own work and nothing else in the sources backs it up \
-(no code, document or task confirms it), use "relation": "claim_only".
+- If a person says they did something, tested something or arranged something, and no code, commit, document \
+or task confirms it, use "relation": "claim_only". For example "I stress-tested it" or "I got the quota raised" \
+with no benchmark or ticket anywhere.
 - Otherwise use "relation": "supported".
+- Something that is missing, unowned, unexplained or undocumented is a gap, never a statement. Examples: a task \
+with no owner, a library or service used without credentials or instructions, a stub waiting on information.
+- Read the chat message by message. When a person says what they tested, configured or arranged (numbers, quotas, \
+scopes, schedules), that is its own claim_only statement unless something else in the sources backs it.
 - Be thorough. Go through every source and report each separate decision, claim, unfinished item, dependency, \
 recurring problem and contact as its own statement. A small project usually gives 25 to 40 statements. \
 Do not leave a source out because it looks sensitive, who may see it is handled elsewhere.
@@ -44,7 +49,12 @@ Reply with JSON only: {"results": [{"id": 0, "verdict": "supported"}]}"""
 
 
 def build_extract_prompt(pieces) -> str:
-    lines = ["Source pieces:", ""]
+    counts: dict[str, int] = {}
+    for piece in pieces:
+        counts[piece.source.name] = counts.get(piece.source.name, 0) + 1
+    lines = ["Sources (every one of them must be covered by at least one statement or gap):"]
+    lines += [f"- {name}: {count} pieces" for name, count in counts.items()]
+    lines += ["", "Source pieces:", ""]
     for piece in pieces:
         lines.append(f"[id={piece.id}] (source: {piece.source.name}, {piece.locator})")
         lines.append(piece.content)

@@ -6,10 +6,13 @@ Everything the project depends on, as Round 2 asks.
 
 | What | Use |
 | --- | --- |
-| Anthropic Messages API | Extracting project state, writing gap questions, and a separate call that checks whether a claim is supported by its quotes |
-| Model | `claude-sonnet-5-5` by default, set with `LLM_MODEL`. An optional second model (`LLM_FALLBACK_MODEL`) is tried if the first keeps failing |
+| Google Gemini API (free tier), through its OpenAI-compatible endpoint | Extracting project state, writing gap questions, and a separate call that checks whether a claim is supported by its quotes |
+| Model | `gemini-3.1-flash-lite` by default, set with `LLM_MODEL`. An optional second model (`LLM_FALLBACK_MODEL`) is tried if the first keeps failing |
+| Other providers | Groq and the Anthropic Messages API are also supported, chosen with `LLM_PROVIDER` (`gemini`, `groq` or `anthropic`) |
 
-The model only ever receives source pieces the lead connected. Its output is checked in code before it is used (see `ARCHITECTURE.md`).
+We tried Groq's free tier first. It limits a request to about 8,000 tokens, which is less than one analysis of the demo project needs, so Gemini is the one we run.
+
+The model only ever receives source pieces the lead connected. Its output is checked in code before it is used (see `ARCHITECTURE.md`). If a source is skipped in the first request, it is sent again on its own. If the AI service is down, the app shows saved results from an earlier real run (`backend/saved_results/`), then a basic listing.
 
 ## Backend libraries
 

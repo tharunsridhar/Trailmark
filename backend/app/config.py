@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:3000"
     llm_api_key: str = ""
     # "anthropic", "groq" or "gemini"
-    llm_provider: str = "anthropic"
-    llm_model: str = "claude-sonnet-5-5"
+    llm_provider: str = "gemini"
+    llm_model: str = "gemini-3.1-flash-lite"
     # tried if the main model keeps failing, leave empty to skip
     llm_fallback_model: str = ""
     # leave empty to use the provider's usual address

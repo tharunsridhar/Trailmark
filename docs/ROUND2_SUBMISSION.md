@@ -19,14 +19,14 @@ Against the seven core features in the Round 1 plan:
 | Core feature | Status |
 | --- | --- |
 | Source import: repository export, documents, chat export, task list, each with an access level set by the lead | Done |
-| Project-state reconstruction: decisions and reasons, owners, unfinished work, dependencies, risks, contacts, each linked to its source | Done (backend). Not yet tuned on the final synthetic project |
+| Project-state reconstruction: decisions and reasons, owners, unfinished work, dependencies, risks, contacts, each linked to its source | Done (backend). Run on the synthetic project, 25 of 32 planted cases found |
 | Evidence labels: verified, unverified, missing, conflicting. A statement with no valid source link cannot be verified | Done, with a word-for-word quote check and a separate verifier call |
 | Gap detection and questions for the departing member, with the evidence shown | Done |
 | Review and approval: edit, reject, resolve a conflict with a written reason, accept a gap, version history | Done |
 | Permission-aware handover: derived statements inherit their sources' restrictions, restricted parts hidden | Done |
 | Handover view with receipt: what they own, unfinished work, risks, dependencies, open questions, ordered next actions, confirm receipt | Done (backend). Frontend screens by Kishan |
 
-Also built: redaction of secrets, emails and phone numbers in the incoming view, fallbacks when the AI service is down (saved results, then a basic listing), retries and an optional second model.
+Also built: support for Gemini, Groq and Anthropic models, saved results from a real run, redaction of secrets, emails and phone numbers in the incoming view, fallbacks when the AI service is down (saved results, then a basic listing), retries and an optional second model.
 
 ## Changes from the Round 1 plan
 
@@ -45,7 +45,8 @@ Also built: redaction of secrets, emails and phone numbers in the incoming view,
 
 ## Known limitations
 
-- The AI has not yet been tuned or measured on the final synthetic project.
+- On the synthetic project the AI cites 25 of the 32 planted cases and gets the expected label on 20. Claims only the leaver makes are not yet labelled unverified, and only one of three planted conflicts is reported as a conflict. Details are in `TESTING.md`.
+- The AI runs on the free tier of Gemini, which limits requests per day and per minute. The demo falls back to saved results from a real run if the service is unavailable.
 - Redaction is pattern based and will miss some sensitive text.
 - The analysis sends all pieces in one request, so very large sources would need chunking.
 - No live integrations with Slack, Jira or the GitHub API.

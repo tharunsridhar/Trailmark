@@ -53,6 +53,31 @@ def test_claim_only_stays_unverified_and_skips_the_verifier():
     assert len(llm.prompts) == 1
 
 
+TWO_SOURCES = [
+    SimpleNamespace(id=1, content="Asha: we go with Render", locator="chat message 1", source=SimpleNamespace(name="Chat")),
+    SimpleNamespace(id=2, content="Bonus is tied to signoff", locator="notes paragraph 1", source=SimpleNamespace(name="Notes")),
+]
+
+
+def test_skipped_source_gets_its_own_second_request():
+    first = {"statements": [statement(evidence=[{"piece_id": 1, "quote": "go with Render"}])], "gaps": []}
+    second = {"statements": [statement(text="Bonus depends on signoff", relation="claim_only",
+                                       evidence=[{"piece_id": 2, "quote": "tied to signoff"}])], "gaps": []}
+    llm = FakeLLM(first, verdict("supported"), second)
+    result = analyze(llm, TWO_SOURCES)
+    assert [d.text for d in result.drafts] == ["Hosting is on Render", "Bonus depends on signoff"]
+    # the second request only contains the source the first one skipped
+    assert "Bonus is tied to signoff" in llm.prompts[2][1]
+    assert "we go with Render" not in llm.prompts[2][1]
+
+
+def test_failed_second_request_keeps_the_first_results():
+    first = {"statements": [statement(evidence=[{"piece_id": 1, "quote": "go with Render"}])], "gaps": []}
+    llm = FakeLLM(first, verdict("supported"), LLMError("down"))
+    result = analyze(llm, TWO_SOURCES)
+    assert [d.text for d in result.drafts] == ["Hosting is on Render"]
+
+
 def test_fabricated_quote_drops_the_claim():
     fake = statement(evidence=[{"piece_id": 1, "quote": "we deploy on Fly.io"}])
     llm = FakeLLM({"statements": [fake], "gaps": []}, verdict())

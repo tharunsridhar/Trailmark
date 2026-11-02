@@ -7,6 +7,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --default-timeout=120 --retries 5 -r requirements.txt
 
 COPY app ./app
+# results from a real run, so a deployed demo still works if the AI service is down
+COPY saved_results ./saved_results
 
 # the app writes saved analysis results here, so it must not run as root
 RUN useradd --create-home appuser \

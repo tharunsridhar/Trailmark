@@ -54,7 +54,8 @@ class FakeLLM:
         import json
 
         self.prompts.append((system, user))
-        reply = self.replies.pop(0)
+        # once the script runs out (a top-up request for a skipped source), answer with nothing found
+        reply = self.replies.pop(0) if self.replies else {"statements": [], "gaps": [], "results": []}
         if isinstance(reply, Exception):
             raise reply
         return reply if isinstance(reply, str) else json.dumps(reply)

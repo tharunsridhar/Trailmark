@@ -103,12 +103,33 @@ def run_verifier(llm, candidates: list[Draft]) -> dict[int, str]:
     return verdicts
 
 
-def analyze(llm, pieces) -> AnalysisResult:
-    pieces_by_id = {p.id: p for p in pieces}
+def ask_for_statements(llm, pieces) -> dict:
     raw = parse_json(llm.complete(EXTRACT_SYSTEM, build_extract_prompt(pieces)))
     if not isinstance(raw.get("statements", []), list) or not isinstance(raw.get("gaps", []), list):
         raise LLMError("the model returned JSON of the wrong shape")
+    return raw
 
+
+def analyze(llm, pieces) -> AnalysisResult:
+    pieces_by_id = {p.id: p for p in pieces}
+    drafts, dropped = build_drafts(llm, ask_for_statements(llm, pieces), pieces_by_id)
+
+    # a long input makes the model skip whole sources, so those get a second, smaller request
+    cited = {pieces_by_id[e.piece_id].source.name for d in drafts for e in d.evidence}
+    skipped = {p.source.name for p in pieces} - cited
+    if skipped:
+        try:
+            raw = ask_for_statements(llm, [p for p in pieces if p.source.name in skipped])
+            more, more_dropped = build_drafts(llm, raw, pieces_by_id)
+        except LLMError:
+            # the first pass already worked, a failed top-up should not throw it away
+            more, more_dropped = [], 0
+        drafts += more
+        dropped += more_dropped
+    return AnalysisResult(drafts, dropped)
+
+
+def build_drafts(llm, raw: dict, pieces_by_id: dict) -> tuple[list[Draft], int]:
     dropped = 0
     drafts: list[Draft] = []
     to_verify: list[Draft] = []
@@ -155,4 +176,4 @@ def analyze(llm, pieces) -> AnalysisResult:
             risk = 1
         drafts.append(Draft(kind, text, "missing", evidence, question=question, risk=risk))
 
-    return AnalysisResult(drafts, dropped)
+    return drafts, dropped

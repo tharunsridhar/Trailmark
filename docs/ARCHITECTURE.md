@@ -8,7 +8,7 @@ How the system fits together, how data moves through it, and why the main techni
  Browser (Next.js, Vercel)
         |  HTTPS, login cookie
         v
- FastAPI backend (Render) ----> LLM API (Anthropic Messages API)
+ FastAPI backend (Render) ----> LLM API (Gemini by default)
         |
         v
  PostgreSQL (SQLite for local work)
@@ -17,7 +17,7 @@ How the system fits together, how data moves through it, and why the main techni
 - **Frontend:** Next.js (React, TypeScript), owned by Kishan. It only talks to the backend through the endpoints in [`API.md`](API.md).
 - **Backend:** Python, FastAPI. All permissions are enforced here, never in the frontend.
 - **Database:** PostgreSQL in deployment, SQLite for local development and fast tests. One schema for both.
-- **AI:** one provider behind a small client (`app/pipeline/llm.py`), with retries and an optional second model.
+- **AI:** one provider behind a small client (`app/pipeline/llm.py`), with retries and an optional second model. Gemini is the default, Groq and Anthropic are also supported.
 
 ## Backend layout
 
@@ -37,7 +37,7 @@ How the system fits together, how data moves through it, and why the main techni
 ## Data flow
 
 1. **Connect** (`POST /handovers/{id}/sources`). The lead uploads a source and chooses which roles may see it. The importer splits it into small pieces. Each piece keeps a locator ("commit a3f9c21", "chat message 14", "task T2") and a copy of its source's allowed roles. A file that is empty or cannot be read is recorded as such.
-2. **Reconstruct** (`POST /handovers/{id}/analyze`, runs in the background). All pieces go to the model in one request. It must return statements and gaps, each citing piece ids with a word-for-word quote.
+2. **Reconstruct** (`POST /handovers/{id}/analyze`, runs in the background). All pieces go to the model in one request. It must return statements and gaps, each citing piece ids with a word-for-word quote. A long request makes models skip whole sources, so any source that nothing cites is sent again on its own, and a failure of that second request keeps the first results.
 3. **Verify.** In code, a quote that is not in the cited piece throws the claim away, and a statement with no valid evidence is dropped. A second, separate model call sees only the claim and its quotes and answers `supported`, `partly_supported` or `not_supported`. Only `supported` becomes `verified`. Two pieces that disagree become one `conflicting` statement that cites both. Missing information becomes a `missing` gap with a question, never a guess.
 4. **Ask** (`GET /handovers/{id}/questions`, `POST /questions/{id}/answer`). Each gap becomes a question for the departing member, highest risk first, shown with its evidence. An answer is stored as an `unverified` statement, the gap it covers is marked answered. Skipped and unknown questions stay open.
 5. **Review** (`/statements/...`). The lead can edit, reject, resolve a conflict (a reason is required, the other source is kept and marked not chosen) or accept a gap. Every change is a new version with the editor and the reason.
