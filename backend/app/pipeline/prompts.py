@@ -47,6 +47,13 @@ CLAIMS_FOCUS = (
     '"relation": "claim_only". Quote the message word for word. Report nothing else and no gaps.'
 )
 
+# document paragraphs are often skipped in the long request, so the ones nothing cites get a request of their own
+DOC_FOCUS = (
+    "Every piece below is a paragraph of a project document that the first pass did not cover. Report each "
+    "decision (with its reason), dependency, contact, risk or unfinished item the paragraph states, and any "
+    "gap it raises. Report nothing that is not in the paragraph."
+)
+
 
 VERIFY_SYSTEM = """You check whether quoted evidence supports a claim. You see only the claim and the quoted text, \
 nothing else.

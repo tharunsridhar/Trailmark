@@ -50,7 +50,8 @@ def test_claim_only_stays_unverified_and_skips_the_verifier():
     llm = FakeLLM({"statements": [statement(relation="claim_only")], "gaps": []})
     result = analyze(llm, PIECES)
     assert [(d.label, d.text) for d in result.drafts] == [("unverified", "Hosting is on Render")]
-    assert len(llm.prompts) == 1
+    # the claim never reaches the verifier: the second request is the top-up for the uncited paragraph
+    assert not any("Claim:" in user for _, user in llm.prompts)
 
 
 TWO_SOURCES = [
@@ -69,6 +70,24 @@ def test_skipped_source_gets_its_own_second_request():
     # the second request only contains the source the first one skipped
     assert "Bonus is tied to signoff" in llm.prompts[2][1]
     assert "we go with Render" not in llm.prompts[2][1]
+
+
+def test_uncited_document_paragraph_gets_its_own_request():
+    first = {"statements": [statement()], "gaps": []}
+    top_up = {"statements": [statement(text="Hosting is on Heroku", evidence=[{"piece_id": 2, "quote": "host the backend on Heroku"}])], "gaps": []}
+    llm = FakeLLM(first, verdict("supported"), top_up, verdict("supported"))
+    result = analyze(llm, PIECES)
+    assert [d.text for d in result.drafts] == ["Hosting is on Render", "Hosting is on Heroku"]
+    # only the paragraph nothing cited is sent again, not the chat message that was covered
+    assert "We host the backend on Heroku" in llm.prompts[2][1]
+    assert "go with Render" not in llm.prompts[2][1]
+
+
+def test_failed_paragraph_request_keeps_the_first_results():
+    first = {"statements": [statement()], "gaps": []}
+    llm = FakeLLM(first, verdict("supported"), LLMError("down"))
+    result = analyze(llm, PIECES)
+    assert [d.text for d in result.drafts] == ["Hosting is on Render"]
 
 
 def test_failed_second_request_keeps_the_first_results():

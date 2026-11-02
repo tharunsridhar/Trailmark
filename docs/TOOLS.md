@@ -12,7 +12,7 @@ Everything the project depends on, as Round 2 asks.
 
 We tried Groq's free tier first. It limits a request to about 8,000 tokens, which is less than one analysis of the demo project needs, so Gemini is the one we run.
 
-The model only ever receives source pieces the lead connected. Its output is checked in code before it is used (see `ARCHITECTURE.md`). If a source is skipped in the first request, it is sent again on its own. If the AI service is down, the app shows saved results from an earlier real run (`backend/saved_results/`), then a basic listing.
+The model only ever receives source pieces the lead connected. Its output is checked in code before it is used (see `ARCHITECTURE.md`). If a source or a document paragraph is skipped in the first request, it is sent again on its own. If the AI service is down, the app shows saved results from an earlier real run (`backend/saved_results/`), then a basic listing.
 
 ## Backend libraries
 

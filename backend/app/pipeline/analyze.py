@@ -13,6 +13,7 @@ from app.models import STATEMENT_KINDS
 from app.pipeline.llm import LLMError
 from app.pipeline.prompts import (
     CLAIMS_FOCUS,
+    DOC_FOCUS,
     EXTRACT_SYSTEM,
     VERIFY_SYSTEM,
     build_extract_prompt,
@@ -168,6 +169,17 @@ def analyze(llm, pieces, leavers: list[str] | None = None) -> AnalysisResult:
             more, more_dropped = build_drafts(llm, raw, pieces_by_id)
         except LLMError:
             # the first pass already worked, a failed top-up should not throw it away
+            more, more_dropped = [], 0
+        drafts += more
+        dropped += more_dropped
+    # a document paragraph nothing cites is usually a skipped decision or dependency, so those are asked again
+    cited_pieces = {e.piece_id for d in drafts for e in d.evidence}
+    loose = [p for p in pieces if "paragraph" in p.locator and p.id not in cited_pieces]
+    if loose:
+        try:
+            raw = ask_for_statements(llm, loose, DOC_FOCUS)
+            more, more_dropped = build_drafts(llm, raw, pieces_by_id)
+        except LLMError:
             more, more_dropped = [], 0
         drafts += more
         dropped += more_dropped

@@ -18,7 +18,7 @@ The AI is never called in tests. A scripted fake model plays back fixed replies,
 
 ## Latest result
 
-149 tests, all passing on both SQLite (about 2 minutes) and PostgreSQL 16 (about 4 minutes). Most of the time is password hashing.
+151 tests, all passing on SQLite (about 2 minutes). The earlier 149 also passed on PostgreSQL 16 (about 4 minutes). The two newest tests only exercise the analysis pipeline with a scripted model and do not touch the database, and the suite was not run on PostgreSQL again after adding them. Most of the time is password hashing.
 
 Also checked by hand: the Docker image builds, and with `docker compose up` the backend container ran against Postgres, answered `/health`, registered a user, created a handover, and returned `401` without a login.
 
@@ -29,7 +29,7 @@ Also checked by hand: the Docker image builds, and with `docker compose up` the 
 | `test_access.py` | 10 | A statement is hidden unless every source behind it is visible, drafts and rejected claims never shown |
 | `test_importers.py` | 11 | Each source type, empty and unreadable files, bad JSON, binary files |
 | `test_sources_api.py` | 10 | Upload, listing, source access levels passed to pieces, size and type checks, no uploads after approval |
-| `test_pipeline.py` | 35 | Quote check, fabricated and unknown citations dropped, verifier verdicts, conflicts, claims nobody backs up, claims only the leaver makes, gaps, bad model output, retries, rate limits, the second model, the Gemini and Groq clients, sources the first request skipped |
+| `test_pipeline.py` | 37 | Quote check, fabricated and unknown citations dropped, verifier verdicts, conflicts, claims nobody backs up, claims only the leaver makes, gaps, bad model output, retries, rate limits, the second model, the Gemini and Groq clients, sources and document paragraphs the first request skipped |
 | `test_analysis_api.py` | 14 | Labels and dropped claims, questions ordered by risk, restricted evidence hidden, saved and basic fallbacks, re-runs, lost runs |
 | `test_review_flow.py` | 37 | Answering, review actions and versions, approval rules, the incoming view, redaction, receipt, who may do what |
 | `test_redact.py` | 6 | Emails, phone numbers, secrets, and things that must not be masked such as dates |
@@ -49,9 +49,11 @@ Run by hand on all sources of the synthetic Campus Events App (9 sources, 128 pi
 
 The default model gives a different answer from run to run, so the saved demo result is one real run, not an average. It took about 30 seconds in AI mode.
 
-**The saved run** (`backend/saved_results/campus-events-app.json`): 82 statements (36 verified, 31 unverified, 13 missing, 2 conflicting), 13 questions for the departing member. 30 of 32 cases cited, 25 with the expected label. All four planted claims only the leaver makes are `unverified`, two of the three planted conflicts (auditorium capacity, QR format) are reported as conflicts, and the HR notes and the confidential lead chat were found.
+**The saved run** (`backend/saved_results/campus-events-app.json`, 3 Nov 2026): 86 statements (51 verified, 26 unverified, 7 missing, 2 conflicting), 7 questions for the departing member. 31 of 32 cases cited, 29 with the expected label. All four planted claims only the leaver makes are `unverified`, two of the three planted conflicts (auditorium capacity, QR format) are reported as conflicts, and the HR notes and the confidential lead chat were found. It replaced the run saved on 2 Nov (82 statements, 27 cited and 22 with the expected label when scored the same way, see below).
 
-The result changes from run to run. Three runs with the final prompt cited 24, 31 and 30 cases and matched the expected label on 10, 24 and 25, with 37, 72 and 82 statements. In two of those three runs all four leaver claims came out `unverified`. The saved file is one of the better runs, picked because it shows every feature (conflicts, gaps, unverified claims), and it is a real run, not edited.
+The result changes from run to run. The scoring script was re-written for this round (it matches a case to a statement by the location it cites, with the paragraph offset below) and used on every run in this paragraph. Without the paragraph top-up, two runs cited 22 and 24 cases and matched the expected label on 17 and 17. With it, three runs cited 31, 31 and 24 and matched the expected label on 29, 27 and 15. One in three runs was still weak, so the saved file is the best of the three, picked because it shows every feature (conflicts, gaps, unverified claims), and it is a real run, not edited.
+
+(The 30 of 32 and 25 figures that were written here for the 2 Nov run came from an earlier scoring script that was not kept. Scored with the current script that run gets 27 and 22.)
 
 What we learned and changed:
 
@@ -60,23 +62,25 @@ What we learned and changed:
 - Thinking models count their thinking against the reply limit and cut the JSON off. Setting `reasoning_effort` to low fixed that for `gemini-3.6-flash`.
 - Something only the departing member says in chat, with nothing else behind it, can no longer be `verified`. This is a rule in code, not a request to the model. It also means a decision only the leaver stated, such as "we chose Render", shows as `unverified` until another person or a document backs it.
 - The model often skipped the leaver's own claims in the long request, so their chat messages now get a short request of their own.
+- Document paragraphs were often skipped inside a long request, even when the document was cited elsewhere, so the decisions and dependencies in them (the database choice, the Tailwind choice, the HR notes) went missing. Any paragraph nothing cites is now sent again on its own. This raised the cases cited from 22 to 24 to 31 in the two best runs.
 - Asking the model to leave out routine commits (typos, version pins, small screens) did not reliably shorten the list, but coverage went up. Plain commits are still often listed as decisions.
 - Splitting the work into two requests (facts, then checks) and a longer checking prompt did not help, so they were not kept.
 - The answer key counts document paragraphs after the title block, the importer counts the title block too, so the key's "paragraph 1" is the importer's "paragraph 2". The scoring allows for that.
 
 Still wrong or missing in the saved run:
 
-- The third planted conflict (token lifetime of 60 or 15 minutes) was found but labelled verified instead of conflicting.
-- One unfinished item (the stalled task T09 export) and one contact (the student council liaison) were not found.
+- The third planted conflict (token lifetime of 60 or 15 minutes, commit c18d402 against chat message 17) is not cited at all in this run.
+- Two planted gaps (commits f710a34 and a3f9c21) are cited but not labelled `missing`.
+- The auditorium capacity conflict appears twice, once labelled `conflicting` and once as a `verified` statement that mentions the conflict.
 - Many plain commits are labelled `decision` although they only record work done, so the lead has a long list to review.
 - The free tier of the AI service sometimes answers "high demand" (503), and some runs took several minutes because of retries. That is why a second model and saved results exist.
 
-**Hand check of the verified labels.** From the saved run, 20 of the 36 verified statements were picked at random (fixed seed) and each quote was read against its statement. In all 20 the quote supports the statement. This was done by the team's AI assistant and not by an outside reviewer, and it is a small sample, so it shows the check is working but is not a measured error rate. Two weaknesses were seen:
+**Hand check of the verified labels.** From the saved run, 20 of the 51 verified statements were picked at random (fixed seed 7) and each quote was read against its statement. In 19 of the 20 the quotes support the statement. The twentieth, about pull request 5 and the auditorium capacity, is supported by its quotes but it describes a conflict and should have been labelled conflicting. This was done by the team's AI assistant and not by an outside reviewer, and it is a small sample, so it shows the check is working but is not a measured error rate. Two weaknesses were seen:
 
 - "Verified" means the quoted words support the statement, not that the statement is the whole truth. A true statement can be one side of a conflict that was reported separately, such as the token lifetime of 60 minutes.
 - A statement built from the restricted HR notes can be verified. It is shown only to the lead, because it inherits the restriction of its source.
 
-With a wrong API key, the app showed the same 82 statements and 13 questions in "saved" mode with a notice, which is what a judge sees if the AI service is down.
+With a wrong API key, the app showed the same 2 Nov run's statements in "saved" mode with a notice, which is what a judge sees if the AI service is down.
 
 ## Main journeys covered
 
