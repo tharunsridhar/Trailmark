@@ -18,7 +18,7 @@ The AI is never called in tests. A scripted fake model plays back fixed replies,
 
 ## Latest result
 
-142 tests, all passing on SQLite (about 2 minutes). The 133 tests that existed before the AI provider work also passed on PostgreSQL 16 (about 4 minutes). Most of the time is password hashing.
+143 tests, all passing on both SQLite (about 2 minutes) and PostgreSQL 16 (about 4 minutes). Most of the time is password hashing.
 
 Also checked by hand: the Docker image builds, and with `docker compose up` the backend container ran against Postgres, answered `/health`, registered a user, created a handover, and returned `401` without a login.
 
