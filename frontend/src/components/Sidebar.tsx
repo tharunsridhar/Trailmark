@@ -130,6 +130,7 @@ export function Sidebar() {
             onClick={() => setActiveScreen('role-select')}
             className="p-1.5 text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] rounded-lg transition-colors"
             title="Switch demo persona"
+            aria-label="Switch demo persona"
           >
             <LogOut size={14} />
           </button>

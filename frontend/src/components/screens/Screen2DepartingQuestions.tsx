@@ -545,7 +545,7 @@ export function Screen2DepartingQuestions() {
             <div className="relative w-80 bg-white h-full shadow-elevated border-l border-[#E6E6DE] p-5 flex flex-col">
               <div className="flex items-center justify-between pb-4 border-b border-[#E6E6DE] mb-4">
                 <h3 className="text-sm font-bold text-[#1F201B]">All Questions</h3>
-                <button onClick={() => setShowNavDrawer(false)}>
+                <button aria-label="Close" onClick={() => setShowNavDrawer(false)}>
                   <X size={16} className="text-[#7A7B72]" />
                 </button>
               </div>
@@ -625,7 +625,7 @@ export function Screen2DepartingQuestions() {
                     {inspectPiece ? inspectPiece.source_name : 'Evidence Restricted'}
                   </h3>
                 </div>
-                <button
+                <button aria-label="Close"
                   onClick={() => {
                     setInspectPiece(null);
                     setPieceError(null);

@@ -390,7 +390,7 @@ export function Screen4IncomingHandover() {
                 <FileText size={16} className="text-[#5A5B4C]" />
                 <h3 className="text-sm font-bold text-[#1F201B]">{inspectPiece.source_name}</h3>
               </div>
-              <button onClick={() => setInspectPiece(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
+              <button aria-label="Close" onClick={() => setInspectPiece(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
                 <X size={16} />
               </button>
             </div>

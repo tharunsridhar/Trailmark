@@ -220,6 +220,7 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
               onClick={resetRecording}
               className="p-1.5 text-[#7A7B72] hover:text-[#1F201B] rounded-full hover:bg-[#EAEAE2]"
               title="Discard"
+              aria-label="Discard"
             >
               <RotateCcw size={14} />
             </button>

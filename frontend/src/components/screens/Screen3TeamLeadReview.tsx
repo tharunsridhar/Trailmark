@@ -292,6 +292,7 @@ export function Screen3TeamLeadReview() {
             onClick={loadStatements}
             className="p-2 rounded-full bg-white border border-[#E6E6DE] text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#EAEAE2] transition-colors"
             title="Refresh statements"
+            aria-label="Refresh statements"
           >
             <RefreshCw size={14} />
           </button>
@@ -552,7 +553,7 @@ export function Screen3TeamLeadReview() {
                 <Split size={18} className="text-rose-600" />
                 <h3 className="text-base font-bold text-[#1F201B]">Resolve Conflicting Sources</h3>
               </div>
-              <button onClick={() => setResolvingStatement(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
+              <button aria-label="Close" onClick={() => setResolvingStatement(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
                 <X size={16} />
               </button>
             </div>
@@ -649,7 +650,7 @@ export function Screen3TeamLeadReview() {
           <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full border border-[#E6E6DE] shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-[#1F201B]">Edit Statement #{editingStatement.id}</h3>
-              <button onClick={() => setEditingStatement(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
+              <button aria-label="Close" onClick={() => setEditingStatement(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
                 <X size={16} />
               </button>
             </div>
@@ -705,7 +706,7 @@ export function Screen3TeamLeadReview() {
           <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full border border-[#E6E6DE] shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-red-900">Reject Statement #{rejectingStatement.id}</h3>
-              <button onClick={() => setRejectingStatement(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
+              <button aria-label="Close" onClick={() => setRejectingStatement(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
                 <X size={16} />
               </button>
             </div>
@@ -756,7 +757,7 @@ export function Screen3TeamLeadReview() {
           <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full border border-[#E6E6DE] shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-purple-900">Accept Knowledge Gap</h3>
-              <button onClick={() => setAcceptingGap(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
+              <button aria-label="Close" onClick={() => setAcceptingGap(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
                 <X size={16} />
               </button>
             </div>
@@ -812,7 +813,7 @@ export function Screen3TeamLeadReview() {
                   Version Audit: Statement #{versionsStatement.id}
                 </h3>
               </div>
-              <button onClick={() => setVersionsStatement(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
+              <button aria-label="Close" onClick={() => setVersionsStatement(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
                 <X size={16} />
               </button>
             </div>
@@ -870,7 +871,7 @@ export function Screen3TeamLeadReview() {
                 <FileText size={16} className="text-[#5A5B4C]" />
                 <h3 className="text-sm font-bold text-[#1F201B]">{inspectPiece.source_name}</h3>
               </div>
-              <button onClick={() => setInspectPiece(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
+              <button aria-label="Close" onClick={() => setInspectPiece(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
                 <X size={16} />
               </button>
             </div>

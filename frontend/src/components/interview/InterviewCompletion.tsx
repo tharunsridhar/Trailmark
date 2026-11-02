@@ -122,6 +122,7 @@ export function InterviewCompletion({ onRevisitQuestion }: InterviewCompletionPr
                 onClick={() => onRevisitQuestion(idx)}
                 className="p-1.5 text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] rounded-lg shrink-0 mt-1"
                 title="Edit response"
+                aria-label="Edit response"
               >
                 <Edit3 size={14} />
               </button>

@@ -45,6 +45,7 @@ export function TopNav() {
           type="button"
           className="w-9 h-9 rounded-full bg-white border border-[#E6E6DE] flex items-center justify-center text-[#3A3B34] hover:bg-[#EAEAE2] transition-colors shadow-2xs relative"
           title="Notifications"
+          aria-label="Notifications"
         >
           <Bell size={15} />
           <span className="w-1.5 h-1.5 rounded-full bg-[#5A5B4C] absolute top-2 right-2" />
@@ -56,6 +57,7 @@ export function TopNav() {
           onClick={resetDemoData}
           className="h-9 px-3 rounded-full bg-white border border-[#E6E6DE] flex items-center gap-1.5 text-xs font-medium text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#EAEAE2] transition-colors shadow-2xs"
           title="Reset demo data"
+          aria-label="Reset demo data"
         >
           <RefreshCcw size={13} />
           <span className="hidden sm:inline">Reset</span>
@@ -75,6 +77,7 @@ export function TopNav() {
           onClick={() => setActiveScreen('role-select')}
           className="flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-full bg-white border border-[#E6E6DE] hover:bg-[#EAEAE2] transition-colors shadow-2xs"
           title="Switch demo persona"
+          aria-label="Switch demo persona"
         >
           <div className="w-7 h-7 rounded-full bg-[#5A5B4C] text-white flex items-center justify-center text-xs font-bold shrink-0">
             {currentUser.avatar}
