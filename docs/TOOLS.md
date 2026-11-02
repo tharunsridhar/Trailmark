@@ -44,7 +44,16 @@ Versions are in `backend/requirements.txt`.
 
 ## Frontend
 
-Next.js (React, TypeScript), built by Kishan S. Libraries are listed in `frontend/package.json` once it is added.
+Built by Kishan S. Versions are in `frontend/package.json`.
+
+| Library | Use |
+| --- | --- |
+| Next.js, React | The web app |
+| TypeScript | Typed code and API types |
+| Tailwind CSS (with PostCSS and autoprefixer) | Styling |
+| lucide-react | Icons |
+| clsx, tailwind-merge | Building class names |
+| IBM Plex Sans | The font used across the screens |
 
 ## Data
 
