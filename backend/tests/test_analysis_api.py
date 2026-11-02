@@ -3,7 +3,7 @@ from sqlalchemy import select
 
 from app.models import AnalysisRun, Question, Statement
 from app.pipeline.llm import LLMError
-from tests.helpers import FakeLLM, good_replies, sign_in, upload
+from tests.helpers import FakeLLM, good_replies, piece_id, sign_in, upload
 
 
 def statements(db):
@@ -171,3 +171,15 @@ def test_a_lost_run_does_not_block_new_analyses(client, loaded, db_session, use_
     db_session.expire_all()
     assert db_session.get(AnalysisRun, stuck.id).status == "failed"
     assert client.get(f"/handovers/{loaded}/analysis").json()["status"] == "done"
+
+
+def test_claim_only_the_departing_member_makes_stays_unverified(client, loaded, db_session, use_llm):
+    # Asha is the departing member, and the only evidence is her own chat message
+    asha_says = piece_id(db_session, "Team chat", "chat message 1")
+    extraction = {"statements": [{
+        "kind": "decision", "text": "We host on Render", "relation": "supported",
+        "evidence": [{"piece_id": asha_says, "quote": "go with Render"}],
+    }], "gaps": []}
+    use_llm(FakeLLM(extraction, {"results": [{"id": 0, "verdict": "supported"}]}))
+    client.post(f"/handovers/{loaded}/analyze")
+    assert statements(db_session)["We host on Render"].label == "unverified"

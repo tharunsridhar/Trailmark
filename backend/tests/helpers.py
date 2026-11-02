@@ -75,6 +75,7 @@ def piece_id(db, source_name, locator):
 
 def good_replies(db):
     render = piece_id(db, "Team chat", "chat message 1")
+    ravi_agrees = piece_id(db, "Team chat", "chat message 2")
     heroku = piece_id(db, "Design notes", "design.md paragraph 1")
     retry = piece_id(db, "Team chat", "chat message 3")
     t2 = piece_id(db, "Task list", "task T2")
@@ -83,7 +84,9 @@ def good_replies(db):
     extraction = {
         "statements": [
             {"kind": "decision", "text": "Hosting is on Render because the free tier is enough", "relation": "supported",
-             "evidence": [{"piece_id": render, "quote": "go with Render, the free tier is enough"}]},
+             # Asha says it and Ravi agrees, so it is not only the leaver's word
+             "evidence": [{"piece_id": render, "quote": "go with Render, the free tier is enough"},
+                          {"piece_id": ravi_agrees, "quote": "Fine by me"}]},
             {"kind": "decision", "text": "Sources disagree on the host", "relation": "conflicting",
              "evidence": [{"piece_id": render, "quote": "go with Render"},
                           {"piece_id": heroku, "quote": "We host the backend on Heroku"}]},

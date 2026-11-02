@@ -18,7 +18,7 @@ The AI is never called in tests. A scripted fake model plays back fixed replies,
 
 ## Latest result
 
-143 tests, all passing on both SQLite (about 2 minutes) and PostgreSQL 16 (about 4 minutes). Most of the time is password hashing.
+149 tests, all passing on both SQLite (about 2 minutes) and PostgreSQL 16 (about 4 minutes). Most of the time is password hashing.
 
 Also checked by hand: the Docker image builds, and with `docker compose up` the backend container ran against Postgres, answered `/health`, registered a user, created a handover, and returned `401` without a login.
 
@@ -29,7 +29,7 @@ Also checked by hand: the Docker image builds, and with `docker compose up` the 
 | `test_access.py` | 10 | A statement is hidden unless every source behind it is visible, drafts and rejected claims never shown |
 | `test_importers.py` | 11 | Each source type, empty and unreadable files, bad JSON, binary files |
 | `test_sources_api.py` | 10 | Upload, listing, source access levels passed to pieces, size and type checks, no uploads after approval |
-| `test_pipeline.py` | 29 | Quote check, fabricated and unknown citations dropped, verifier verdicts, conflicts, claims nobody backs up, gaps, bad model output, retries, rate limits, the second model, the Gemini and Groq clients, sources the first request skipped |
+| `test_pipeline.py` | 35 | Quote check, fabricated and unknown citations dropped, verifier verdicts, conflicts, claims nobody backs up, claims only the leaver makes, gaps, bad model output, retries, rate limits, the second model, the Gemini and Groq clients, sources the first request skipped |
 | `test_analysis_api.py` | 14 | Labels and dropped claims, questions ordered by risk, restricted evidence hidden, saved and basic fallbacks, re-runs, lost runs |
 | `test_review_flow.py` | 37 | Answering, review actions and versions, approval rules, the incoming view, redaction, receipt, who may do what |
 | `test_redact.py` | 6 | Emails, phone numbers, secrets, and things that must not be masked such as dates |
@@ -49,23 +49,29 @@ Run by hand on all sources of the synthetic Campus Events App (9 sources, 128 pi
 
 The default model gives a different answer from run to run, so the saved demo result is one real run, not an average. It took about 30 seconds in AI mode.
 
-**The saved run** (`backend/saved_results/campus-events-app.json`): 33 statements (20 verified, 5 unverified, 5 missing, 3 conflicting), 5 questions for the departing member, 6 claims thrown away because the quote was not in the source. 24 of 32 cases cited, 23 with the expected label. All three planted conflicts were reported as conflicts, and the HR notes and the confidential lead chat were found.
+**The saved run** (`backend/saved_results/campus-events-app.json`): 76 statements (56 verified, 11 unverified, 7 missing, 2 conflicting), 7 questions for the departing member. 28 of 32 cases cited, 24 with the expected label. Two of the three planted conflicts (auditorium capacity, QR format) are reported as conflicts, and the HR notes and the confidential lead chat were found.
+
+Five more runs of the default model after the leaver-claims changes below cited 25 to 30 cases and matched the expected label on 14 to 24. The number of statements also varies, from 54 to 76 in those runs.
 
 What we learned and changed:
 
-- The first prompt found 10 statements. Telling the model to cover every source, and what counts as a gap or a claim only the leaver makes, raised it to about 35.
+- The first prompt found 10 statements. Telling the model to cover every source, and what counts as a gap or a claim only the leaver makes, raised it to 35 or more.
 - A long request makes models skip whole sources, such as the HR notes. Any source nothing cites is now sent again on its own.
 - Thinking models count their thinking against the reply limit and cut the JSON off. Setting `reasoning_effort` to low fixed that for `gemini-3.6-flash`.
+- Something only the departing member says in chat, with nothing else behind it, can no longer be `verified`. This is a rule in code, not a request to the model. It also means a decision only the leaver stated, such as "we chose Render", shows as `unverified` until another person or a document backs it.
+- The model often skipped the leaver's own claims in the long request, so their chat messages now get a short request of their own. Of the four planted claims, two (chat messages 32 and 50) came out `unverified` in 3 of 5 runs, and the other two (37 and 46) in about 1 of 5.
 - Splitting the work into two requests (facts, then checks) and a longer checking prompt did not help, so they were not kept.
 - The answer key counts document paragraphs after the title block, the importer counts the title block too, so the key's "paragraph 1" is the importer's "paragraph 2". The scoring allows for that.
 
 Still wrong or missing in the saved run:
 
-- None of the four claims only the leaver makes (chat messages 32, 37, 46 and 50) was labelled unverified. They were not found, or were found and labelled verified.
-- Three planted gaps and one decision and one contact were not found.
-- The free tier of the AI service sometimes answers "high demand" (503). That is why a second model and saved results exist.
+- Two of the four claims only the leaver makes (chat messages 37 and 46) were not found.
+- The third planted conflict (token lifetime of 60 or 15 minutes) was found but labelled verified instead of conflicting.
+- One unfinished item (the stalled task T09 export) and one contact (Deepak, for database restore access) were not found.
+- Wrong "verified" labels were not measured. We only measured how many planted cases are found.
+- The free tier of the AI service sometimes answers "high demand" (503), and some runs took several minutes because of retries. That is why a second model and saved results exist.
 
-With a wrong API key, the app showed the same statements in "saved" mode with a notice, which is what a judge sees if the AI service is down.
+With a wrong API key, the app showed the same 76 statements and 7 questions in "saved" mode with a notice, which is what a judge sees if the AI service is down.
 
 ## Main journeys covered
 

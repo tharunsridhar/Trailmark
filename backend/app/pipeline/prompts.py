@@ -37,6 +37,14 @@ Reply with JSON only, in exactly this shape:
   ]
 }"""
 
+# the long request often skips chat claims, so they get a short request of their own
+CLAIMS_FOCUS = (
+    "Every piece below is a chat message by the person who is leaving. Report each message in which they say "
+    "they did, tested, configured, arranged or agreed something about the project, as its own statement with "
+    '"relation": "claim_only". Quote the message word for word. Report nothing else and no gaps.'
+)
+
+
 VERIFY_SYSTEM = """You check whether quoted evidence supports a claim. You see only the claim and the quoted text, \
 nothing else.
 

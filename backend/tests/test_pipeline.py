@@ -306,3 +306,68 @@ def test_build_llm_picks_client_from_provider(monkeypatch):
 
     monkeypatch.setattr("app.pipeline.llm.get_settings", lambda: settings(llm_api_key=""))
     assert build_llm() is None
+
+
+def chat_piece(piece_id, sender, text):
+    return SimpleNamespace(
+        id=piece_id, content=f"[t] {sender}: {text}", locator=f"chat message {piece_id}",
+        source=SimpleNamespace(name="Chat", type="chat"),
+    )
+
+
+def test_claim_only_the_leaver_makes_in_chat_cannot_be_verified():
+    pieces = [chat_piece(1, "Asha", "I stress-tested the scanner to 5,000 scans a minute")]
+    claim = statement(text="The scanner was stress-tested to 5,000 scans a minute",
+                      evidence=[{"piece_id": 1, "quote": "stress-tested the scanner to 5,000 scans"}])
+    result = analyze(FakeLLM({"statements": [claim], "gaps": []}, verdict("supported")), pieces, leavers=["Asha Menon"])
+    assert result.drafts[0].label == "unverified"
+
+
+def test_leaver_claim_backed_by_another_person_or_a_document_stays_verified():
+    pieces = [
+        chat_piece(1, "Asha", "We go with Render"),
+        chat_piece(2, "Deepak", "Agreed, Render it is"),
+        SimpleNamespace(id=3, content="Hosting is on Render", locator="notes paragraph 1",
+                        source=SimpleNamespace(name="Notes", type="doc")),
+    ]
+    two_people = statement(evidence=[{"piece_id": 1, "quote": "go with Render"}, {"piece_id": 2, "quote": "Render it is"}])
+    with_doc = statement(text="Hosting is on Render (doc)", evidence=[{"piece_id": 1, "quote": "go with Render"},
+                                                                       {"piece_id": 3, "quote": "Hosting is on Render"}])
+    llm = FakeLLM({"statements": [two_people, with_doc], "gaps": []}, verdict("supported", "supported"))
+    result = analyze(llm, pieces, leavers=["Asha"])
+    assert [d.label for d in result.drafts] == ["verified", "verified"]
+
+
+def test_without_a_known_leaver_nothing_is_downgraded():
+    pieces = [chat_piece(1, "Asha", "We go with Render")]
+    claim = statement(evidence=[{"piece_id": 1, "quote": "go with Render"}])
+    result = analyze(FakeLLM({"statements": [claim], "gaps": []}, verdict("supported")), pieces)
+    assert result.drafts[0].label == "verified"
+
+
+def test_leaver_chat_messages_get_their_own_request_and_stay_unverified():
+    pieces = [
+        chat_piece(1, "Asha", "I stress-tested the scanner to 5,000 scans a minute"),
+        chat_piece(2, "Deepak", "Please remember to renew the domain"),
+    ]
+    main = {"statements": [], "gaps": []}
+    claims = {"statements": [statement(text="The scanner was stress-tested to 5,000 scans a minute", relation="claim_only",
+                                       evidence=[{"piece_id": 1, "quote": "stress-tested the scanner"}])], "gaps": []}
+    # the main request found nothing, so the skipped source is asked again before the claims request
+    llm = FakeLLM(main, {"statements": [], "gaps": []}, claims)
+    result = analyze(llm, pieces, leavers=["Asha"])
+    assert [(d.label, d.text) for d in result.drafts] == [("unverified", "The scanner was stress-tested to 5,000 scans a minute")]
+    # only the leaver's own message is sent in the claims request
+    assert "stress-tested the scanner" in llm.prompts[2][1] and "renew the domain" not in llm.prompts[2][1]
+
+
+def test_claim_already_covered_is_not_repeated_and_a_failed_claims_request_is_ignored():
+    pieces = [chat_piece(1, "Asha", "I stress-tested the scanner to 5,000 scans a minute")]
+    covered = statement(text="Scanner stress test", evidence=[{"piece_id": 1, "quote": "stress-tested the scanner"}])
+    again = statement(text="Stress-tested the scanner", relation="claim_only",
+                      evidence=[{"piece_id": 1, "quote": "stress-tested the scanner"}])
+    llm = FakeLLM({"statements": [covered], "gaps": []}, verdict("supported"), {"statements": [again], "gaps": []})
+    assert len(analyze(llm, pieces, leavers=["Asha"]).drafts) == 1
+
+    failing = FakeLLM({"statements": [covered], "gaps": []}, verdict("supported"), LLMError("down"))
+    assert len(analyze(failing, pieces, leavers=["Asha"]).drafts) == 1

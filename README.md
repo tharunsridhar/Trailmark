@@ -35,7 +35,7 @@ When someone leaves a project, the files stay but much of what they knew leaves 
 
 ## Status
 
-Round 2 build. The backend covers the whole workflow and is tested (143 tests on SQLite and PostgreSQL): sign-in with roles, handovers and members, source import, the AI analysis with quote and verification checks, the saved-results and basic fallbacks, the departing member's answers, the lead's review and approval, the incoming member's redacted and permission-filtered handover, and the receipt. The AI has been run on the synthetic project and the results are saved in `backend/saved_results/`. It finds about 24 of 32 planted cases and misses claims only the leaver makes, details in `docs/TESTING.md`. Docker and Render configuration are written, the deployment steps are in `docs/DEPLOY.md`. The frontend screens (Kishan) are being connected to the backend.
+Round 2 build. The backend covers the whole workflow and is tested (149 tests on SQLite and PostgreSQL): sign-in with roles, handovers and members, source import, the AI analysis with quote and verification checks, the saved-results and basic fallbacks, the departing member's answers, the lead's review and approval, the incoming member's redacted and permission-filtered handover, and the receipt. The AI has been run on the synthetic project and the results are saved in `backend/saved_results/`. It finds about 24 of 32 planted cases and misses claims only the leaver makes, details in `docs/TESTING.md`. Docker and Render configuration are written, the deployment steps are in `docs/DEPLOY.md`. The frontend screens (Kishan) are being connected to the backend.
 
 ## Running the backend
 
@@ -87,11 +87,12 @@ This starts PostgreSQL and the backend at `http://localhost:8000` (if that port 
 ## How the AI analysis stays honest
 
 1. The model must cite source pieces by id with a word-for-word quote. If the quote is not in the cited piece, the claim is thrown away.
-2. A second, separate model call sees only the claim and its quotes. Only a clear "supported" makes a statement `verified`, anything else stays `unverified`.
-3. Two sources that disagree become one `conflicting` statement that cites both.
-4. Missing information is reported as a `missing` gap with a question for the leaver, never filled in.
-5. Text shown to the incoming member has emails, phone numbers and secrets masked, and a statement is hidden unless they may see every source behind it.
-6. If the AI service fails, the last good results are shown (marked as saved), and if there are none, a basic listing built only from structured fields such as task owners. The response always says which mode was used.
+2. Something only the departing member says in chat, with no code, document, task or other person behind it, is never `verified`: it stays `unverified`.
+3. A second, separate model call sees only the claim and its quotes. Only a clear "supported" makes a statement `verified`, anything else stays `unverified`.
+4. Two sources that disagree become one `conflicting` statement that cites both.
+5. Missing information is reported as a `missing` gap with a question for the leaver, never filled in.
+6. Text shown to the incoming member has emails, phone numbers and secrets masked, and a statement is hidden unless they may see every source behind it.
+7. If the AI service fails, the last good results are shown (marked as saved), and if there are none, a basic listing built only from structured fields such as task owners. The response always says which mode was used.
 
 Set `LLM_API_KEY` in `.env` to turn the AI on (a free Gemini key from Google AI Studio works, see `.env.example` for Groq and Anthropic). Without it the analysis runs in the saved or basic mode.
 

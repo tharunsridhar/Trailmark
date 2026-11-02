@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from app.models import STATEMENT_KINDS
 from app.pipeline.llm import LLMError
 from app.pipeline.prompts import (
+    CLAIMS_FOCUS,
     EXTRACT_SYSTEM,
     VERIFY_SYSTEM,
     build_extract_prompt,
@@ -103,14 +104,58 @@ def run_verifier(llm, candidates: list[Draft]) -> dict[int, str]:
     return verdicts
 
 
-def ask_for_statements(llm, pieces) -> dict:
-    raw = parse_json(llm.complete(EXTRACT_SYSTEM, build_extract_prompt(pieces)))
+def ask_for_statements(llm, pieces, focus: str | None = None) -> dict:
+    system = EXTRACT_SYSTEM if focus is None else EXTRACT_SYSTEM + "\n\n" + focus
+    raw = parse_json(llm.complete(system, build_extract_prompt(pieces)))
     if not isinstance(raw.get("statements", []), list) or not isinstance(raw.get("gaps", []), list):
         raise LLMError("the model returned JSON of the wrong shape")
     return raw
 
 
-def analyze(llm, pieces) -> AnalysisResult:
+def chat_sender(piece) -> str | None:
+    """Who wrote a chat message. Pieces from other kinds of source have no sender."""
+    if getattr(piece.source, "type", None) != "chat":
+        return None
+    match = re.match(r"\[[^\]]*\]\s*([^:]+):", piece.content)
+    return match.group(1).strip() if match else None
+
+
+def is_one_of(sender: str, names: list[str]) -> bool:
+    sender = sender.lower()
+    return any(sender in name.lower() or name.lower() in sender for name in names if name)
+
+
+def mark_leaver_only_claims(drafts: list[Draft], pieces_by_id: dict, leavers: list[str]) -> None:
+    """Something only the departing person says in chat, with no code, document, task or
+    other person behind it, is their word and nothing more, so it cannot be verified."""
+    for draft in drafts:
+        if draft.label != "verified" or not draft.evidence:
+            continue
+        senders = [chat_sender(pieces_by_id[e.piece_id]) for e in draft.evidence]
+        if all(s and is_one_of(s, leavers) for s in senders):
+            draft.label = "unverified"
+
+
+def leaver_claims(llm, pieces, pieces_by_id: dict, drafts: list[Draft], leavers: list[str]):
+    """The departing person's own chat messages get a request of their own, because a long
+    request tends to skip them. A claim already covered by an earlier statement is not repeated."""
+    mine = [p for p in pieces if (s := chat_sender(p)) and is_one_of(s, leavers)]
+    if not mine:
+        return [], 0
+    try:
+        raw = ask_for_statements(llm, mine, CLAIMS_FOCUS)
+    except LLMError:
+        return [], 0
+    raw["gaps"] = []
+    new, dropped = build_drafts(llm, raw, pieces_by_id)
+    cited = {e.piece_id for d in drafts for e in d.evidence}
+    fresh = [d for d in new if not all(e.piece_id in cited for e in d.evidence)]
+    for draft in fresh:
+        draft.label = "unverified"
+    return fresh, dropped
+
+
+def analyze(llm, pieces, leavers: list[str] | None = None) -> AnalysisResult:
     pieces_by_id = {p.id: p for p in pieces}
     drafts, dropped = build_drafts(llm, ask_for_statements(llm, pieces), pieces_by_id)
 
@@ -126,6 +171,11 @@ def analyze(llm, pieces) -> AnalysisResult:
             more, more_dropped = [], 0
         drafts += more
         dropped += more_dropped
+    mark_leaver_only_claims(drafts, pieces_by_id, leavers or [])
+    if leavers:
+        claims, claims_dropped = leaver_claims(llm, pieces, pieces_by_id, drafts, leavers)
+        drafts += claims
+        dropped += claims_dropped
     return AnalysisResult(drafts, dropped)
 
 

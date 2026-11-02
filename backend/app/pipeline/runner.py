@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.config import get_settings
 from app.models import (
-    Answer, AnalysisRun, Handover, Question, QuestionPiece, Source, SourcePiece,
+    Answer, AnalysisRun, Handover, Membership, Question, QuestionPiece, Source, SourcePiece,
     Statement, StatementSource, StatementVersion, now,
 )
 from app.pipeline.analyze import Draft, analyze
@@ -29,6 +29,14 @@ def load_pieces(db, handover_id: int):
         .options(selectinload(SourcePiece.source))
         .order_by(SourcePiece.source_id, SourcePiece.position)
     ).all()
+
+
+def leaver_names(db, handover_id: int) -> list[str]:
+    members = db.scalars(
+        select(Membership).where(Membership.handover_id == handover_id, Membership.role == "departing")
+        .options(selectinload(Membership.user))
+    ).all()
+    return [m.user.name for m in members]
 
 
 def clear_previous(db, handover_id: int) -> None:
@@ -83,7 +91,7 @@ def run_analysis(session_factory, run_id: int, llm) -> None:
             result = None
             if llm is not None:
                 try:
-                    result = analyze(llm, pieces)
+                    result = analyze(llm, pieces, leaver_names(db, handover.id))
                 except (LLMError, httpx.HTTPError) as error:
                     log.warning("AI analysis failed: %s", error)
 
