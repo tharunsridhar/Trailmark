@@ -19,7 +19,7 @@ Against the seven core features in the Round 1 plan:
 | Core feature | Status |
 | --- | --- |
 | Source import: repository export, documents, chat export, task list, each with an access level set by the lead | Done |
-| Project-state reconstruction: decisions and reasons, owners, unfinished work, dependencies, risks, contacts, each linked to its source | Done (backend). Run on the synthetic project, 28 of 32 planted cases found in the saved run |
+| Project-state reconstruction: decisions and reasons, owners, unfinished work, dependencies, risks, contacts, each linked to its source | Done (backend). Run on the synthetic project, 30 of 32 planted cases found in the saved run |
 | Evidence labels: verified, unverified, missing, conflicting. A statement with no valid source link cannot be verified | Done, with a word-for-word quote check and a separate verifier call |
 | Gap detection and questions for the departing member, with the evidence shown | Done |
 | Review and approval: edit, reject, resolve a conflict with a written reason, accept a gap, version history | Done |
@@ -45,7 +45,7 @@ Also built: support for Gemini, Groq and Anthropic models, saved results from a 
 
 ## Known limitations
 
-- On the synthetic project the AI cites 25 to 30 of the 32 planted cases and gets the expected label on 14 to 24, depending on the run. Claims only the leaver makes are labelled unverified in most runs, but two of the four are often not found at all. Details are in `TESTING.md`.
+- On the synthetic project the AI cites 24 to 31 of the 32 planted cases and gets the expected label on 10 to 25, depending on the run. The saved run cites 30, marks all four leaver-only claims unverified and reports two of three planted conflicts. Many plain commits are listed as decisions. Details are in `TESTING.md`.
 - The AI runs on the free tier of Gemini, which limits requests per day and per minute. The demo falls back to saved results from a real run if the service is unavailable.
 - Redaction is pattern based and will miss some sensitive text.
 - The analysis sends all pieces in one request, so very large sources would need chunking.

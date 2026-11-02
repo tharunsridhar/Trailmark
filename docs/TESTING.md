@@ -49,9 +49,9 @@ Run by hand on all sources of the synthetic Campus Events App (9 sources, 128 pi
 
 The default model gives a different answer from run to run, so the saved demo result is one real run, not an average. It took about 30 seconds in AI mode.
 
-**The saved run** (`backend/saved_results/campus-events-app.json`): 76 statements (56 verified, 11 unverified, 7 missing, 2 conflicting), 7 questions for the departing member. 28 of 32 cases cited, 24 with the expected label. Two of the three planted conflicts (auditorium capacity, QR format) are reported as conflicts, and the HR notes and the confidential lead chat were found.
+**The saved run** (`backend/saved_results/campus-events-app.json`): 82 statements (36 verified, 31 unverified, 13 missing, 2 conflicting), 13 questions for the departing member. 30 of 32 cases cited, 25 with the expected label. All four planted claims only the leaver makes are `unverified`, two of the three planted conflicts (auditorium capacity, QR format) are reported as conflicts, and the HR notes and the confidential lead chat were found.
 
-Five more runs of the default model after the leaver-claims changes below cited 25 to 30 cases and matched the expected label on 14 to 24. The number of statements also varies, from 54 to 76 in those runs.
+The result changes from run to run. Three runs with the final prompt cited 24, 31 and 30 cases and matched the expected label on 10, 24 and 25, with 37, 72 and 82 statements. In two of those three runs all four leaver claims came out `unverified`. The saved file is one of the better runs, picked because it shows every feature (conflicts, gaps, unverified claims), and it is a real run, not edited.
 
 What we learned and changed:
 
@@ -59,23 +59,24 @@ What we learned and changed:
 - A long request makes models skip whole sources, such as the HR notes. Any source nothing cites is now sent again on its own.
 - Thinking models count their thinking against the reply limit and cut the JSON off. Setting `reasoning_effort` to low fixed that for `gemini-3.6-flash`.
 - Something only the departing member says in chat, with nothing else behind it, can no longer be `verified`. This is a rule in code, not a request to the model. It also means a decision only the leaver stated, such as "we chose Render", shows as `unverified` until another person or a document backs it.
-- The model often skipped the leaver's own claims in the long request, so their chat messages now get a short request of their own. Of the four planted claims, two (chat messages 32 and 50) came out `unverified` in 3 of 5 runs, and the other two (37 and 46) in about 1 of 5.
+- The model often skipped the leaver's own claims in the long request, so their chat messages now get a short request of their own.
+- Asking the model to leave out routine commits (typos, version pins, small screens) did not reliably shorten the list, but coverage went up. Plain commits are still often listed as decisions.
 - Splitting the work into two requests (facts, then checks) and a longer checking prompt did not help, so they were not kept.
 - The answer key counts document paragraphs after the title block, the importer counts the title block too, so the key's "paragraph 1" is the importer's "paragraph 2". The scoring allows for that.
 
 Still wrong or missing in the saved run:
 
-- Two of the four claims only the leaver makes (chat messages 37 and 46) were not found.
 - The third planted conflict (token lifetime of 60 or 15 minutes) was found but labelled verified instead of conflicting.
-- One unfinished item (the stalled task T09 export) and one contact (Deepak, for database restore access) were not found.
+- One unfinished item (the stalled task T09 export) and one contact (the student council liaison) were not found.
+- Many plain commits are labelled `decision` although they only record work done, so the lead has a long list to review.
 - The free tier of the AI service sometimes answers "high demand" (503), and some runs took several minutes because of retries. That is why a second model and saved results exist.
 
-**Hand check of the verified labels.** From the saved run, 20 of the 56 verified statements were picked at random (fixed seed) and each quote was read against its statement. In all 20 the quote supports the statement. This was done by the team's AI assistant and not by an outside reviewer, and it is a small sample, so it shows the check is working but is not a measured error rate. Two weaknesses were seen:
+**Hand check of the verified labels.** From the saved run, 20 of the 36 verified statements were picked at random (fixed seed) and each quote was read against its statement. In all 20 the quote supports the statement. This was done by the team's AI assistant and not by an outside reviewer, and it is a small sample, so it shows the check is working but is not a measured error rate. Two weaknesses were seen:
 
 - "Verified" means the quoted words support the statement, not that the statement is the whole truth. A true statement can be one side of a conflict that was reported separately, such as the token lifetime of 60 minutes.
-- Many commits are labelled `decision` although they only record work done with no reason given.
+- A statement built from the restricted HR notes can be verified. It is shown only to the lead, because it inherits the restriction of its source.
 
-With a wrong API key, the app showed the same 76 statements and 7 questions in "saved" mode with a notice, which is what a judge sees if the AI service is down.
+With a wrong API key, the app showed the same 82 statements and 13 questions in "saved" mode with a notice, which is what a judge sees if the AI service is down.
 
 ## Main journeys covered
 

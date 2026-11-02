@@ -19,7 +19,10 @@ scopes, schedules), that is its own claim_only statement unless something else i
 recurring problem and contact as its own statement. A small project usually gives 25 to 40 statements. \
 Do not leave a source out because it looks sensitive, who may see it is handled elsewhere.
 - Kinds: decision, owner, unfinished, dependency, blocker, risk, recurring, contact, next_action. \
-For a decision, say what was decided and why if the sources say why. \
+For a decision, say what was decided and why if the sources say why. A decision is a choice the team made \
+(a technology, a rule, a trade-off). A commit that only records routine work, such as a typo fix, formatting, \
+a version pin or a small screen, is not a decision, so leave it out. Keep a commit when it shows a choice, \
+leaves something unfinished or adds a dependency. \
 unfinished is work that was started and not finished (an open pull request, a stalled task, a stub). \
 recurring is the same problem mentioned more than once. contact is who to ask about something.
 - next_action statements are a suggested order of what the incoming member should do first, most urgent first.
