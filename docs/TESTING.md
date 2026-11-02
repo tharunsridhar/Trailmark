@@ -68,8 +68,12 @@ Still wrong or missing in the saved run:
 - Two of the four claims only the leaver makes (chat messages 37 and 46) were not found.
 - The third planted conflict (token lifetime of 60 or 15 minutes) was found but labelled verified instead of conflicting.
 - One unfinished item (the stalled task T09 export) and one contact (Deepak, for database restore access) were not found.
-- Wrong "verified" labels were not measured. We only measured how many planted cases are found.
 - The free tier of the AI service sometimes answers "high demand" (503), and some runs took several minutes because of retries. That is why a second model and saved results exist.
+
+**Hand check of the verified labels.** From the saved run, 20 of the 56 verified statements were picked at random (fixed seed) and each quote was read against its statement. In all 20 the quote supports the statement. This was done by the team's AI assistant and not by an outside reviewer, and it is a small sample, so it shows the check is working but is not a measured error rate. Two weaknesses were seen:
+
+- "Verified" means the quoted words support the statement, not that the statement is the whole truth. A true statement can be one side of a conflict that was reported separately, such as the token lifetime of 60 minutes.
+- Many commits are labelled `decision` although they only record work done with no reason given.
 
 With a wrong API key, the app showed the same 76 statements and 7 questions in "saved" mode with a notice, which is what a judge sees if the AI service is down.
 
