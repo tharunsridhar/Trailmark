@@ -174,25 +174,13 @@ export function Screen2DepartingQuestions() {
           return;
         }
 
-        // If the question is already answered in backend, proceed to next without attempting duplicate answer
-        if (currentQuestion?.status === 'answered') {
-          if (currentIndex < totalQuestions - 1) {
-            setSlideDir('left');
-            setSlideKey((k) => k + 1);
-            setTimeout(() => setCurrentIndex((p) => p + 1), 10);
-          } else {
-            setIsCompletedMode(true);
-          }
-          return;
-        }
-
         // If previous save attempt resulted in error, block advancing until resolved or skipped
         if (saveStatus === 'error') {
           return;
         }
 
-        // Save if unsaved changes exist on an unanswered question
-        if (saveStatus === 'unsaved' && answerText.trim()) {
+        // Save if unsaved changes exist (either new answer or editing previous answer)
+        if (saveStatus === 'unsaved' && answerText.trim() && answerText.trim() !== (currentQuestion?.answer || '')) {
           const ok = await handleSaveCurrent();
           if (!ok) {
             // Stop navigation if backend rejected answer
@@ -648,14 +636,14 @@ export function Screen2DepartingQuestions() {
                     <span className="text-red-600 font-semibold flex items-center gap-1">
                       <AlertCircle size={12} /> {safeErrorMessage(errorMessage) || 'Response not saved to backend.'}
                     </span>
-                  ) : currentQuestion.status === 'answered' ? (
-                    <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                      <Check size={12} /> Answer recorded in backend
-                    </span>
                   ) : saveStatus === 'unsaved' ? (
-                    <span className="text-amber-700 font-medium">Unsaved response — click Save Answer when ready</span>
-                  ) : answerText.trim() ? (
-                    <span className="text-emerald-700 flex items-center gap-1">
+                    <span className="text-amber-700 font-medium">
+                      {currentQuestion.status === 'answered'
+                        ? 'Unsaved changes — click Update Answer to replace old response'
+                        : 'Unsaved response — click Save Answer when ready'}
+                    </span>
+                  ) : currentQuestion.status === 'answered' || (answerText.trim() && saveStatus === 'saved') ? (
+                    <span className="text-emerald-700 font-semibold flex items-center gap-1">
                       <Check size={12} /> Saved in backend
                     </span>
                   ) : (
@@ -670,7 +658,7 @@ export function Screen2DepartingQuestions() {
                     saveStatus === 'saving' ||
                     !answerText.trim() ||
                     activeHandover?.status === 'approved' ||
-                    currentQuestion.status === 'answered'
+                    (saveStatus === 'saved' && answerText.trim() === (currentQuestion.answer || ''))
                   }
                   className="px-4 py-1.5 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] disabled:opacity-40 text-white text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5"
                 >
@@ -679,10 +667,15 @@ export function Screen2DepartingQuestions() {
                       <Loader2 size={12} className="animate-spin" />
                       <span>Saving...</span>
                     </>
-                  ) : currentQuestion.status === 'answered' ? (
+                  ) : currentQuestion.status === 'answered' && saveStatus === 'unsaved' ? (
                     <>
                       <Check size={12} />
-                      <span>Answer Recorded</span>
+                      <span>Update Answer</span>
+                    </>
+                  ) : saveStatus === 'saved' && answerText.trim() ? (
+                    <>
+                      <Check size={12} />
+                      <span>Saved</span>
                     </>
                   ) : (
                     <>

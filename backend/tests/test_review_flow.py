@@ -78,11 +78,13 @@ def test_skipped_and_unknown_questions_stay_open_gaps(client, analysed, db_sessi
     assert unknown.json()["status"] == "unknown"
 
 
-def test_a_question_can_only_be_answered_once(client, analysed):
+def test_a_question_can_be_updated(client, analysed):
     login(client, "Asha")
-    client.post(f"/questions/{Q_T2}/answer", json={"action": "answer", "text": "first"})
+    first = client.post(f"/questions/{Q_T2}/answer", json={"action": "answer", "text": "first"})
+    assert first.status_code == 200
     again = client.post(f"/questions/{Q_T2}/answer", json={"action": "answer", "text": "second"})
-    assert again.status_code == 409
+    assert again.status_code == 200
+    assert again.json()["answer"] == "second"
 
 
 @pytest.mark.parametrize("who", ["Kishan", "Ravi", "Outsider"])

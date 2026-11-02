@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.access import can_user_see
@@ -30,27 +31,36 @@ def answer_question(
 
     if db.get(Handover, question.handover_id).status != "draft":
         raise HTTPException(status_code=409, detail="This handover is already approved")
-    if question.status == "answered":
-        raise HTTPException(status_code=409, detail="Already answered, ask the lead to edit the statement")
 
     gap = db.get(Statement, question.gap_statement_id) if question.gap_statement_id else None
 
     if body.action == "answer":
         text = body.text.strip()
-        # the answer rests on nothing but the leaver's word, so it is unverified
-        statement = Statement(
-            handover_id=question.handover_id, kind="answer", text=text, label="unverified",
-        )
-        db.add(statement)
-        db.flush()
-        # it inherits the restrictions of the evidence that raised the question
-        for link in question.evidence:
-            db.add(StatementSource(statement_id=statement.id, piece_id=link.piece_id, quote=link.quote))
-        db.add(StatementVersion(
-            statement_id=statement.id, version=1, action="created", text=text,
-            label="unverified", editor_id=user.id,
-        ))
-        db.add(Answer(question_id=question.id, user_id=user.id, text=text, statement_id=statement.id))
+        existing_answer = db.scalar(select(Answer).where(Answer.question_id == question.id))
+
+        if existing_answer is not None:
+            # Replace old response with new response
+            existing_answer.text = text
+            if existing_answer.statement_id:
+                statement = db.get(Statement, existing_answer.statement_id)
+                if statement:
+                    statement.text = text
+                    add_version(db, statement, "edited", user.id, "Updated response by departing member")
+        else:
+            # First time answering: create statement and answer record
+            statement = Statement(
+                handover_id=question.handover_id, kind="answer", text=text, label="unverified",
+            )
+            db.add(statement)
+            db.flush()
+            # it inherits the restrictions of the evidence that raised the question
+            for link in question.evidence:
+                db.add(StatementSource(statement_id=statement.id, piece_id=link.piece_id, quote=link.quote))
+            db.add(StatementVersion(
+                statement_id=statement.id, version=1, action="created", text=text,
+                label="unverified", editor_id=user.id,
+            ))
+            db.add(Answer(question_id=question.id, user_id=user.id, text=text, statement_id=statement.id))
 
         # the gap is now covered by the answer, so it stops showing as open
         if gap is not None and gap.status == "draft":
