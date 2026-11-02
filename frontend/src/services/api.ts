@@ -70,6 +70,7 @@ export interface ApiQuestion {
   risk: number;
   status: 'open' | 'answered' | 'skipped' | 'unknown';
   evidence: QuestionEvidence[];
+  answer?: string | null;
 }
 
 export interface StatementSource {
@@ -132,6 +133,27 @@ export interface HandoverView {
   receipt: HandoverReceipt | null;
 }
 
+function formatErrorDetail(detail: any): string {
+  if (!detail) return '';
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        if (item && typeof item === 'object') {
+          return item.msg || item.message || JSON.stringify(item);
+        }
+        return String(item);
+      })
+      .filter(Boolean)
+      .join(', ');
+  }
+  if (typeof detail === 'object') {
+    return detail.msg || detail.message || detail.error || JSON.stringify(detail);
+  }
+  return String(detail);
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {}
@@ -159,7 +181,8 @@ async function request<T>(
 
     const data = await res.json().catch(() => null);
     if (!res.ok) {
-      return { data: null, status: res.status, error: data?.detail || `HTTP ${res.status}` };
+      const formattedError = formatErrorDetail(data?.detail) || `HTTP ${res.status}`;
+      return { data: null, status: res.status, error: formattedError };
     }
 
     return { data, status: res.status };

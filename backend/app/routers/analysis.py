@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.access import can_user_see
 from app.db import get_db
 from app.deps import get_llm, get_session_factory, require_roles
-from app.models import AnalysisRun, Handover, Membership, Question, Source, SourcePiece
+from app.models import AnalysisRun, Answer, Handover, Membership, Question, Source, SourcePiece
 from app.pipeline.runner import run_analysis
 from app.schemas import AnalysisOut, QuestionOut
 from app.services import question_out
@@ -96,11 +96,17 @@ def list_questions(
         .order_by(Question.risk.desc(), Question.id)
     ).all()
 
+    q_ids = [q.id for q in questions]
+    answers_map: dict[int, str] = {}
+    if q_ids:
+        for a in db.scalars(select(Answer).where(Answer.question_id.in_(q_ids))).all():
+            answers_map[a.question_id] = a.text
+
     shown = []
     for question in questions:
         pieces = [link.piece for link in question.evidence]
         # a question is built from its evidence, so it is hidden when any of that is off limits
         if not can_user_see(membership.role, pieces):
             continue
-        shown.append(question_out(question))
+        shown.append(question_out(question, answers_map.get(question.id)))
     return shown

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useHandover } from '@/context/HandoverContext';
 import {
   Compass,
@@ -13,13 +13,37 @@ import {
   FolderGit2,
   User,
   Sparkles,
+  Loader2,
+  RefreshCw,
 } from 'lucide-react';
 
 export function InterviewIntroduction() {
-  const { project, setActiveScreen } = useHandover();
+  const {
+    project,
+    setActiveScreen,
+    loadQuestions,
+    questionsLoading,
+    activeHandoverId,
+    authUser,
+  } = useHandover();
+
+  // Refetch questions once login completes or when active handover changes
+  useEffect(() => {
+    loadQuestions();
+  }, [loadQuestions, activeHandoverId, authUser]);
 
   const totalQuestions = project.questions.length;
   const answeredCount = project.questions.filter((q) => q.status === 'answered').length;
+
+  if (questionsLoading && totalQuestions === 0) {
+    return (
+      <div className="max-w-4xl mx-auto py-16 flex flex-col items-center justify-center select-none text-center">
+        <Loader2 size={32} className="animate-spin text-[#5A5B4C] mb-3" />
+        <h3 className="text-base font-bold text-[#1F201B]">Loading Handover Checkpoints...</h3>
+        <p className="text-xs text-[#7A7B72] mt-1">Retrieving assigned interview questions for your session.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto py-6 select-none">

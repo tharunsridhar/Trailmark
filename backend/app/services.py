@@ -44,7 +44,7 @@ def statement_out(statement: Statement, for_incoming: bool = False) -> Statement
     )
 
 
-def question_out(question: Question) -> QuestionOut:
+def question_out(question: Question, answer_text: str | None = None) -> QuestionOut:
     return QuestionOut(
         id=question.id,
         text=question.text,
@@ -54,4 +54,5 @@ def question_out(question: Question) -> QuestionOut:
             EvidenceOut(piece_id=link.piece_id, locator=link.piece.locator, quote=link.quote)
             for link in question.evidence
         ],
+        answer=answer_text,
     )

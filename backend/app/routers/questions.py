@@ -62,4 +62,5 @@ def answer_question(
         question.status = "skipped" if body.action == "skip" else "unknown"
 
     db.commit()
-    return question_out(question)
+    ans_text = body.text.strip() if body.action == 'answer' and body.text else None
+    return question_out(question, ans_text)

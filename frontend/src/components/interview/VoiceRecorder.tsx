@@ -22,6 +22,12 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const speechRecognitionRef = useRef<any>(null);
+  const latestTranscriptRef = useRef(initialText);
+
+  useEffect(() => {
+    latestTranscriptRef.current = initialText;
+    setTranscribedText(initialText);
+  }, [initialText]);
 
   useEffect(() => {
     return () => {
@@ -38,6 +44,8 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
   const startRecording = async () => {
     setErrorMessage(null);
     audioChunksRef.current = [];
+    latestTranscriptRef.current = '';
+    setTranscribedText('');
 
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -78,16 +86,22 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
         recognition.interimResults = true;
         recognition.lang = 'en-US';
 
+        // Rebuilding cleanly across all results avoids duplicate words
         recognition.onresult = (event: any) => {
-          let currentTranscript = '';
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
-            currentTranscript += event.results[i][0].transcript;
+          let sessionFinal = '';
+          let sessionInterim = '';
+          for (let i = 0; i < event.results.length; ++i) {
+            const transcript = event.results[i][0]?.transcript || '';
+            if (event.results[i].isFinal) {
+              sessionFinal += transcript + ' ';
+            } else {
+              sessionInterim += transcript;
+            }
           }
-          if (currentTranscript.trim()) {
-            setTranscribedText((prev) => {
-              const combined = prev ? `${prev} ${currentTranscript}` : currentTranscript;
-              return combined;
-            });
+          const full = (sessionFinal + sessionInterim).trim();
+          if (full) {
+            latestTranscriptRef.current = full;
+            setTranscribedText(full);
           }
         };
 
@@ -116,18 +130,13 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
         } catch {}
       }
 
-      if (!transcribedText.trim()) {
-        setIsTranscribing(true);
-        setTimeout(() => {
-          const generated =
-            'We implemented our core authentication using PyJWT signed with RS256 algorithm. The emergency bypass token has a dedicated rotation schedule verified through the audit middleware.';
-          setTranscribedText(generated);
-          setIsTranscribing(false);
-          onTranscriptionComplete(generated, recordingSeconds || 12);
-        }, 800);
-      } else {
-        onTranscriptionComplete(transcribedText, recordingSeconds);
+      const textToSend = (latestTranscriptRef.current || transcribedText).trim();
+      if (!textToSend) {
+        setErrorMessage('No speech detected. Please speak into your microphone or type your response.');
+        return;
       }
+
+      onTranscriptionComplete(textToSend, recordingSeconds);
     }
   };
 
