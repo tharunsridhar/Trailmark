@@ -23,7 +23,113 @@ import {
   GitBranch,
   ListOrdered,
   Users,
+  Layers,
+  PhoneCall,
+  UserCheck,
 } from 'lucide-react';
+
+function StatementLabelChip({ label }: { label?: string }) {
+  switch (label) {
+    case 'verified':
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase tracking-wider shrink-0">
+          <ShieldCheck size={11} /> Verified
+        </span>
+      );
+    case 'unverified':
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 uppercase tracking-wider shrink-0">
+          <ShieldQuestion size={11} /> Unverified
+        </span>
+      );
+    case 'conflicting':
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200 uppercase tracking-wider shrink-0">
+          <ShieldAlert size={11} /> Conflicting
+        </span>
+      );
+    case 'missing':
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200 uppercase tracking-wider shrink-0">
+          <AlertTriangle size={11} /> Missing Gap
+        </span>
+      );
+    default:
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gray-50 text-gray-700 border border-gray-200 uppercase tracking-wider shrink-0">
+          {label || 'Note'}
+        </span>
+      );
+  }
+}
+
+function IncomingStatementCard({
+  st,
+  onInspect,
+  highlightDirectNote = false,
+}: {
+  st: ApiStatement;
+  onInspect: (pieceId: number) => void;
+  highlightDirectNote?: boolean;
+}) {
+  return (
+    <div className="py-4 first:pt-0 last:pb-0 space-y-2.5">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <StatementLabelChip label={st.label} />
+        {st.id && (
+          <span className="text-[10px] text-[#A2A399] font-mono">Statement #{st.id}</span>
+        )}
+      </div>
+
+      <div
+        className={`text-xs sm:text-sm leading-relaxed ${
+          highlightDirectNote
+            ? 'p-3.5 rounded-2xl bg-[#F8F8F4] border border-[#E6E6DE] text-[#1F201B]'
+            : 'text-[#1F201B] font-medium'
+        }`}
+      >
+        {highlightDirectNote && (
+          <span className="font-bold text-[#5A5B4C] block mb-1">Asha&apos;s Statement:</span>
+        )}
+        <p>{st.text}</p>
+      </div>
+
+      {/* Grounded Evidence Quotes */}
+      {st.sources && st.sources.length > 0 && (
+        <div className="space-y-1.5 pt-1">
+          {st.sources.map((src) => (
+            <div
+              key={src.piece_id}
+              className="p-3 rounded-xl bg-[#F4F4F0] border border-[#E6E6DE] text-xs space-y-1.5"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold text-[#1F201B] flex items-center gap-1.5 text-[11px]">
+                  <FileText size={12} className="text-[#5A5B4C] shrink-0" />
+                  <span>{src.source_name}</span>
+                  <span className="text-[#7A7B72] font-mono">({src.locator})</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onInspect(src.piece_id)}
+                  className="text-[10px] text-[#5A5B4C] hover:underline flex items-center gap-1 font-semibold shrink-0"
+                >
+                  <span>Inspect Piece #{src.piece_id}</span>
+                  <ExternalLink size={10} />
+                </button>
+              </div>
+
+              {src.quote && (
+                <p className="text-[11px] text-[#3A3B34] italic pl-2.5 border-l-2 border-[#5A5B4C] leading-relaxed">
+                  &ldquo;{src.quote}&rdquo;
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function Screen4IncomingHandover() {
   const {
@@ -179,8 +285,8 @@ export function Screen4IncomingHandover() {
         <Info size={16} className="text-[#5A5B4C] shrink-0 mt-0.5" />
         <div className="text-xs text-[#3A3B34] leading-relaxed space-y-1">
           <div>
-            <strong className="text-[#1F201B]">Notice to Successor: </strong>
-            All answers submitted by departing member Asha are explicitly marked <span className="font-semibold text-amber-800">Unverified</span> below. Open technical questions and gaps remain active for team onboarding.
+            <strong className="text-[#1F201B]">Verification &amp; Evidence Grounding Notice: </strong>
+            Every statement below carries its own evidence verification chip (<span className="font-semibold text-emerald-800">Verified</span>, <span className="font-semibold text-amber-800">Unverified</span>, <span className="font-semibold text-purple-800">Missing Gap</span>, or <span className="font-semibold text-rose-800">Conflicting</span>) and links directly to its quoted source piece.
           </div>
           <div className="text-[11px] text-[#7A7B72]">
             Sensitive data (passwords, private API keys, emails) has been pattern-redacted by the backend security filter for this view.
@@ -196,34 +302,15 @@ export function Screen4IncomingHandover() {
               <Sparkles size={16} className="text-[#5A5B4C]" />
               Architectural Decisions ({handoverView.decisions.length})
             </h3>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-              Verified
-            </span>
           </div>
 
           <div className="divide-y divide-[#E6E6DE]">
             {handoverView.decisions.map((st) => (
-              <div key={st.id} className="py-3.5 first:pt-0 last:pb-0 space-y-2">
-                <p className="text-xs sm:text-sm font-semibold text-[#1F201B] leading-relaxed">
-                  {st.text}
-                </p>
-                {st.sources.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-0.5">
-                    {st.sources.map((src) => (
-                      <button
-                        key={src.piece_id}
-                        type="button"
-                        onClick={() => openPieceInspection(src.piece_id)}
-                        className="px-2.5 py-1 rounded-lg bg-[#F4F4F0] hover:bg-[#EAEAE2] border border-[#E6E6DE] text-[11px] text-[#3A3B34] flex items-center gap-1.5 transition-colors"
-                      >
-                        <FileText size={11} className="text-[#5A5B4C]" />
-                        <span>{src.source_name} ({src.locator})</span>
-                        <ExternalLink size={9} className="text-[#7A7B72]" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <IncomingStatementCard
+                key={st.id}
+                st={st}
+                onInspect={openPieceInspection}
+              />
             ))}
           </div>
         </div>
@@ -238,9 +325,11 @@ export function Screen4IncomingHandover() {
           </h3>
           <div className="divide-y divide-[#E6E6DE]">
             {handoverView.owns.map((st) => (
-              <div key={st.id} className="py-3 first:pt-0 last:pb-0 space-y-1.5">
-                <p className="text-xs sm:text-sm text-[#1F201B] leading-relaxed">{st.text}</p>
-              </div>
+              <IncomingStatementCard
+                key={st.id}
+                st={st}
+                onInspect={openPieceInspection}
+              />
             ))}
           </div>
         </div>
@@ -255,14 +344,11 @@ export function Screen4IncomingHandover() {
           </h3>
           <div className="divide-y divide-[#E6E6DE]">
             {handoverView.unfinished.map((st) => (
-              <div key={st.id} className="py-3 first:pt-0 last:pb-0 space-y-1.5">
-                <p className="text-xs sm:text-sm text-[#1F201B] leading-relaxed">{st.text}</p>
-                {st.sources[0] && (
-                  <p className="text-[11px] text-[#7A7B72] italic pl-2 border-l-2 border-[#5A5B4C]">
-                    &ldquo;{st.sources[0].quote}&rdquo; — {st.sources[0].source_name}
-                  </p>
-                )}
-              </div>
+              <IncomingStatementCard
+                key={st.id}
+                st={st}
+                onInspect={openPieceInspection}
+              />
             ))}
           </div>
         </div>
@@ -277,15 +363,55 @@ export function Screen4IncomingHandover() {
           </h3>
           <div className="divide-y divide-[#E6E6DE]">
             {handoverView.risks.map((st) => (
-              <div key={st.id} className="py-3 first:pt-0 last:pb-0 space-y-1.5">
-                <p className="text-xs sm:text-sm text-[#1F201B] leading-relaxed">{st.text}</p>
-              </div>
+              <IncomingStatementCard
+                key={st.id}
+                st={st}
+                onInspect={openPieceInspection}
+              />
             ))}
           </div>
         </div>
       )}
 
-      {/* ── SECTION 5: Departing Member Answers (EXPLICITLY MARKED UNVERIFIED) ─ */}
+      {/* ── SECTION 5: System Dependencies ─────────────────────────────────── */}
+      {handoverView.dependencies && handoverView.dependencies.length > 0 && (
+        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E6E6DE] shadow-soft space-y-4">
+          <h3 className="text-base font-bold text-[#1F201B] flex items-center gap-2">
+            <Layers size={16} className="text-[#5A5B4C]" />
+            System Dependencies &amp; Integrations ({handoverView.dependencies.length})
+          </h3>
+          <div className="divide-y divide-[#E6E6DE]">
+            {handoverView.dependencies.map((st) => (
+              <IncomingStatementCard
+                key={st.id}
+                st={st}
+                onInspect={openPieceInspection}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── SECTION 6: Key Contacts ────────────────────────────────────────── */}
+      {handoverView.contacts && handoverView.contacts.length > 0 && (
+        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E6E6DE] shadow-soft space-y-4">
+          <h3 className="text-base font-bold text-[#1F201B] flex items-center gap-2">
+            <PhoneCall size={16} className="text-[#5A5B4C]" />
+            Key Contacts &amp; Subject Matter Experts ({handoverView.contacts.length})
+          </h3>
+          <div className="divide-y divide-[#E6E6DE]">
+            {handoverView.contacts.map((st) => (
+              <IncomingStatementCard
+                key={st.id}
+                st={st}
+                onInspect={openPieceInspection}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── SECTION 7: Departing Member Answers (Always Unverified) ────────── */}
       {handoverView.from_departing_member.length > 0 && (
         <div className="bg-white rounded-3xl p-6 sm:p-7 border border-amber-200 shadow-soft space-y-4">
           <div className="flex items-center justify-between">
@@ -304,28 +430,18 @@ export function Screen4IncomingHandover() {
 
           <div className="divide-y divide-[#E6E6DE]">
             {handoverView.from_departing_member.map((st) => (
-              <div key={st.id} className="py-3.5 first:pt-0 last:pb-0 space-y-2">
-                <div className="p-3.5 rounded-2xl bg-[#F8F8F4] border border-[#E6E6DE] text-xs text-[#1F201B] leading-relaxed">
-                  <span className="font-bold text-[#5A5B4C] block mb-1">Asha&apos;s Direct Note:</span>
-                  {st.text}
-                </div>
-                {st.sources.length > 0 && (
-                  <div className="flex flex-wrap gap-2 text-[11px] text-[#7A7B72]">
-                    <span>Linked to evidence:</span>
-                    {st.sources.map((s) => (
-                      <span key={s.piece_id} className="font-mono underline">
-                        {s.source_name} ({s.locator})
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <IncomingStatementCard
+                key={st.id}
+                st={st}
+                onInspect={openPieceInspection}
+                highlightDirectNote={true}
+              />
             ))}
           </div>
         </div>
       )}
 
-      {/* ── SECTION 6: Outstanding Gaps / Open Questions ───────────────────── */}
+      {/* ── SECTION 8: Outstanding Gaps / Open Questions ───────────────────── */}
       {handoverView.open_questions.length > 0 && (
         <div className="bg-white rounded-3xl p-6 sm:p-7 border border-purple-200 shadow-soft space-y-4">
           <div className="flex items-center justify-between">
@@ -344,15 +460,17 @@ export function Screen4IncomingHandover() {
 
           <div className="divide-y divide-[#E6E6DE]">
             {handoverView.open_questions.map((st) => (
-              <div key={st.id} className="py-3 first:pt-0 last:pb-0 space-y-1.5">
-                <p className="text-xs sm:text-sm text-[#1F201B] leading-relaxed">{st.text}</p>
-              </div>
+              <IncomingStatementCard
+                key={st.id}
+                st={st}
+                onInspect={openPieceInspection}
+              />
             ))}
           </div>
         </div>
       )}
 
-      {/* ── SECTION 7: Recommended Next Actions ────────────────────────────── */}
+      {/* ── SECTION 9: Recommended Next Actions ────────────────────────────── */}
       {handoverView.next_actions.length > 0 && (
         <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E6E6DE] shadow-soft space-y-4">
           <div>
@@ -365,16 +483,59 @@ export function Screen4IncomingHandover() {
             </p>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {handoverView.next_actions.map((act) => (
               <div
                 key={act.order}
-                className="p-3.5 rounded-2xl bg-[#F4F4F0] border border-[#E6E6DE] flex items-start gap-3"
+                className="p-4 rounded-2xl bg-[#F4F4F0] border border-[#E6E6DE] space-y-2"
               >
-                <div className="w-6 h-6 rounded-full bg-[#5A5B4C] text-white flex items-center justify-center text-xs font-bold shrink-0">
-                  {act.order}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-[#5A5B4C] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      {act.order}
+                    </div>
+                    <StatementLabelChip label={act.label} />
+                  </div>
+                  {act.statement_id && (
+                    <span className="text-[10px] text-[#A2A399] font-mono">Linked #{act.statement_id}</span>
+                  )}
                 </div>
-                <p className="text-xs text-[#1F201B] font-medium leading-relaxed mt-0.5">{act.text}</p>
+
+                <p className="text-xs text-[#1F201B] font-medium leading-relaxed pl-8">
+                  {act.text}
+                </p>
+
+                {act.sources && act.sources.length > 0 && (
+                  <div className="pl-8 space-y-1.5 pt-1">
+                    {act.sources.map((src) => (
+                      <div
+                        key={src.piece_id}
+                        className="p-2.5 rounded-xl bg-white border border-[#E6E6DE] text-xs space-y-1"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold text-[#1F201B] flex items-center gap-1.5 text-[11px]">
+                            <FileText size={11} className="text-[#5A5B4C] shrink-0" />
+                            <span>{src.source_name}</span>
+                            <span className="text-[#7A7B72] font-mono">({src.locator})</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => openPieceInspection(src.piece_id)}
+                            className="text-[10px] text-[#5A5B4C] hover:underline flex items-center gap-0.5 font-semibold shrink-0"
+                          >
+                            <span>Inspect Piece</span>
+                            <ExternalLink size={9} />
+                          </button>
+                        </div>
+                        {src.quote && (
+                          <p className="text-[11px] text-[#3A3B34] italic pl-2 border-l-2 border-[#5A5B4C]">
+                            &ldquo;{src.quote}&rdquo;
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -390,7 +551,7 @@ export function Screen4IncomingHandover() {
                 <FileText size={16} className="text-[#5A5B4C]" />
                 <h3 className="text-sm font-bold text-[#1F201B]">{inspectPiece.source_name}</h3>
               </div>
-              <button aria-label="Close" onClick={() => setInspectPiece(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
+              <button onClick={() => setInspectPiece(null)} className="text-[#7A7B72] hover:text-[#1F201B]">
                 <X size={16} />
               </button>
             </div>
