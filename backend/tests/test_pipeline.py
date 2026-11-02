@@ -240,6 +240,20 @@ def test_groq_client_sends_chat_format_and_reads_reply(monkeypatch):
     ]
 
 
+def test_reasoning_effort_is_sent_only_when_set(monkeypatch):
+    bodies = []
+
+    def fake_post(url, **kwargs):
+        bodies.append(kwargs["json"])
+        return chat_reply("ok")
+
+    monkeypatch.setattr("app.pipeline.llm.httpx.post", fake_post)
+    ChatCompletionsClient("k", ["m"], reasoning_effort="low").complete("s", "u")
+    ChatCompletionsClient("k", ["m"]).complete("s", "u")
+    assert bodies[0]["reasoning_effort"] == "low"
+    assert "reasoning_effort" not in bodies[1]
+
+
 def test_groq_client_strips_reasoning_block(monkeypatch):
     monkeypatch.setattr(
         "app.pipeline.llm.httpx.post", lambda url, **kw: chat_reply("<think>let me see\nhmm</think>\n{\"a\": 1}")
@@ -274,7 +288,8 @@ def test_groq_client_odd_reply_shape_is_an_error(monkeypatch):
 
 def test_build_llm_picks_client_from_provider(monkeypatch):
     def settings(**overrides):
-        base = dict(llm_api_key="k", llm_provider="anthropic", llm_model="m", llm_fallback_model="", llm_base_url="")
+        base = dict(llm_api_key="k", llm_provider="anthropic", llm_model="m", llm_fallback_model="", llm_base_url="",
+                    llm_reasoning_effort="low")
         return SimpleNamespace(**{**base, **overrides})
 
     monkeypatch.setattr("app.pipeline.llm.get_settings", lambda: settings(llm_provider="groq", llm_fallback_model="b"))

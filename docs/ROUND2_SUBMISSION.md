@@ -19,7 +19,7 @@ Against the seven core features in the Round 1 plan:
 | Core feature | Status |
 | --- | --- |
 | Source import: repository export, documents, chat export, task list, each with an access level set by the lead | Done |
-| Project-state reconstruction: decisions and reasons, owners, unfinished work, dependencies, risks, contacts, each linked to its source | Done (backend). Run on the synthetic project, 25 of 32 planted cases found |
+| Project-state reconstruction: decisions and reasons, owners, unfinished work, dependencies, risks, contacts, each linked to its source | Done (backend). Run on the synthetic project, about 24 of 32 planted cases found |
 | Evidence labels: verified, unverified, missing, conflicting. A statement with no valid source link cannot be verified | Done, with a word-for-word quote check and a separate verifier call |
 | Gap detection and questions for the departing member, with the evidence shown | Done |
 | Review and approval: edit, reject, resolve a conflict with a written reason, accept a gap, version history | Done |
@@ -45,7 +45,7 @@ Also built: support for Gemini, Groq and Anthropic models, saved results from a 
 
 ## Known limitations
 
-- On the synthetic project the AI cites 25 of the 32 planted cases and gets the expected label on 20. Claims only the leaver makes are not yet labelled unverified, and only one of three planted conflicts is reported as a conflict. Details are in `TESTING.md`.
+- On the synthetic project the AI cites about 24 of the 32 planted cases and gets the expected label on about 20 to 23, and results change from run to run. It finds all three planted conflicts in the saved run, but none of the four claims only the leaver makes is labelled unverified. Details are in `TESTING.md`.
 - The AI runs on the free tier of Gemini, which limits requests per day and per minute. The demo falls back to saved results from a real run if the service is unavailable.
 - Redaction is pattern based and will miss some sensitive text.
 - The analysis sends all pieces in one request, so very large sources would need chunking.

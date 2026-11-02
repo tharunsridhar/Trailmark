@@ -7,7 +7,7 @@ Everything the project depends on, as Round 2 asks.
 | What | Use |
 | --- | --- |
 | Google Gemini API (free tier), through its OpenAI-compatible endpoint | Extracting project state, writing gap questions, and a separate call that checks whether a claim is supported by its quotes |
-| Model | `gemini-3.1-flash-lite` by default, set with `LLM_MODEL`. An optional second model (`LLM_FALLBACK_MODEL`) is tried if the first keeps failing |
+| Model | `gemini-3.6-flash` by default, set with `LLM_MODEL`, with `LLM_REASONING_EFFORT=low` so its thinking does not use up the reply. The second model `gemini-3.5-flash-lite` (`LLM_FALLBACK_MODEL`) is tried if the first keeps failing. The free tier allows about 20 requests a day on the first and 500 on the second |
 | Other providers | Groq and the Anthropic Messages API are also supported, chosen with `LLM_PROVIDER` (`gemini`, `groq` or `anthropic`) |
 
 We tried Groq's free tier first. It limits a request to about 8,000 tokens, which is less than one analysis of the demo project needs, so Gemini is the one we run.

@@ -38,32 +38,34 @@ Also checked by hand: the Docker image builds, and with `docker compose up` the 
 
 ## Real AI run on the synthetic project
 
-Run by hand with `gemini-3.1-flash-lite` on all sources of the synthetic Campus Events App (9 sources, 128 pieces) and scored against `data/synthetic/answer_key.json`, which plants 32 cases.
+Run by hand on all sources of the synthetic Campus Events App (9 sources, 128 pieces) and scored against `data/synthetic/answer_key.json`, which plants 32 cases. The scoring is a script that matches a case to a statement by the source location it cites, and it counts a case as labelled correctly if any statement citing that location has the expected label. It is a generous, rough measure, not a judgement of the wording.
 
-| Measure | Result |
-| --- | --- |
-| Time | about 20 seconds, in AI mode |
-| Statements produced | 36 (25 verified, 4 unverified, 6 missing, 1 conflicting) |
-| Questions for the departing member | 6 |
-| Claims thrown away because the quote was not in the source | 1 |
-| Planted cases cited by at least one statement | 25 of 32 |
-| Planted cases that ended with the label the key expects | 20 of 32 |
+| Model (Gemini, free tier) | Runs | Cases cited (of 32) | Expected label (of 32) |
+| --- | --- | --- | --- |
+| `gemini-3.1-flash-lite` | 2, identical | 25 | 20 |
+| `gemini-3.5-flash-lite` | 1 | 26 | 12 |
+| `gemini-3.5-flash` | 1 | 26 | 23 |
+| `gemini-3.6-flash` (the default) | 5 | 24 to 29, usually 24 | 18 to 27 |
 
-Same input gave the same result on repeat runs (temperature 0). The scoring is a script that matches a case to a statement by the source location it cites, and it counts a case as labelled correctly if any statement citing that location has the expected label. It is a generous, rough measure, not a judgement of the wording.
+The default model gives a different answer from run to run, so the saved demo result is one real run, not an average. It took about 30 seconds in AI mode.
+
+**The saved run** (`backend/saved_results/campus-events-app.json`): 33 statements (20 verified, 5 unverified, 5 missing, 3 conflicting), 5 questions for the departing member, 6 claims thrown away because the quote was not in the source. 24 of 32 cases cited, 23 with the expected label. All three planted conflicts were reported as conflicts, and the HR notes and the confidential lead chat were found.
 
 What we learned and changed:
 
-- The first prompt found 10 statements. Telling the model to cover every source, and what counts as a gap or a claim only the leaver makes, raised it to 36.
-- A long request makes the model skip whole sources, such as the HR notes. Any source nothing cites is now sent again on its own.
+- The first prompt found 10 statements. Telling the model to cover every source, and what counts as a gap or a claim only the leaver makes, raised it to about 35.
+- A long request makes models skip whole sources, such as the HR notes. Any source nothing cites is now sent again on its own.
+- Thinking models count their thinking against the reply limit and cut the JSON off. Setting `reasoning_effort` to low fixed that for `gemini-3.6-flash`.
+- Splitting the work into two requests (facts, then checks) and a longer checking prompt did not help, so they were not kept.
 - The answer key counts document paragraphs after the title block, the importer counts the title block too, so the key's "paragraph 1" is the importer's "paragraph 2". The scoring allows for that.
 
-Still wrong or missing:
+Still wrong or missing in the saved run:
 
-- None of the four claims only the leaver makes was labelled unverified: one (chat message 32) was not found, and three were labelled verified because the model did not mark them as unbacked claims.
-- Only one of the three planted conflicts (the auditorium capacity) was reported as conflicting. The other two, the token lifetime and the QR format, were missed or shown as ordinary statements.
-- Some unowned tasks and undocumented dependencies were reported as plain statements instead of gaps.
+- None of the four claims only the leaver makes (chat messages 32, 37, 46 and 50) was labelled unverified. They were not found, or were found and labelled verified.
+- Three planted gaps and one decision and one contact were not found.
+- The free tier of the AI service sometimes answers "high demand" (503). That is why a second model and saved results exist.
 
-A successful run is saved to `backend/saved_results/campus-events-app.json`. With a wrong API key, the app showed the same 36 statements in "saved" mode with a notice, which is the fallback a judge sees if the AI service is down.
+With a wrong API key, the app showed the same statements in "saved" mode with a notice, which is what a judge sees if the AI service is down.
 
 ## Main journeys covered
 
@@ -100,7 +102,6 @@ A successful run is saved to `backend/saved_results/campus-events-app.json`. Wit
 Being honest about the gaps:
 
 - **The AI in the automated tests.** The test suite never calls a real model. The real AI was run by hand on the synthetic project, see below.
-- **Stronger models.** `gemini-3.6-flash` returned broken JSON on the same request and the app fell back to the basic listing. We use `gemini-3.1-flash-lite`.
 - **A deployed instance.** `render.yaml` is written but nothing is deployed to Render yet.
 - **The frontend.** Integration with Kishan's screens has not been tested.
 - **Load and long inputs.** A very large repository would need chunking, which is not built.

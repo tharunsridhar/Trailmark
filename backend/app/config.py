@@ -19,9 +19,11 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     # "anthropic", "groq" or "gemini"
     llm_provider: str = "gemini"
-    llm_model: str = "gemini-3.1-flash-lite"
+    llm_model: str = "gemini-3.6-flash"
     # tried if the main model keeps failing, leave empty to skip
-    llm_fallback_model: str = ""
+    llm_fallback_model: str = "gemini-3.5-flash-lite"
+    # "low", "medium" or "high" for models that think before answering, empty leaves the model's default
+    llm_reasoning_effort: str = "low"
     # leave empty to use the provider's usual address
     llm_base_url: str = ""
     # analysis results are saved here so the demo works without the AI service

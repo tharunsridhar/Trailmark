@@ -84,23 +84,28 @@ class AnthropicClient(LLMClient):
 class ChatCompletionsClient(LLMClient):
     """The OpenAI chat completions format, which Groq and Gemini both speak."""
 
-    def __init__(self, api_key: str, models: list[str], base_url: str = GROQ_URL):
+    def __init__(self, api_key: str, models: list[str], base_url: str = GROQ_URL, reasoning_effort: str = ""):
         super().__init__(api_key, models, base_url)
+        self.reasoning_effort = reasoning_effort
 
     def _call(self, model: str, system: str, user: str) -> str:
+        body = {
+            "model": model,
+            "max_completion_tokens": 8000,
+            "temperature": 0,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+        }
+        # thinking models count their thinking against the reply limit and can cut the JSON off
+        if self.reasoning_effort:
+            body["reasoning_effort"] = self.reasoning_effort
         try:
             response = httpx.post(
                 f"{self.base_url}/chat/completions",
                 headers={"Authorization": f"Bearer {self.api_key}", "content-type": "application/json"},
-                json={
-                    "model": model,
-                    "max_completion_tokens": 8000,
-                    "temperature": 0,
-                    "messages": [
-                        {"role": "system", "content": system},
-                        {"role": "user", "content": user},
-                    ],
-                },
+                json=body,
                 timeout=120,
             )
         except httpx.HTTPError as error:
@@ -136,5 +141,5 @@ def build_llm() -> LLMClient | None:
     chat_urls = {"groq": GROQ_URL, "gemini": GEMINI_URL}
     if settings.llm_provider in chat_urls:
         base_url = settings.llm_base_url or chat_urls[settings.llm_provider]
-        return ChatCompletionsClient(settings.llm_api_key, models, base_url)
+        return ChatCompletionsClient(settings.llm_api_key, models, base_url, settings.llm_reasoning_effort)
     return AnthropicClient(settings.llm_api_key, models, settings.llm_base_url or ANTHROPIC_URL)

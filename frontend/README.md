@@ -44,3 +44,15 @@ Follow-up questions, the decision timeline and the audit log are the Round 3 imp
 ## Docker
 
 The root `docker-compose.yml` has a `frontend` service that builds `./frontend` and serves it on port 3000. It only starts with `docker compose --profile frontend up --build`, so add a `Dockerfile` here when you are ready (run `npm run build` and `npm start`).
+
+## Integration checklist (what is still missing)
+
+`src/services/api.ts` already matches `docs/API.md`. The screens are not using it for their data yet:
+
+1. `HandoverContext.tsx` builds everything from the hard-coded `SYNTHETIC_PROJECT`. Replace it with data from the backend.
+2. Lead screen: upload the files in `data/synthetic/` with `uploadSource`, using the type and allowed roles listed in `data/synthetic/manifest.json`. Then call `triggerAnalysis` and poll `getAnalysis` until `status` is `done`. Show `notice` when `mode` is `saved` or `basic`.
+3. Departing member screen: build the questions from `listQuestions` and send answers with `answerQuestion` using the real question ids.
+4. Lead review screen: build the list from `listStatements`. Edit, reject, resolve, accept-gap and approve act on the real statement ids.
+5. Incoming member screen: build it from `getHandoverView`, which only works after approval (`409` before). Confirm with `confirmReceipt`.
+6. Remove the silent `.catch(() => {})` on API calls and show an error message instead. A `401` means the user is not signed in, a `403` means the wrong role.
+7. Sign in as three different users (lead, departing, incoming) added to the same handover with `addMember`, so each role sees its own filtered view.
