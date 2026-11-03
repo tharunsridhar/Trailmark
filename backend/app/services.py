@@ -1,5 +1,6 @@
 """Small helpers shared by the routers."""
 
+from app.access import shown_text
 from app.models import Question, Statement, StatementVersion
 from app.redact import redact
 from app.schemas import EvidenceOut, QuestionOut, SourceRef, StatementOut
@@ -36,7 +37,7 @@ def statement_out(statement: Statement, for_incoming: bool = False) -> Statement
     return StatementOut(
         id=statement.id,
         kind=statement.kind,
-        text=redact(statement.text) if for_incoming else statement.text,
+        text=redact(shown_text("incoming", statement)) if for_incoming else statement.text,
         label=statement.label,
         status=statement.status,
         current_version=statement.current_version,

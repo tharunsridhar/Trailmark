@@ -4,7 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.access import can_user_see
+from app.access import can_see_question
 from app.db import get_db
 from app.deps import get_llm, get_session_factory, require_roles
 from app.models import AnalysisRun, Handover, Membership, Question, Source, SourcePiece
@@ -98,9 +98,8 @@ def list_questions(
 
     shown = []
     for question in questions:
-        pieces = [link.piece for link in question.evidence]
         # a question is built from its evidence, so it is hidden when any of that is off limits
-        if not can_user_see(membership.role, pieces):
-            continue
-        shown.append(question_out(question))
+        # or when it has none (its wording could name a restricted place)
+        if can_see_question(membership.role, question):
+            shown.append(question_out(question))
     return shown
