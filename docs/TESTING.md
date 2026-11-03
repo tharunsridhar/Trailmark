@@ -215,7 +215,9 @@ Backend on port 8000 with an empty AI key and a fresh SQLite file, so the analys
 | --- | --- |
 | Lead: sign in, create a handover, upload the 9 synthetic files | Pass. 8 imported, the empty test file was reported and shown as "Empty, not imported" (after a fix, see below) |
 | Lead: run the analysis | Pass. The notice said `saved`; 55 verified, 28 unverified, 18 missing, 3 conflicting; statements show labels and quotes |
-| Departing member: answer, Next, reload | Pass at the time. The question showed as answered after a reload. Since merging the departing-member work, the server returns the saved `answer` text, so the screen shows it again; this was not hand-run again after the merge |
+| Departing member: answer, Next, reload, and edit/replace answer | Pass. Answer is stored in backend and returned by GET /questions in the nswer field. On reload, the response box and review checkpoint display the saved answer. Editing the response replaces the previous answer without conflict. |
+| Departing member: voice transcription | Pass. Web Speech API transcribes directly into the response editor without word duplication; auto-save on speech end removed so departing member can review before saving. |
+| Departing member: follow-up clarification box | Pass. Non-functional follow-up answer box removed cleanly from the interview screen. |
 | Departing member: Skip and "I don't know" | Pass. Both are stored (`skipped`, `unknown`) and shown on the review page |
 | Departing member: save after approval | Pass. The screen says the handover is approved and the response is "Not saved". The server answered `409` |
 | Lead: edit a statement | Pass. Version 2 appears and the version history names the editor (Deepak) |
@@ -242,7 +244,7 @@ A second defence was added in the pipeline (rule 10, `rules.py`): restricted sou
 
 - **The AI in the automated tests.** The test suite never calls a real model. The real AI was run by hand on the synthetic project (above).
 - **A deployed instance.** `render.yaml` is written but nothing is deployed to Render yet.
-- **The frontend, beyond one local run.** The by-hand browser run is described above. The frontend has no automated tests, was not run in AI mode, only in one browser (the Claude desktop app's built-in one) and one window size, and not with voice answers.
+- **The frontend, beyond one local run.** The by-hand browser run is described above. The frontend has no automated tests (skipped for Round 2) and was not run in live AI mode (saved mode was used). Window responsiveness was tested down to 375px phone width with mobile navigation drawer.
 - **The frontend Docker image.** Only the backend and Postgres were built and run in Docker.
 - **Load and long inputs.** A very large repository would need chunking, which is not built.
 - **Outside users.** No structured feedback has been collected yet. The script and a table to fill in are in [`FEEDBACK.md`](FEEDBACK.md).

@@ -354,7 +354,7 @@ export function Screen2DepartingQuestions() {
 
       <div className="min-h-screen bg-[#F4F4F0] flex flex-col font-sans select-none">
         {/* ── Top Bar ──────────────────────────────────────────────────────── */}
-        <header className="h-16 bg-white border-b border-[#E6E6DE] px-6 sm:px-10 flex items-center justify-between sticky top-0 z-30 shrink-0">
+        <header className="h-16 bg-white border-b border-[#E6E6DE] px-3 sm:px-10 flex items-center justify-between sticky top-0 z-30 shrink-0">
           {/* Left: Brand */}
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 rounded-full bg-[#5A5B4C] flex items-center justify-center text-white shrink-0 shadow-2xs">
@@ -367,7 +367,7 @@ export function Screen2DepartingQuestions() {
           </div>
 
           {/* Center: Thin Progress Bar + Question Counter */}
-          <div className="flex flex-col items-center gap-1.5 flex-1 px-6 max-w-sm mx-auto">
+          <div className="flex flex-col items-center gap-1.5 flex-1 px-2 sm:px-6 max-w-sm mx-auto">
             <div className="w-full h-1 bg-[#E6E6DE] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#5A5B4C] transition-all duration-300 ease-out"
@@ -708,13 +708,13 @@ export function Screen2DepartingQuestions() {
         </main>
 
         {/* ── Fixed Bottom Navigation Bar ──────────────────────────────────── */}
-        <nav className="fixed bottom-0 inset-x-0 h-16 bg-white border-t border-[#E6E6DE] px-6 sm:px-10 flex items-center justify-between z-20">
+        <nav className="fixed bottom-0 inset-x-0 h-16 bg-white border-t border-[#E6E6DE] px-2 sm:px-10 flex items-center justify-between z-20">
           {/* Back Button */}
           <button
             type="button"
             onClick={handlePrevious}
             disabled={currentIndex === 0}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-[#7A7B72] hover:bg-[#EAEAE2] disabled:opacity-30 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold text-[#7A7B72] hover:bg-[#EAEAE2] disabled:opacity-30 transition-colors"
           >
             <ChevronLeft size={16} />
             Back
@@ -725,14 +725,14 @@ export function Screen2DepartingQuestions() {
             <button
               type="button"
               onClick={handleSkip}
-              className="px-4 py-2 rounded-full text-xs font-medium text-[#7A7B72] hover:bg-[#EAEAE2] transition-colors"
+              className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-medium text-[#7A7B72] hover:bg-[#EAEAE2] transition-colors"
             >
               Skip
             </button>
             <button
               type="button"
               onClick={handleDontKnow}
-              className="px-4 py-2 rounded-full text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors"
+              className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold text-amber-800 whitespace-nowrap bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors"
             >
               I Don&apos;t Know
             </button>
@@ -742,7 +742,7 @@ export function Screen2DepartingQuestions() {
           <button
             type="button"
             onClick={handleNext}
-            className="flex items-center gap-1.5 px-6 py-2.5 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] text-white text-xs font-semibold shadow-soft transition-colors"
+            className="flex items-center gap-1.5 px-3 sm:px-6 py-2 sm:py-2.5 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] text-white text-[11px] sm:text-xs font-semibold whitespace-nowrap shadow-soft transition-colors"
           >
             {currentIndex === totalQuestions - 1 ? 'Review & Submit' : 'Next Question'}
             <ChevronRight size={16} />
@@ -814,7 +814,7 @@ export function Screen2DepartingQuestions() {
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setShowExitConfirm(false)}
-                  className="px-4 py-2 rounded-full text-xs font-semibold text-[#7A7B72] hover:bg-[#EAEAE2] transition-colors"
+                  className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold text-[#7A7B72] hover:bg-[#EAEAE2] transition-colors"
                 >
                   Stay
                 </button>

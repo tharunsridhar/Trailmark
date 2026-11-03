@@ -274,8 +274,8 @@ export function Screen1TeamLeadDashboard() {
       )}
 
       {/* KPI Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-5 border border-[#E6E6DE] shadow-soft">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-[#E6E6DE] shadow-soft">
           <p className="text-xs text-[#7A7B72] font-medium">Uploaded Sources</p>
           <p className="text-2xl font-bold text-[#1F201B] mt-1">{sources.filter((s) => s.status === 'ok').length}</p>
           <p className="text-[11px] text-[#5A5B4C] mt-1 font-medium">
@@ -283,7 +283,7 @@ export function Screen1TeamLeadDashboard() {
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-[#E6E6DE] shadow-soft">
+        <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-[#E6E6DE] shadow-soft">
           <p className="text-xs text-[#7A7B72] font-medium">AI Questions</p>
           <p className="text-2xl font-bold text-[#1F201B] mt-1">{questions.length}</p>
           <p className="text-[11px] text-[#7A7B72] mt-1">
@@ -291,7 +291,7 @@ export function Screen1TeamLeadDashboard() {
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-[#E6E6DE] shadow-soft">
+        <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-[#E6E6DE] shadow-soft">
           <p className="text-xs text-[#7A7B72] font-medium">Analysis Verification</p>
           <p className="text-2xl font-bold text-[#5A5B4C] mt-1">
             {analysis?.counts ? `${analysis.counts.verified} V / ${analysis.counts.conflicting} C` : 'Pending'}
@@ -301,7 +301,7 @@ export function Screen1TeamLeadDashboard() {
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-[#E6E6DE] shadow-soft">
+        <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-[#E6E6DE] shadow-soft">
           <p className="text-xs text-[#7A7B72] font-medium">Handover State</p>
           <p className="text-base font-bold text-[#1F201B] mt-1 truncate">
             {activeHandover?.status === 'approved' ? 'Approved & Published' : 'In Draft Review'}
@@ -662,3 +662,4 @@ export function Screen1TeamLeadDashboard() {
     </div>
   );
 }
+

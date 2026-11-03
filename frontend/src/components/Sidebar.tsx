@@ -49,7 +49,7 @@ export function Sidebar() {
         : INCOMING_NAV;
 
   return (
-    <aside className="w-[260px] bg-[#F4F4F0] flex flex-col border-r border-[#E6E6DE] h-screen shrink-0 select-none">
+    <aside className="hidden md:flex w-[260px] bg-[#F4F4F0] flex-col border-r border-[#E6E6DE] h-screen shrink-0 select-none">
       {/* Brand Header */}
       <div className="h-20 flex items-center gap-3 px-6">
         <div className="w-8 h-8 rounded-full bg-[#5A5B4C] flex items-center justify-center text-white shadow-2xs">
