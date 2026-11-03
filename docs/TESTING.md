@@ -18,20 +18,23 @@ The AI is never called in tests. A scripted fake model plays back fixed replies,
 
 ## Latest result
 
-197 tests, all passing on SQLite (3 Nov 2026, details in the table below). An older run on PostgreSQL 16 from `docker compose` (`TEST_DATABASE_URL`, about 10.8 minutes) passed the first 192 tests, with no PostgreSQL-only failure. That run is from before the merge of the departing-member work, so it does not count as a PostgreSQL result for the current suite. Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the time is password hashing.
-
-Checked again for the final documents (3 Nov 2026, merge commit `24c7afc`):
+Run on 3 Nov 2026 on the merged documents branch, which is `origin/main` at `b8fc04a` plus the key audit and the documents changes. All commands were run from this machine (Windows, Docker 29.9.2).
 
 | Check | Command, from | Result |
 | --- | --- | --- |
-| Backend tests, SQLite | `.venv\Scripts\python.exe -m pytest -q`, `backend` | 197 passed, 1 warning (an `httpx` deprecation notice from Starlette's test client), 3 min 7 s |
-| Backend tests, SQLite, clean checkout | same command, in a separate checkout of `24c7afc` with no uncommitted edits | 197 passed, 1 warning, 1 min 43 s. Made because the first checkout had uncommitted edits to `backend/tests/score_run.py` and `data/synthetic/answer_key.json` |
+| Backend tests, SQLite | `.venv\Scripts\python.exe -m pytest -q`, `backend` | 197 passed, 1 warning (an `httpx` deprecation notice from Starlette's test client), 2 min 23 s |
+| Backend tests, PostgreSQL 16 (current suite) | `TEST_DATABASE_URL=postgresql://trailmark:trailmark@127.0.0.1:55432/trailmark`, same command, against the `db` service of `docker compose` | 197 passed, 1 warning, 3 min 48 s. No PostgreSQL-only failure |
 | TypeScript | `node_modules\.bin\tsc --noEmit`, `frontend` | No errors |
-| Production build | `node_modules\.bin\next build`, `frontend` | Compiled, 6 static pages generated, no type or lint errors |
+| Production build | `node_modules\.bin\next build`, `frontend` | Compiled, 6 static pages generated |
+| Saved run, scorer | `.venv\Scripts\python.exe tests/score_run.py saved_results/campus-events-app.json`, `backend` | 106 statements (54 `verified`, 31 `unverified`, 18 `missing`, 3 `conflicting`), 9 questions, 32/32 cited, 32/32 expected label, 3/3 conflicts, 4/4 leaver-only `unverified`, 0 restricted names, 0 sourceless |
+| Docker, backend and Postgres | `docker compose config -q`, `docker compose build backend`, `BACKEND_PORT=8010 docker compose up -d db backend` | Config valid, image built, both containers healthy. `GET /health` returned `{"status": "ok"}`, `POST /auth/register` returned `201`, `GET /handovers` without a login returned `401`. Port 8010 was used because port 8000 was taken on this machine |
+| Docker, frontend image | `docker compose --profile frontend build frontend`, then `docker run -p 3010:3000` | Image built. Started with `docker run` and the page answered `200`, running as user `node`. `docker compose up` for the frontend failed because port 3000 was already in use on this machine, so the compose start of the frontend was not run |
 
-These show that the code compiles and the backend tests pass. They do not run the frontend in a browser.
+What these checks do not show: the Docker checks did not upload files or run an analysis, and the frontend image was not opened in a browser or used against the backend container.
 
-**Older Docker and PostgreSQL result, from before the latest merges.** It was not repeated on the current code (see "Not tested yet"). On the backend code of earlier on 3 Nov 2026, `docker compose build backend` and `up` ran the backend against Postgres. `GET /health` returned `{"status": "ok"}`, a user registered (`201`), a handover was created (`201`), and `GET /handovers` without a login returned `401`. With a wrong `LLM_API_KEY` and the nine synthetic files uploaded, the analysis finished in `saved` mode with the notice "AI unavailable: showing saved results from an earlier run." and 114 statements (51 verified, 42 unverified, 18 missing, 3 conflicting), none without a source, and 9 questions for the lead. The frontend image was not built in this check.
+An older Docker run (earlier on 3 Nov 2026, before the latest merges) also uploaded the nine synthetic files with a wrong `LLM_API_KEY`. The analysis finished in `saved` mode with the notice "AI unavailable: showing saved results from an earlier run." and the file of that time (114 statements). That part was not repeated.
+
+Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the test time is password hashing.
 
 | File | Tests | What it covers |
 | --- | --- | --- |
@@ -128,9 +131,9 @@ Only run 3 met the bar for replacing the saved file on every measure (32 cited, 
 
 ### Still limited
 
-- **The score varies from run to run.** The model is not deterministic, which is why the saved fallback exists. In this round the expected label was 29, 30 and 31 of 32, and the wrong cases were different each time. Earlier rounds were weaker (table below), so a run can be clearly worse than the saved one. The saved file is the best of three runs, picked because it met the bar for saving. It is a real run but not typical.
+- **The score varies from run to run.** The model is not deterministic, which is why the saved fallback exists. In this round the expected label was 29, 30 and 31 of 32 with the old key, and the wrong cases were different each time. The saved run (the 31) is 32 with the corrected key. The other two runs were not kept and were not re-scored. Earlier rounds were weaker (table below), so a run can be clearly worse than the saved one. The saved file is the best of three runs, picked because it met the bar for saving. It is a real run but not typical.
 - **C02 depends on the run.** It is `verified` here because a second person confirms it, and `unverified` when only the leaver's message is cited. Both are correct under the leaver-only rule, and the answer key was not changed.
-- **C18 is not reliably `verified` in other runs (run 2 of the earlier round had it `unverified`).
+- **C18 is not reliably `verified` in other runs** (run 2 of the earlier round had it `unverified`).
 - **The `missing` count is high** (18, against 13 in the earlier best run). Nine have a question, the others are gaps without one.
 - **Rule 10 removes names it can match.** It matches display names, file names, locators and loose forms made of the words of a restricted title. A phrase that matches none of these ("HR and Lead Private Notes" matches only if it contains enough of the title words) can pass. A statement that cites an open source and uses its own wording is not changed. The saved file has one: the open task row T15 is titled "Lead-only HR notes verified", and the statement that quotes it says so.
 - **Three conflict patterns are written into the code.** Any other kind of conflict is found only if the model finds it.
@@ -140,9 +143,10 @@ Only run 3 met the bar for replacing the saved file on every measure (32 cited, 
 - **A statement built from the restricted HR notes can be `verified`.** It is shown only to the lead, because it inherits the restriction of its source.
 - The free tier of the AI service sometimes answers "high demand" (503). That is why a second model and saved results exist.
 
+
 ### Earlier round: runs after the rule 9 change (3 Nov 2026)
 
-Run 3 of that round was the saved file until the round above.
+Run 3 of that round was the saved file until the round above. All scores in this table are with the **old key**, and none were re-scored: the files were not kept.
 
 | Run | Statements | Questions | Cited (of 32) | Expected label (of 32) | Conflicts (of 3) | Leaver-only `unverified` (of 4) | `missing` | Conflict duplicates | C18 | C07 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -153,7 +157,7 @@ Run 3 of that round was the saved file until the round above.
 
 ### All rounds
 
-Each row is one real run on the same 9 sources. Rounds used different versions of the code and of the scoring script, so the rows are not a clean comparison.
+Each row is one real run on the same 9 sources. Rounds used different versions of the code and of the scoring script, so the rows are not a clean comparison. **Every expected-label figure here was scored with the old answer key (C26 and C28 at the wrong paragraph), except the saved run, which is shown with both.** Only the saved run could be re-scored, because it is the only file kept. The other rows are "not re-scored" and may be one lower than they would be with the corrected key.
 
 | Round | Run | Statements | Questions | Cited (of 32) | Expected label (of 32) | Conflicts found (of 3) | Leaver-only claims `unverified` |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -174,7 +178,7 @@ Each row is one real run on the same 9 sources. Rounds used different versions o
 | | 3 | 114 | 9 | 32 | 31 | 3 | 4 of 4 |
 | Restricted-location rule (rule 10) | 1 | 88 | 9 | 30 | 29 | 3 | 3 of 4 |
 | | 2 | 93 | 9 | 32 | 30 | 3 | 4 of 4 |
-| | **3 (saved)** | **106** | **9** | **32** | **31** | **3** | **4 of 4** |
+| | **3 (saved)** | **106** | **9** | **32** | **31 with the old key, 32 with the corrected key** | **3** | **4 of 4** |
 
 Notes on the table:
 
@@ -271,21 +275,20 @@ Bugs found and fixed in the frontend during this run: the review page said "No a
 
 One backend finding, now fixed: for a handover that includes a lead-only document, a `missing` gap with no source of its own was shown to the incoming member. In an earlier saved file one such statement read "The contents of 'hr_private_notes paragraph 2' are not provided in the sources" (`GET /handovers/1/handover-view` as the incoming member, statement 37). It leaked the name of a restricted location, not its content.
 
-The fix is in the access layer (`backend/app/access.py`), not in the prompt. A statement with no source of its own cannot be proven safe, so for the incoming member a `missing` gap with no source is shown as "Something is not documented here" with no sources, any other statement with no source is left out, and the real text stays with the lead. A question with no evidence is shown only to the lead, so the departing member does not get it in the list and cannot answer it. `tests/test_privacy.py` builds the leak (gaps and a claim that name `hr_private_notes`, `lead_private_chat` and a salary) and checks that none of those words appear in the incoming member's view or receipt, that the lead's preview equals the incoming view, that the lead still sees the original text, questions and version history, that the departing member gets no restricted question and `403` on the draft and the view, and that an outsider gets `403`. Five of these tests failed before the fix. The saved file needed no change: it has 114 statements and none without a source. One saved gap is titled "Confidential HR notes document..."; its source is the lead-only HR document, so the incoming member never receives it. Limit: a statement that cites an open source is judged by its sources, so text a model wrote about a restricted place while citing an open source is not caught by this rule.
+The fix is in the access layer (`backend/app/access.py`), not in the prompt. A statement with no source of its own cannot be proven safe, so for the incoming member a `missing` gap with no source is shown as "Something is not documented here" with no sources, any other statement with no source is left out, and the real text stays with the lead. A question with no evidence is shown only to the lead, so the departing member does not get it in the list and cannot answer it. `tests/test_privacy.py` builds the leak (gaps and a claim that name `hr_private_notes`, `lead_private_chat` and a salary) and checks that none of those words appear in the incoming member's view or receipt, that the lead's preview equals the incoming view, that the lead still sees the original text, questions and version history, that the departing member gets no restricted question and `403` on the draft and the view, and that an outsider gets `403`. Five of these tests failed before the fix. The saved file of that time (114 statements) needed no change: none had no source. The current saved file has 106 statements and the scorer finds 0 without a source. One saved gap is titled "Confidential HR notes document..."; its source is the lead-only HR document, so the incoming member never receives it. Limit: a statement that cites an open source is judged by its sources, so text a model wrote about a restricted place while citing an open source is not caught by this rule.
 
 A second defence was added in the pipeline (rule 10, `rules.py`): restricted source names are removed or neutralised in every statement and question the pipeline writes, so the text does not name a restricted place even before the access layer looks at it. The new saved file has no statement without a source and no restricted file name, path, paragraph number or title in any statement or question.
 
 ## Not tested yet
 
-Each item is listed separately. "Not tested yet" means no result has been recorded for it. As of 3 Nov 2026 the only checks run on the current code (`24c7afc`) are the SQLite suite, `tsc --noEmit` and `next build` above.
+Each item is listed separately. "Not tested yet" means no result has been recorded for it. The checks that were run, with their dates, are in "Latest result" above.
 
-- **PostgreSQL with the current suite (197 tests).** Not tested yet. The last PostgreSQL run covered 192 tests from before the merge.
-- **Docker with the current build.** Not tested yet. `docker compose build` and `up` for the backend and Postgres, `/health`, a register call and a `401` without login were last run on earlier 3 Nov code (see "Latest result"). `docker compose config` on the current compose file was not run.
-- **The frontend Docker image** (`--profile frontend`). Not tested yet. It has not been built or started. The runtime stage was reproduced without Docker earlier (production install, build, `next start`).
-- **The frontend journey after the merge of the departing-member work.** Not tested yet in a browser. The hand-run table above is from before the merge. Since then: answers can be edited until approval, the saved answer is returned and shown after a reload, voice answers were added, and the follow-up box was removed. `tsc` and `next build` pass on the merged code, which shows it compiles, not that it works.
-- **The frontend in AI mode.** Not tested yet. The hand-run was in `saved` mode with an empty AI key.
-- **Other browsers and window widths.** Not tested yet. The earlier run used one browser (the Claude desktop app's built-in one) at one window size. Chrome and a 375 px width were not checked.
-- **Voice answers.** Not tested yet, in any browser.
+- **The frontend journey after the merge of the departing-member work.** Not run by me in a browser. The hand-run table above is from before the merge. Kishan reported on 3 Nov 2026 (b8fc04a) that editing an answer, the saved answer after a reload, voice transcription and the removal of the follow-up box work; those rows are marked "reported by Kishan, not re-run by me". `tsc` and `next build` pass on the merged code, which shows it compiles, not that it works.
+- **The frontend in AI mode.** Not tested yet. The hand-run was in `saved` mode with an empty AI key. Kishan's note says the same: not run in live AI mode.
+- **Other browsers and window widths.** Not tested yet by me. My earlier run used one browser (the Claude desktop app's built-in one) at one window size. Kishan reported (b8fc04a, 3 Nov 2026) that the layout was tested down to 375 px with a mobile navigation drawer; that is reported by Kishan, not re-run by me. Chrome was not checked.
+- **Voice answers.** Reported by Kishan, not re-run by me.
+- **The frontend image against the backend container.** Not tested yet. The image was built and answered `200` on its own; nothing was clicked through in it.
+- **Docker, upload and analysis in the container.** Not tested yet on the current build (the older run is described in "Latest result").
 - **A deployed instance.** Not tested yet. `render.yaml` is written and nothing is deployed to Render or Vercel. Same-origin forwarding through Vercel to Render is also untested.
 - **The AI in the automated tests.** The test suite never calls a real model. The real AI was run by hand on the synthetic project (above).
 - **Automated frontend tests.** None exist (skipped for Round 2).

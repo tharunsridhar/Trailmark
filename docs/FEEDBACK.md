@@ -1,5 +1,7 @@
 # User feedback
 
+**Status: no feedback session has been held. No outside user has tried Trailmark.** The script and the empty table below are ready for Round 3.
+
 Structured feedback for Round 2. Nothing in the results table below is filled in until a real person has tried the product. Do not write answers for people who did not give them.
 
 ## How to run a session
