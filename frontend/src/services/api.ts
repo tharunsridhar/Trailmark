@@ -5,7 +5,10 @@
  * Sends session cookies with credentials: "include" on every request.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Unset: local backend. Empty or "same-origin": relative paths, which next.config.mjs forwards
+// to BACKEND_URL (so the login cookie belongs to the frontend's own domain).
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+const API_BASE_URL = configuredApiUrl.trim() === 'same-origin' ? '' : configuredApiUrl.trim().replace(/\/+$/, '');
 
 export interface UserOut {
   id: number;

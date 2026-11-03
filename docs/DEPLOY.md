@@ -32,8 +32,23 @@ Free Render services sleep after a while without traffic, so the first request a
 Browsers can block cookies set by another domain (strict tracking protection, private windows, Safari). Signs: sign-in returns `200` but the next request is `401`. Fixes, in order:
 
 1. Try a normal Chrome window.
-2. Put the frontend and backend under one domain, for example a custom domain with `app.` and `api.` sub-domains, and keep `COOKIE_SAMESITE=none`.
-3. Make the browser talk only to the Vercel address and have Vercel forward the API paths to Render with `rewrites` in `frontend/next.config.mjs`. The frontend then has to use an empty `NEXT_PUBLIC_API_URL`, which needs a small change in `frontend/src/services/api.ts` (an empty string currently falls back to `localhost:8000`).
+2. Use the same-origin mode below. It needs no custom domain.
+3. Or put the frontend and backend under one domain, for example a custom domain with `app.` and `api.` sub-domains, and keep `COOKIE_SAMESITE=none`.
+
+### Same-origin mode (forwarding through Vercel)
+
+The browser talks only to the Vercel address. Vercel forwards the API paths (`/auth`, `/handovers`, `/questions`, `/statements`, `/pieces`, `/health`) to Render with `rewrites` in `frontend/next.config.mjs`, so the login cookie belongs to the Vercel domain and is not a cross-domain cookie.
+
+On Vercel set these two variables, then **redeploy** (`BACKEND_URL` is read at build time):
+
+| Variable | Value |
+|---|---|
+| `BACKEND_URL` | The Render address, for example `https://trailmark-backend.onrender.com`, no trailing slash |
+| `NEXT_PUBLIC_API_URL` | `same-origin` (an empty value works too, if Vercel lets you save one) |
+
+`FRONTEND_ORIGIN` on Render can stay as it is, because the browser no longer calls Render directly. The default mode is unchanged: with `NEXT_PUBLIC_API_URL` set to a Render address and `BACKEND_URL` not set, the browser calls Render directly. With neither set the frontend calls `http://localhost:8000`, which is what local development uses.
+
+Tested locally: with `BACKEND_URL=http://localhost:8000` and an empty `NEXT_PUBLIC_API_URL`, the app on port 3001 signed in and loaded a handover with every request going to port 3001 (`curl` and a browser run), a production build contains the rewrites and a build without `BACKEND_URL` contains none. Not tested: forwarding on Vercel to Render itself. A very long AI analysis could hit Vercel's own request time limit, which the local test cannot show. In that case use the direct mode.
 
 ## After deploying
 
