@@ -54,6 +54,7 @@ Built by Kishan S. Versions are in `frontend/package.json`.
 | Tailwind CSS (with PostCSS and autoprefixer) | Styling |
 | lucide-react | Icons |
 | clsx, tailwind-merge | Building class names |
+| Vitest, React Testing Library, jsdom, `@vitejs/plugin-react` (dev only) | The 12 frontend tests (`npm test`) |
 | IBM Plex Sans, loaded from Google Fonts | The font used across the screens. The browser fetches it from `fonts.googleapis.com` |
 
 ## Data

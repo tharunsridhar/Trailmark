@@ -213,6 +213,19 @@ Notes on the table:
 
 Done on the 3 Nov saved run from before the label fixes (86 statements), not on the current saved run. It was not repeated. 20 of its 51 verified statements were picked at random (fixed seed 7) and each quote was read against its statement. In 19 of the 20 the quotes support the statement. The twentieth, about pull request 5 and the auditorium capacity, is supported by its quotes but it describes a conflict and should have been labelled conflicting. This was done by the team's AI assistant and not by an outside reviewer. It is a small sample, so it shows the check is working but is not a measured error rate.
 
+## Frontend automated tests
+
+`npm test` in `frontend` (Vitest, React Testing Library, jsdom, network mocked, no backend). Run on 3 Nov 2026: 4 files, **12 tests, all passed**. `tsc --noEmit` and `next build` still pass with them.
+
+| File | Tests | What it covers |
+| --- | --- | --- |
+| `EvidenceBadge.test.tsx` | 2 | The label and tooltip for `verified`, `unverified` and missing/conflicting |
+| `api.test.ts` | 5 | Every request sends the cookie (`credentials: include`); `401` and `403` become visible messages with no data; the server's own text is shown; a network failure says the server cannot be reached |
+| `VoiceRecorder.test.tsx` | 3 | A refused or missing microphone shows a clear message, keeps the typed text and does not enter the recording state. These three fail on the code before the fix |
+| `Screen2SaveStatus.test.tsx` | 2 | The departing member's answer screen shows "Not Saved" and never "Saved" when the save is refused, keeps the text, and shows "Saved" only after the save is accepted |
+
+Not covered: the lead review and approve screens, the incoming view, real recording, and anything in a real browser.
+
 ## Main journeys covered
 
 - Lead connects sources, runs an analysis, the departing member answers, the lead reviews and approves, the incoming member reads the handover and confirms receipt (`test_review_flow.py`).
@@ -302,11 +315,13 @@ Run by me through the Claude in Chrome extension on `e98ee51`. Backend on port 8
 | Console | The extension's console reader returned no messages for the pages above. It starts recording only when first called, so the first part of the journey was not captured |
 | Network failures | The only non-`200` answers seen were the `403` lead-only lists after a reload (above) and `404` for `/favicon.ico` on port 3202 |
 
-| Voice answer (Chrome) | Result |
+| Voice answer (Chrome, 3 Nov 2026) | Result |
 | --- | --- |
 | Open the recorder | Pass. The answer box kept the typed text, and the panel showed "Start Recording" |
-| Press "Start Recording" and allow the microphone | **Not run.** I pressed it three times. The page asked for the microphone, the browser's permission state stayed "prompt", and `getUserMedia` stayed pending for 15 seconds. The prompt was not answered in the tab I drove, even after the project owner said they had clicked Allow. No recording started and no transcription was run. No speech was produced either |
-| Message when permission is denied, typed text kept | Not tested. Reading the code, the recorder shows an error message and the typed answer is a separate field, but that was not run |
+| Press "Start Recording" and allow the microphone | **Not run.** I pressed it several times in two passes. Each time `getUserMedia` stayed pending and the permission state stayed "prompt". The project owner said they clicked Allow, but the prompt was not answered in the tab I drove. No recording started, no transcription was run, and no speech was produced. Transcription itself uses the browser's Web Speech API, with no backend call, so saved mode does not affect it |
+| Message when permission is denied, typed text kept | Passed with a **stubbed** denial, not a real one: `navigator.mediaDevices.getUserMedia` was replaced in the page with a call that rejects with `NotAllowedError`, then `NotFoundError`. After the fix below the page showed "Microphone access was denied. Allow the microphone for this site in the browser, or type your answer. Your text has not been changed." and "No microphone was found. Connect one, or type your answer. Your text has not been changed." The typed text stayed in both boxes, the recorder did not enter the recording state, "Save Answer" still worked and the backend held the saved answer |
+
+Two problems were found by this test and fixed in `frontend/src/components/interview/VoiceRecorder.tsx`: the message was only the browser's raw text ("Permission denied"), and pressing Start Recording emptied the recorder's own text box before the microphone was granted. The main answer box was never emptied. The text is now cleared only after the microphone is granted, and the message depends on the error. A real denial (blocking the site in Chrome's settings) was not tried.
 
 Bugs found and fixed in the frontend during this run: the lead dashboard showed "Pending / Run analysis to compute" after a reload although an analysis existed (the last analysis is now loaded); the "Inspect Piece" button ran past the card at 375px (incoming screens); the dashboard's header buttons ran past the edge at 768px; "Mode: null" was shown while an analysis was running. Review of the departing-member work also removed the optimistic local copy of the typed answer: it was set before the server answered, so a rejected save could still show the text as the answer. The screen now shows only what the server returned.
 
@@ -320,12 +335,12 @@ A second defence was added in the pipeline (rule 10, `rules.py`): restricted sou
 
 "Not tested yet" means no result has been recorded for it. The checks that were run, with their dates, are in "Latest result" and "Frontend run by hand".
 
-- **Voice answers: recording and transcription.** Not run. In Chrome the microphone prompt was never answered, so recording did not start (see "Second pass in real Chrome"). The built-in browser blocks the microphone. The denied-permission message was not tested.
+- **Voice answers: recording and transcription.** Not run. In Chrome the microphone prompt was never answered, so recording did not start (see "Second pass in real Chrome"). The built-in browser blocks the microphone. The denied-permission message was tested with a stubbed rejection only, not a real denial.
 - **Firefox and Safari.** Not run (not available here). A real phone and touch devices were not used.
 - **Vercel, and a deployed instance.** Nothing is deployed to Render or Vercel. Forwarding through Vercel to Render is untested. Same-origin mode was run locally only.
 - **The frontend image under `docker compose --profile frontend up`.** Ports were busy, so the image was started with `docker run`.
 - **Docker, upload and analysis in the container.** Not run on the current build.
-- **Automated frontend tests.** None exist (skipped for Round 2).
+- **Automated frontend tests, beyond the small set below.** There is no test of the lead review, approve or incoming screens, and none runs in a browser.
 - **The AI in the automated tests.** The test suite never calls a real model. The real AI was run by hand on the synthetic project (above).
 - **Load and long inputs.** A very large repository would need chunking, which is not built.
 - **Outside users.** No structured feedback has been collected yet. The script and a table to fill in are in [`FEEDBACK.md`](FEEDBACK.md).
