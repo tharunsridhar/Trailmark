@@ -230,28 +230,33 @@ Done on the 3 Nov saved run from before the label fixes (86 statements), not on 
 
 ## Frontend run by hand (local, 3 Nov 2026)
 
-Backend on port 8000 with an empty AI key and a fresh SQLite file, so the analysis ran in `saved` mode (the saved file of that time: 104 statements, 9 questions). Frontend with `next dev`. Driven in the Claude desktop app's built-in browser. Nothing here was run against Render or Vercel and the AI was not called.
+Run on the merged frontend (`frontend-final-check` merged on top of the departing-member work, then four small fixes). Backend on port 8001 (port 8000 was taken by another project on the machine, so the frontend was built with `NEXT_PUBLIC_API_URL=http://localhost:8001`), an empty AI key and a fresh SQLite file, so the analysis ran in `saved` mode. Frontend with `next start` of a production build. Driven in the Claude desktop app's built-in browser only. Nothing was run against Render or Vercel.
 
 | Step | Result |
 | --- | --- |
-| Lead: sign in, create a handover, upload the 9 synthetic files | Pass. 8 imported, the empty test file was reported and shown as "Empty, not imported" (after a fix, see below) |
-| Lead: run the analysis | Pass. The notice said `saved`; 55 verified, 28 unverified, 18 missing, 3 conflicting; statements show labels and quotes |
-| Departing member: answer, Next, reload | Pass at the time. The question showed as answered after a reload. Since merging the departing-member work, the server returns the saved `answer` text, so the screen shows it again; this was not hand-run again after the merge |
-| Departing member: Skip and "I don't know" | Pass. Both are stored (`skipped`, `unknown`) and shown on the review page |
-| Departing member: save after approval | Pass. The screen says the handover is approved and the response is "Not saved". The server answered `409` |
-| Lead: edit a statement | Pass. Version 2 appears and the version history names the editor (Deepak) |
-| Lead: reject with a reason | Pass. The statement is marked rejected |
-| Lead: resolve the three conflicts with a written reason, accept a gap with a reason | Pass |
-| Lead: approve while a conflict is open | The Approve button stays disabled until the last conflict is resolved. This was checked in the screen only. The backend rule is covered by the automated tests |
-| Lead: approve | Pass |
-| Incoming member: sees only the approved handover | Pass. The rejected statement is not shown, every statement lists its source quote, emails are masked, and no text from the HR notes or the lead-only chat appears (also checked in the raw response: none of the HR amounts or the database credential) |
-| Incoming member: confirm receipt, reload | Pass. "Receipt confirmed by Kiran" stays after a reload |
-| Wrong password, or an unknown email | Pass. "Wrong email or password" |
-| Incoming member calling a lead-only endpoint (`curl`) | `403` with "Your role cannot do this" |
+| Lead: sign in, create a handover, upload the 9 synthetic files | Pass. 8 imported (128 pieces), the empty test file was reported as "Empty, not imported" |
+| Lead: run the analysis | Pass. Notice `saved`; 54 verified, 31 unverified, 18 missing, 3 conflicting, 9 questions; statements show labels and quotes |
+| Departing member: answer, Next, Back, change the answer, Update Answer, reload | Pass. After the reload the changed text shows (the server returns the saved `answer`) |
+| Departing member: voice answer | **Not tested.** The built-in browser blocks the microphone. The recorder opened and showed "Permission denied" instead of failing silently; recording and transcription were not run |
+| Departing member: Skip and "I don't know" | Pass. Review page showed 1 answered, 7 skipped, 1 unknown |
+| Lead: edit a statement | Pass. Version 2; the version history names the editor (Deepak) |
+| Lead: reject with a reason | Pass. The button stays disabled until a reason is typed; the statement shows Rejected |
+| Lead: resolve the three conflicts with a written reason, accept a gap with a reason | Pass. The confirm buttons stay disabled until a reason is typed |
+| Lead: Approve while a conflict is open | Approve was disabled ("Resolve all open conflicts before approving") until the third conflict was resolved. Checked in the screen only |
+| Lead: approve | Pass. The screen said approved only after the server answered |
+| Departing member: change a response after approval | Pass. The answer box is locked; "I don't know" gave the server's `409` and the text "This handover is already approved", no fake success. The status line next to the locked box then reads "Not Saved" although the earlier answer is stored (cosmetic, left as is) |
+| Incoming member: sees only the approved handover | Pass. The rejected statement is not shown, every statement has a source, and no text from the HR notes or the lead-only chat, and no restricted file name, appears on the page (searched the page text) |
+| Incoming member: confirm receipt, reload | Pass. "Receipt Confirmed by Kiran" is shown again after a reload |
+| Wrong password | Pass. "Wrong email or password" |
+| Wrong role (`401` / `403`) | Seen in the browser's network list: lead-only requests as the incoming or departing member answered `403`, and the screens did not break. A screen message for this was not reachable by clicking |
 | Backend stopped | Pass. "Cannot reach the Trailmark server. Check that the backend is running and try again.", not a blank page |
-| Same-origin mode (`BACKEND_URL`, empty `NEXT_PUBLIC_API_URL`) | Pass locally: the page, sign-in and every request went through the frontend's own port. Not tested on Vercel |
+| Browser console on every screen | No script errors. The only entries were "Failed to load resource" for the `401`, `403`, `404` and `409` answers above. After a reload the app asks for lead-only lists once before it knows the role, which the server refuses with `403`; this is harmless noise and was not changed |
+| Phone width (375px) | Pass after fixes. Role selection, lead dashboard and review, departing intro and interview, incoming screens: no horizontal page scroll, the menu opens and closes (Escape too), the bottom buttons of the interview fit. The sources table scrolls inside its card. Not covered: touch devices, a real phone |
+| Tablet (768px) and desktop (1440px) | Pass after fixes. Lead dashboard, review and incoming screens: no horizontal scroll, sidebar shown from 768px |
+| AI mode (once, with the key in `.env`) | Pass on the second try. The first run fell back to `saved` with the notice "AI unavailable: showing saved results from an earlier run" (backend log: "the model returned broken JSON"). The second run took about 110 seconds and showed `Mode: ai` (no notice is shown in this mode): 43 verified, 32 unverified, 11 missing, 3 conflicting, 6 dropped, 89 statements with labels and quotes, 9 questions. The incoming member's screens were not re-checked on the AI result |
+| Frontend Docker image | Pass, with a change. `docker compose --profile frontend build` built the backend and the frontend images. Ports 3000 and 8000 were busy, so the frontend image was started with `docker run -p 3200:3000`, not `compose up`. The page loaded and "Enter as Team Lead" signed in against the backend on 8001 |
 
-Bugs found and fixed in the frontend during this run: the review page said "No answer recorded" for questions that were answered; the lead dashboard showed no sources after switching from another persona (stale cookie, the sources and members requests were not repeated after the new sign-in); the empty file was counted as an uploaded source; the departing member's answers called a lead-only endpoint and got a `403` each time; the answer box could still be typed in after approval. Fixed but only partly re-tested in the browser: the review page now shows the text typed in the same session, which was not clicked through again because the handover was already approved.
+Bugs found and fixed in the frontend during this run: the lead dashboard showed "Pending / Run analysis to compute" after a reload although an analysis existed (the last analysis is now loaded); the "Inspect Piece" button ran past the card at 375px (incoming screens); the dashboard's header buttons ran past the edge at 768px; "Mode: null" was shown while an analysis was running. Review of the departing-member work also removed the optimistic local copy of the typed answer: it was set before the server answered, so a rejected save could still show the text as the answer. The screen now shows only what the server returned.
 
 One backend finding, now fixed: for a handover that includes a lead-only document, a `missing` gap with no source of its own was shown to the incoming member. In an earlier saved file one such statement read "The contents of 'hr_private_notes paragraph 2' are not provided in the sources" (`GET /handovers/1/handover-view` as the incoming member, statement 37). It leaked the name of a restricted location, not its content.
 
@@ -263,7 +268,7 @@ A second defence was added in the pipeline (rule 10, `rules.py`): restricted sou
 
 - **The AI in the automated tests.** The test suite never calls a real model. The real AI was run by hand on the synthetic project (above).
 - **A deployed instance.** `render.yaml` is written but nothing is deployed to Render yet.
-- **The frontend, beyond one local run.** The by-hand browser run is described above. The frontend has no automated tests, was not run in AI mode, only in one browser (the Claude desktop app's built-in one) and one window size, and not with voice answers.
-- **The frontend Docker image.** Only the backend and Postgres were built and run in Docker.
+- **The frontend, beyond the run above.** It has no automated tests. Not run: Vercel and the same-origin mode (not re-run in this pass), voice answers (the built-in browser blocks the microphone), any browser other than the Claude desktop app's built-in one (no Chrome, Safari or Firefox), a real phone, and `docker compose --profile frontend up` (ports 3000 and 8000 were busy on the test machine, so the image was started with `docker run`).
+- **The frontend Docker image on a real deployment.** It was built and started locally only; the backend image was built but not started in this run.
 - **Load and long inputs.** A very large repository would need chunking, which is not built.
 - **Outside users.** No structured feedback has been collected yet. The script and a table to fill in are in [`FEEDBACK.md`](FEEDBACK.md).

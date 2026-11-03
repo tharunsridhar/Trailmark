@@ -136,27 +136,6 @@ export interface HandoverView {
   receipt: HandoverReceipt | null;
 }
 
-function formatErrorDetail(detail: any): string {
-  if (!detail) return '';
-  if (typeof detail === 'string') return detail;
-  if (Array.isArray(detail)) {
-    return detail
-      .map((item) => {
-        if (typeof item === 'string') return item;
-        if (item && typeof item === 'object') {
-          return item.msg || item.message || JSON.stringify(item);
-        }
-        return String(item);
-      })
-      .filter(Boolean)
-      .join(', ');
-  }
-  if (typeof detail === 'object') {
-    return detail.msg || detail.message || detail.error || JSON.stringify(detail);
-  }
-  return String(detail);
-}
-
 async function request<T>(
   path: string,
   options: RequestInit = {}
@@ -184,14 +163,25 @@ async function request<T>(
 
     const data = await res.json().catch(() => null);
     if (!res.ok) {
-      const formattedError = formatErrorDetail(data?.detail) || `HTTP ${res.status}`;
-      return { data: null, status: res.status, error: formattedError };
+      return { data: null, status: res.status, error: describeError(res.status, data?.detail) };
     }
 
     return { data, status: res.status };
   } catch (err: any) {
     return { data: null, status: 0, error: 'Cannot reach the Trailmark server. Check that the backend is running and try again.' };
   }
+}
+
+// FastAPI sends detail as a string, or as a list of validation errors (422). Always return text.
+function describeError(status: number, detail: unknown): string {
+  if (typeof detail === 'string' && detail.trim()) return detail;
+  if (Array.isArray(detail) && detail.length > 0) {
+    const msgs = detail.map((d) => (d && typeof d.msg === 'string' ? d.msg : '')).filter(Boolean);
+    if (msgs.length > 0) return msgs.join('; ');
+  }
+  if (status === 401) return 'You are not signed in, or your session has expired. Sign in again.';
+  if (status === 403) return 'Your role is not allowed to do this.';
+  return `Request failed (HTTP ${status}).`;
 }
 
 export const HandoverApiService = {

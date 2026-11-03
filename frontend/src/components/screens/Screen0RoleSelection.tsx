@@ -107,7 +107,7 @@ export function Screen0RoleSelection() {
         </div>
         <div className="flex flex-col">
           <span className="text-xl font-bold tracking-tight text-[#1F201B]">Trailmark</span>
-          <span className="text-[10px] font-semibold text-[#7A7B72] tracking-[0.18em] uppercase -mt-0.5">
+          <span className="text-[10px] font-semibold text-[#62635A] tracking-[0.18em] uppercase -mt-0.5">
             Handover OS
           </span>
         </div>
@@ -118,7 +118,7 @@ export function Screen0RoleSelection() {
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#1F201B] mb-2">
           Welcome to Trailmark
         </h1>
-        <p className="text-base text-[#7A7B72] font-medium mb-4">
+        <p className="text-base text-[#62635A] font-medium mb-4">
           Your project knowledge, carried forward.
         </p>
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-[#E6E6DE] text-xs font-semibold text-[#5A5B4C] shadow-2xs">
@@ -162,7 +162,7 @@ export function Screen0RoleSelection() {
                       >
                         {r.icon}
                       </div>
-                      <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#F4F4F0] text-[#7A7B72]">
+                      <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#F4F4F0] text-[#62635A]">
                         {r.badge}
                       </span>
                     </div>
@@ -172,7 +172,7 @@ export function Screen0RoleSelection() {
                       Persona: <span className="font-semibold">{r.assignedUser}</span> ({r.userRole.split('(')[0].trim()})
                     </p>
 
-                    <p className="text-xs text-[#7A7B72] leading-relaxed mb-6">
+                    <p className="text-xs text-[#62635A] leading-relaxed mb-6">
                       {r.description}
                     </p>
                   </div>
@@ -222,7 +222,7 @@ export function Screen0RoleSelection() {
             <h2 className="text-xl font-bold text-[#1F201B]">
               {isRegisterMode ? 'Create an Account' : 'Sign In to Trailmark'}
             </h2>
-            <p className="text-xs text-[#7A7B72] mt-1">
+            <p className="text-xs text-[#62635A] mt-1">
               Connects to real FastAPI HTTP-only cookie authentication.
             </p>
           </div>
@@ -230,10 +230,11 @@ export function Screen0RoleSelection() {
           <form onSubmit={handleCustomAuth} className="space-y-4">
             {isRegisterMode && (
               <div>
-                <label className="block text-xs font-semibold text-[#1F201B] mb-1">Full Name</label>
+                <label htmlFor="auth-name" className="block text-xs font-semibold text-[#1F201B] mb-1">Full Name</label>
                 <div className="relative">
-                  <User size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#7A7B72]" />
+                  <User size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#62635A]" />
                   <input
+                    id="auth-name"
                     type="text"
                     required
                     value={name}
@@ -246,10 +247,11 @@ export function Screen0RoleSelection() {
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-[#1F201B] mb-1">Email Address</label>
+              <label htmlFor="auth-email" className="block text-xs font-semibold text-[#1F201B] mb-1">Email Address</label>
               <div className="relative">
-                <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#7A7B72]" />
+                <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#62635A]" />
                 <input
+                  id="auth-email"
                   type="email"
                   required
                   value={email}
@@ -261,10 +263,11 @@ export function Screen0RoleSelection() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1F201B] mb-1">Password</label>
+              <label htmlFor="auth-password" className="block text-xs font-semibold text-[#1F201B] mb-1">Password</label>
               <div className="relative">
-                <KeyRound size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#7A7B72]" />
+                <KeyRound size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#62635A]" />
                 <input
+                  id="auth-password"
                   type="password"
                   required
                   minLength={8}
@@ -297,7 +300,7 @@ export function Screen0RoleSelection() {
             <button
               type="button"
               onClick={() => setShowCustomAuth(false)}
-              className="text-[#7A7B72] hover:text-[#1F201B]"
+              className="text-[#62635A] hover:text-[#1F201B]"
             >
               Back to personas
             </button>
@@ -305,7 +308,7 @@ export function Screen0RoleSelection() {
         </div>
       )}
 
-      <div className="mt-12 text-center text-xs text-[#7A7B72] max-w-md">
+      <div className="mt-12 text-center text-xs text-[#62635A] max-w-md">
         <p>
           Testing against synthetic project: <strong>Campus Events App</strong>. Switch personas anytime from the top bar or sidebar.
         </p>

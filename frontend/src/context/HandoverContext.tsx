@@ -189,7 +189,6 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
   // Questions
   const [backendQuestions, setBackendQuestions] = useState<ApiQuestion[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(false);
-  const [localAnswers, setLocalAnswers] = useState<Record<string | number, string>>({});
 
   // Statements
   const [backendStatements, setBackendStatements] = useState<ApiStatement[]>([]);
@@ -294,6 +293,10 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
         setQuestionsLoading(false);
         return false;
       }
+      // Drop what the previous persona loaded, but keep the chosen handover so it is reloaded for this one
+      const keepHandoverId = activeHandoverId;
+      resetSessionData();
+      setActiveHandoverId(keepHandoverId);
       setAuthUser(authRes.data);
     }
     setActiveRole(role);
@@ -341,6 +344,11 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
             setBackendStatements(sRes.data);
           }
           setStatementsLoading(false);
+          // After a reload the dashboard must show the last analysis, not "Pending"
+          const aRes = await HandoverApiService.getAnalysis(targetId);
+          if (aRes.data && aRes.data.status !== 'not_started') {
+            setAnalysis(aRes.data);
+          }
         }
       }
     } catch (e) {
@@ -349,7 +357,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       setQuestionsLoading(false);
     }
     return true;
-  }, [activeHandoverId, clearMessages]);
+  }, [activeHandoverId, clearMessages, resetSessionData]);
 
   // ─── HANDOVERS (docs/api.md) ───────────────────────────────────────────────
 
@@ -547,7 +555,6 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       }
       const res = await HandoverApiService.answerQuestion(questionId, action, text);
       if (res.data) {
-        if (action === 'answer' && text) setLocalAnswers((prev) => ({ ...prev, [questionId]: text }));
         setSuccessMessage(action === 'answer' ? 'Answer saved.' : action === 'skip' ? 'Question skipped.' : 'Marked as unknown.');
         await loadQuestions();
         if (activeHandoverId && activeRole === 'lead') {
@@ -718,7 +725,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     if (backendQuestions.length > 0) {
       return backendQuestions.map((bq) => {
         const primaryEvidence = bq.evidence[0];
-        const ans = bq.answer || localAnswers[bq.id] || localAnswers[String(bq.id)] || '';
+        const ans = bq.answer || '';
         return {
           id: String(bq.id),
           category: 'Backend Architecture' as QuestionCategory,
@@ -733,7 +740,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       });
     }
     return [];
-  }, [backendQuestions, localAnswers]);
+  }, [backendQuestions]);
 
   const adaptedStatements: Statement[] = useMemo(() => {
     if (backendStatements.length > 0) {
@@ -811,7 +818,6 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     async (questionId: string | number, answer: string): Promise<boolean> => {
       const numId = typeof questionId === 'number' ? questionId : parseInt(questionId, 10);
       if (!isNaN(numId)) {
-        setLocalAnswers((prev) => ({ ...prev, [numId]: answer, [String(numId)]: answer }));
         return await answerQuestionApi(numId, 'answer', answer);
       }
       return false;

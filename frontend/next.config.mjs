@@ -8,6 +8,7 @@ const backendUrl = (process.env.BACKEND_URL || '').trim().replace(/\/+$/, '');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   experimental: {
     // The AI analysis can run for a minute or more
     proxyTimeout: 300000,

@@ -137,7 +137,7 @@ This starts PostgreSQL and the backend at `http://localhost:8000` (if that port 
 - pgvector and similarity search are not used. The model is given all source pieces in one request instead, which is fine for a project of the demo size but would need chunking for a large repository.
 - Postgres row-level security is not built. Access is enforced in the backend and covered by tests.
 - Repository data comes from an uploaded export (JSON), not live from the GitHub REST API.
-- The frontend Docker image (`frontend/Dockerfile`) has not been built yet. The compose file is valid and the runtime stage works outside Docker.
+- The frontend Docker image (`frontend/Dockerfile`) was built with `docker compose --profile frontend build` and started locally with `docker run`; it loaded and signed in against a local backend. `compose up` with the frontend profile and a deployed instance have not been run.
 
 ## How the AI analysis stays honest
 

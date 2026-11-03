@@ -268,7 +268,7 @@ export function Screen2DepartingQuestions() {
       <div className="min-h-screen bg-[#F4F4F0] flex flex-col items-center justify-center p-8 select-none">
         <Loader2 size={36} className="animate-spin text-[#5A5B4C] mb-4" />
         <h3 className="text-base font-bold text-[#1F201B]">Loading Handover Questions...</h3>
-        <p className="text-xs text-[#7A7B72] mt-1">Authenticating session and fetching assigned questions.</p>
+        <p className="text-xs text-[#62635A] mt-1">Authenticating session and fetching assigned questions.</p>
       </div>
     );
   }
@@ -282,7 +282,7 @@ export function Screen2DepartingQuestions() {
             <AlertCircle size={24} />
           </div>
           <h2 className="text-lg font-bold text-[#1F201B]">No Questions Available</h2>
-          <p className="text-xs text-[#7A7B72] leading-relaxed">
+          <p className="text-xs text-[#62635A] leading-relaxed">
             There are currently no interview questions generated for this handover. Ask Team Lead Deepak to upload sources and run AI Analysis.
           </p>
           <div className="pt-2 flex justify-center gap-2">
@@ -354,7 +354,7 @@ export function Screen2DepartingQuestions() {
 
       <div className="min-h-screen bg-[#F4F4F0] flex flex-col font-sans select-none">
         {/* ── Top Bar ──────────────────────────────────────────────────────── */}
-        <header className="h-16 bg-white border-b border-[#E6E6DE] px-6 sm:px-10 flex items-center justify-between sticky top-0 z-30 shrink-0">
+        <header className="h-16 bg-white border-b border-[#E6E6DE] px-3 sm:px-10 flex items-center justify-between sticky top-0 z-30 shrink-0">
           {/* Left: Brand */}
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 rounded-full bg-[#5A5B4C] flex items-center justify-center text-white shrink-0 shadow-2xs">
@@ -362,19 +362,19 @@ export function Screen2DepartingQuestions() {
             </div>
             <div className="hidden sm:block leading-none min-w-0">
               <div className="text-[11px] font-bold text-[#1F201B] tracking-widest uppercase">TRAILMARK</div>
-              <div className="text-[11px] text-[#7A7B72] truncate max-w-[200px] mt-0.5">{project.name}</div>
+              <div className="text-[11px] text-[#62635A] truncate max-w-[200px] mt-0.5">{project.name}</div>
             </div>
           </div>
 
           {/* Center: Thin Progress Bar + Question Counter */}
-          <div className="flex flex-col items-center gap-1.5 flex-1 px-6 max-w-sm mx-auto">
+          <div className="flex flex-col items-center gap-1.5 flex-1 px-2 sm:px-6 max-w-sm mx-auto">
             <div className="w-full h-1 bg-[#E6E6DE] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#5A5B4C] transition-all duration-300 ease-out"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
-            <span className="text-xs font-medium text-[#7A7B72] whitespace-nowrap">
+            <span className="text-xs font-medium text-[#62635A] whitespace-nowrap">
               Question{' '}
               <span className="font-bold text-[#1F201B]">{currentIndex + 1}</span>
               {' '}of {totalQuestions}
@@ -394,7 +394,7 @@ export function Screen2DepartingQuestions() {
             <button
               type="button"
               onClick={() => setShowExitConfirm(true)}
-              className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#7A7B72] hover:bg-[#EAEAE2] transition-colors"
+              className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#62635A] hover:bg-[#EAEAE2] transition-colors"
             >
               Save &amp; Exit
             </button>
@@ -446,11 +446,11 @@ export function Screen2DepartingQuestions() {
                   <Sparkles size={12} />
                   {currentQuestion.category}
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-white border border-[#E6E6DE] text-[#7A7B72]">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-white border border-[#E6E6DE] text-[#62635A]">
                   <RiskDot status={currentQuestion.evidenceStatus} />
                   <span className="capitalize">{currentQuestion.evidenceStatus.replace('_', ' / ')}</span>
                 </span>
-                <span className="text-xs text-[#A2A399] ml-auto hidden sm:inline">
+                <span className="text-xs text-[#6B6C62] ml-auto hidden sm:inline">
                   Target: {project.departingRole}
                 </span>
               </div>
@@ -474,7 +474,7 @@ export function Screen2DepartingQuestions() {
 
                 {whyOpen && (
                   <div className="mt-3.5 p-4 sm:p-5 rounded-2xl bg-white border border-[#E6E6DE] shadow-soft space-y-3">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A7B72]">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#62635A]">
                       Grounded Source Context &amp; Evidence
                     </p>
                     {backendEvidence.length > 0 ? (
@@ -483,7 +483,7 @@ export function Screen2DepartingQuestions() {
                           <div key={idx} className="border-l-2 border-[#5A5B4C] pl-3.5 text-xs space-y-1">
                             <p className="italic text-[#3A3B34]">&ldquo;{ev.quote}&rdquo;</p>
                             <div className="flex items-center gap-2 text-[11px]">
-                              <span className="font-mono text-[#7A7B72]">{ev.locator}</span>
+                              <span className="font-mono text-[#62635A]">{ev.locator}</span>
                               <button
                                 type="button"
                                 onClick={() => handleInspectEvidence(ev.piece_id)}
@@ -497,7 +497,7 @@ export function Screen2DepartingQuestions() {
                         ))}
                       </div>
                     ) : isRestricted ? (
-                      <p className="text-xs text-[#7A7B72] italic leading-relaxed">
+                      <p className="text-xs text-[#62635A] italic leading-relaxed">
                         Source evidence for this item is restricted to Lead review.
                       </p>
                     ) : sourceQuotes.length > 0 ? (
@@ -510,7 +510,7 @@ export function Screen2DepartingQuestions() {
                         </blockquote>
                       ))
                     ) : (
-                      <p className="text-xs text-[#7A7B72] italic leading-relaxed">
+                      <p className="text-xs text-[#62635A] italic leading-relaxed">
                         {currentQuestion.reason ||
                           'This question ensures critical technical context and unowned dependencies are carried forward.'}
                       </p>
@@ -552,7 +552,7 @@ export function Screen2DepartingQuestions() {
                     </span>
                   )}
                   {saveStatus === 'saving' && (
-                    <span className="text-xs text-[#7A7B72] flex items-center gap-1">
+                    <span className="text-xs text-[#62635A] flex items-center gap-1">
                       <Loader2 size={12} className="animate-spin" /> Saving...
                     </span>
                   )}
@@ -577,13 +577,14 @@ export function Screen2DepartingQuestions() {
                   onChange={(e) => handleAnswerChange(e.target.value)}
                   disabled={activeHandover?.status === 'approved'}
                   readOnly={activeHandover?.status === 'approved'}
+                  aria-label="Your answer"
                   rows={8}
                   placeholder={
                     activeHandover?.status === 'approved'
                       ? 'Handover has been approved. Responses are locked.'
                       : 'Detail your architecture decisions, edge cases, deployment keys, or unfinished code branches...'
                   }
-                  className={`w-full px-5 py-4 pr-14 rounded-3xl border border-[#E6E6DE] bg-white text-sm text-[#1F201B] placeholder-[#A2A399] focus:outline-none focus:ring-2 focus:ring-[#5A5B4C]/25 focus:border-[#5A5B4C] leading-relaxed resize-none transition-all shadow-soft font-[inherit] ${
+                  className={`w-full px-5 py-4 pr-14 rounded-3xl border border-[#E6E6DE] bg-white text-sm text-[#1F201B] placeholder-[#6B6C62] focus:outline-none focus:ring-2 focus:ring-[#5A5B4C]/25 focus:border-[#5A5B4C] leading-relaxed resize-none transition-all shadow-soft font-[inherit] ${
                     activeHandover?.status === 'approved' ? 'opacity-80 bg-[#FAFAFA] cursor-not-allowed' : ''
                   }`}
                 />
@@ -612,7 +613,7 @@ export function Screen2DepartingQuestions() {
 
                 {/* Character Count */}
                 {answerText.length > 0 && (
-                  <div className="absolute bottom-3.5 right-4 text-[10px] text-[#A2A399] pointer-events-none">
+                  <div className="absolute bottom-3.5 right-4 text-[10px] text-[#6B6C62] pointer-events-none">
                     {answerText.length} characters
                   </div>
                 )}
@@ -628,7 +629,7 @@ export function Screen2DepartingQuestions() {
 
               {/* Direct Save Action & Status Notice */}
               <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] text-[#7A7B72]">
+                <span className="text-[11px] text-[#62635A]">
                   {saveStatus === 'error' ? (
                     <span className="text-red-600 font-semibold flex items-center gap-1">
                       <AlertCircle size={12} /> {safeErrorMessage(errorMessage) || 'Response not saved to backend.'}
@@ -691,7 +692,7 @@ export function Screen2DepartingQuestions() {
                       <Mic size={13} className="text-[#5A5B4C]" />
                       <span className="text-xs font-semibold text-[#1F201B]">Voice Transcription</span>
                     </div>
-                    <span className="text-[10px] text-[#7A7B72]">Speech-to-Text auto appends</span>
+                    <span className="text-[10px] text-[#62635A]">Speech-to-Text auto appends</span>
                   </div>
                   <div className="p-4">
                     <VoiceRecorder
@@ -708,13 +709,13 @@ export function Screen2DepartingQuestions() {
         </main>
 
         {/* ── Fixed Bottom Navigation Bar ──────────────────────────────────── */}
-        <nav className="fixed bottom-0 inset-x-0 h-16 bg-white border-t border-[#E6E6DE] px-6 sm:px-10 flex items-center justify-between z-20">
+        <nav className="fixed bottom-0 inset-x-0 h-16 bg-white border-t border-[#E6E6DE] px-2 sm:px-10 flex items-center justify-between z-20">
           {/* Back Button */}
           <button
             type="button"
             onClick={handlePrevious}
             disabled={currentIndex === 0}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-[#7A7B72] hover:bg-[#EAEAE2] disabled:opacity-30 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold text-[#62635A] hover:bg-[#EAEAE2] disabled:opacity-30 transition-colors"
           >
             <ChevronLeft size={16} />
             Back
@@ -725,14 +726,14 @@ export function Screen2DepartingQuestions() {
             <button
               type="button"
               onClick={handleSkip}
-              className="px-4 py-2 rounded-full text-xs font-medium text-[#7A7B72] hover:bg-[#EAEAE2] transition-colors"
+              className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-medium text-[#62635A] hover:bg-[#EAEAE2] transition-colors"
             >
               Skip
             </button>
             <button
               type="button"
               onClick={handleDontKnow}
-              className="px-4 py-2 rounded-full text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors"
+              className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold text-amber-800 whitespace-nowrap bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors"
             >
               I Don&apos;t Know
             </button>
@@ -742,7 +743,7 @@ export function Screen2DepartingQuestions() {
           <button
             type="button"
             onClick={handleNext}
-            className="flex items-center gap-1.5 px-6 py-2.5 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] text-white text-xs font-semibold shadow-soft transition-colors"
+            className="flex items-center gap-1.5 px-3 sm:px-6 py-2 sm:py-2.5 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] text-white text-[11px] sm:text-xs font-semibold whitespace-nowrap shadow-soft transition-colors"
           >
             {currentIndex === totalQuestions - 1 ? 'Review & Submit' : 'Next Question'}
             <ChevronRight size={16} />
@@ -761,9 +762,9 @@ export function Screen2DepartingQuestions() {
                   aria-label="Close question drawer"
                   title="Close"
                   onClick={() => setShowNavDrawer(false)}
-                  className="p-1.5 rounded-lg text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors"
+                  className="p-1.5 rounded-lg text-[#62635A] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors"
                 >
-                  <X size={16} className="text-[#7A7B72]" aria-hidden="true" />
+                  <X size={16} className="text-[#62635A]" aria-hidden="true" />
                   <span className="sr-only sm:not-sr-only">Close</span>
                 </button>
               </div>
@@ -792,7 +793,7 @@ export function Screen2DepartingQuestions() {
                           <Check size={11} className="text-emerald-600 shrink-0" />
                         )}
                       </div>
-                      <p className={`text-[10px] mt-0.5 ${isActive ? 'text-white/70' : 'text-[#7A7B72]'}`}>
+                      <p className={`text-[10px] mt-0.5 ${isActive ? 'text-white/70' : 'text-[#62635A]'}`}>
                         {q.category}
                       </p>
                     </button>
@@ -808,13 +809,13 @@ export function Screen2DepartingQuestions() {
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/30">
             <div className="bg-white rounded-3xl p-6 border border-[#E6E6DE] shadow-elevated max-w-sm w-full space-y-4">
               <h3 className="text-base font-bold text-[#1F201B]">Save &amp; Exit?</h3>
-              <p className="text-xs text-[#7A7B72] leading-relaxed">
+              <p className="text-xs text-[#62635A] leading-relaxed">
                 All your answers are saved. You can resume this interview anytime from your dashboard.
               </p>
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setShowExitConfirm(false)}
-                  className="px-4 py-2 rounded-full text-xs font-semibold text-[#7A7B72] hover:bg-[#EAEAE2] transition-colors"
+                  className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold text-[#62635A] hover:bg-[#EAEAE2] transition-colors"
                 >
                   Stay
                 </button>
@@ -851,7 +852,7 @@ export function Screen2DepartingQuestions() {
                     setInspectPiece(null);
                     setPieceError(null);
                   }}
-                  className="p-1.5 rounded-lg text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors"
+                  className="p-1.5 rounded-lg text-[#62635A] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors"
                 >
                   <X size={16} aria-hidden="true" />
                   <span className="sr-only sm:not-sr-only">Close</span>
@@ -860,7 +861,7 @@ export function Screen2DepartingQuestions() {
 
               {inspectPiece ? (
                 <>
-                  <div className="text-xs text-[#7A7B72] font-mono bg-[#F4F4F0] px-3 py-1.5 rounded-lg w-fit">
+                  <div className="text-xs text-[#62635A] font-mono bg-[#F4F4F0] px-3 py-1.5 rounded-lg w-fit">
                     Locator: {inspectPiece.locator} (Piece #{inspectPiece.id})
                   </div>
                   <div className="p-4 rounded-2xl bg-[#F8F8F4] border border-[#E6E6DE] text-xs text-[#1F201B] font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
