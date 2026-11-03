@@ -68,6 +68,25 @@ These run after the model's statements are built (`apply_rules` in `backend/app/
 
 Run by hand on all sources of the synthetic Campus Events App (9 sources, 128 pieces) and scored against `data/synthetic/answer_key.json`, which plants 32 cases. The scoring is a script that matches a case to a statement by the source location it cites. It counts a case as labelled correctly if any statement citing that location has the expected label. It is a generous, rough measure, not a judgement of the wording. The script is now in the repository: `python tests/score_run.py <file>` from the `backend` folder scores a saved or fresh result, and `python tests/run_real_pipeline.py <outdir>` makes one real run into a folder without touching the saved file. Scores in the rounds before 3 Nov were made with older scripts that were not kept, so those rows cannot be recomputed.
 
+### Key location audit (3 Nov 2026)
+
+The key counts document paragraphs without the title block; the importer counts it, so the scorer uses key paragraph + 1. For each of the 10 cases whose source is a markdown document, the document was split the way `backend/app/importers.py` splits it and compared with the case's `description` (word overlap, 1.00 = every word of the description is in that paragraph).
+
+| Case | Key location | Scorer looks at | Paragraph where the text is | Overlap there | Match |
+| --- | --- | --- | --- | --- | --- |
+| C01 | architecture_overview.md paragraph 1 | 2 | 2 | 1.00 | yes |
+| C04 | meeting_notes_august.md paragraph 1 | 2 | 2 | 0.93 | yes |
+| C21 | meeting_notes_august.md paragraph 2 | 3 | 3 | 1.00 | yes |
+| C22 | meeting_notes_august.md paragraph 2 | 3 | 3 | 1.00 | yes |
+| C23 | meeting_notes_august.md paragraph 2 | 3 | 3 | 0.90 | yes |
+| C26 | deployment_guide.md paragraph 3, chat message 9 | 4 | 5 | 1.00 (0.00 in 4) | **no** |
+| C28 | deployment_guide.md paragraph 3 | 4 | 5 | 1.00 (0.08 in 4) | **no** |
+| C29 | hr_private_notes.md paragraph 1 | 2 | 2 | 0.73 | yes |
+| C30 | hr_private_notes.md paragraph 2 | 3 | 3 | 0.90 | yes |
+| C31 | hr_private_notes.md paragraph 1 | 2 | 2 | 0.27 (generic description) | yes |
+
+Key location for C28 corrected from paragraph 3 to paragraph 4, because the description text ("For production database restore access and escalated permissions, contact Deepak") is in the contacts paragraph (importer paragraph 5, key paragraph 4) of the deployment guide. Paragraph 4 in the importer's count, which the old key pointed to, is the note about the persistent volume. The earlier score of 31 counted C28 wrong because of this: the saved run's statement for the contact line was `verified` and quoted it word for word, but it cites paragraph 5 and the scorer was looking at paragraph 4. The same mistake was in C26 (the Ravi contact line is in the same paragraph); it was corrected the same way. C26 was never counted wrong, because its key also lists chat message 9, which the saved run cites. Only the `location` field of these two cases changed: not the description, not the expected label. The AI's label was not changed or tuned. The key was not touched for any other case.
+
 ### The saved run
 
 `backend/saved_results/campus-events-app.json`, saved 3 Nov 2026, run 3 of the three runs below (the runs after the restricted-location rule, rule 10), one real run on `gemini-3.6-flash`, copied unedited.
@@ -76,15 +95,15 @@ From the file itself:
 
 - 106 statements: 54 `verified`, 31 `unverified`, 18 `missing`, 3 `conflicting`. Every statement cites at least one source.
 - 9 questions for the departing member.
-- No statement or question names a restricted source's file name, path, paragraph number or title (`hr_private_notes`, `lead_private_chat`, "HR Private Notes", "Lead 1-on-1 Chat"). Two statements say "a restricted source" where rule 10 removed a name. Both cite only the lead-only chat, so the incoming member does not see them.
+- No statement or question names a restricted source's file name, path, paragraph number or title (`hr_private_notes`, `lead_private_chat`, "HR Private Notes", "Lead 1-on-1 Chat"): the scorer counts 0. It counts the generic word "restricted" apart, and finds it in two statements: a `verified` one ("Deepak stated that the contractor exit bonus is tied to handover signoff, as referenced in a restricted source.") and a `missing` one ("The contents of 'a restricted source' are not provided in the sources."). Both cite only "Lead 1-on-1 Chat (Confidential)", which the manifest allows for the lead only, so the access layer hides them from the incoming member (`tests/test_analysis_api.py` and `tests/test_privacy.py`). The wording is rule 10's own neutral replacement. The word says that a restricted source exists, not which one, and only the lead sees it, so it was judged harmless and rule 10 was not changed. The scorer now reports the two measures separately and checks that each statement with the generic word cites only lead-only sources (0 do not).
 
 From the scoring script, now in the repository (`backend/tests/score_run.py`), run on this file:
 
-- 32 of 32 planted cases cited, 31 with the expected label.
+- 32 of 32 planted cases cited, 32 with the expected label (31 before the key location of C28 was corrected, see the audit above).
 - All three planted conflicts reported (auditorium capacity, token lifetime, QR format), as 3 `conflicting` statements and no duplicates.
 - All four planted claims only the leaver makes (C06 to C09) are `unverified`. C07 (the Google OAuth claim) is `unverified`.
 - C18 (task T09, CSV export) has a `verified` statement.
-- The one case with a wrong label is C28 (deployment guide, the persistent volume for the database files). The only statement that cites it is a `missing` gap ("no owner is specified for setting up..."), where the key expects `verified`. This is the model's choice of label and varies from run to run.
+- No case has a wrong label. C28 (deployment guide, contact Deepak for database restore access) had been counted wrong only because its key location pointed at the persistent-volume note; the saved file's statement for it is `verified` with a word-for-word quote. An earlier version of these notes described C28 as the persistent volume and a `missing` gap; that was wrong.
 
 **C02 (chat message 5, "Team chose Render over Heroku").** In the previous saved file this was the one wrong label, and it was correct by design: only the departing member's message backed the statement, so the leaver-only rule kept it `unverified`. In this file C02 is `verified` because the statement also cites chat message 6, where Deepak (not the leaver) agrees ("Agreed, Render also links directly with our GitHub preview branches"). That is the rule working as intended, not weakened: a decision the leaver alone states stays `unverified`, and one a second person confirms can be `verified`. Whether the model cites message 6 together with message 5 changes from run to run. When it does not, C02 is `unverified`, which is the right label under the rule. The answer key says `verified` for C02, which is probably too generous for the case where only the leaver's message backs it. The key was not edited.
 
@@ -92,14 +111,16 @@ A run takes about 1 to 3 minutes in AI mode. Checked again with a wrong API key 
 
 ### Runs after the restricted-location rule (3 Nov 2026)
 
-Rule 10 (`hide_restricted_names` in `rules.py`) removes restricted names from statement and question text. The previous saved file contained "Confidential HR notes document content is completely restricted and inaccessible...", a `missing` statement that cited only the HR notes, so the pipeline output had changed and three real runs were made (the limit). They were scored with `backend/tests/score_run.py`, which reproduces the previous saved file as 32 cited, 31 expected labels, 3 conflicts, 4 of 4, 9 questions, so the figures are comparable with the tables below.
+Rule 10 (`hide_restricted_names` in `rules.py`) removes restricted names from statement and question text. The previous saved file contained "Confidential HR notes document content is completely restricted and inaccessible...", a `missing` statement that cited only the HR notes, so the pipeline output had changed and three real runs were made (the limit). They were scored with `backend/tests/score_run.py` and the key as it was then, which reproduced the previous saved file as 32 cited, 31 expected labels, 3 conflicts, 4 of 4, 9 questions, so the figures are comparable with the tables below.
 
 | Run | Statements | Questions | Cited (of 32) | Expected label (of 32) | Conflicts (of 3) | Leaver-only `unverified` (of 4) | `missing` | Conflict duplicates | Restricted names in text | Wrong labels |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 88 | 9 | 30 | 29 | 3 | 3 | 15 | none | 0 | C02, C08 and C27 (the last two not cited) |
 | 2 | 93 | 9 | 32 | 30 | 3 | 4 | 14 | none | one sourceless gap saying "a restricted source", one statement saying "HR and Lead Private Notes" | C29, C31 |
-| 3 (saved) | 106 | 9 | 32 | 31 | 3 | 4 | 18 | none | none (no file name, path, paragraph number or title) | C28 |
+| 3 (saved) | 106 | 9 | 32 | 32 (31 with the old key) | 3 | 4 | 18 | none | none (no file name, path, paragraph number or title); the generic word in 2 lead-only statements | none (C28 under the old key) |
 | Previous saved file, for comparison | 114 | 9 | 32 | 31 | 3 | 4 | 18 | none | 1 ("Confidential HR notes document...") | C02 |
+
+**Re-scored with the corrected key (C28 and C26 locations):** only the saved file (run 3) still exists as a file, so it is the only one re-scored: 31 became 32 expected labels, with its other figures unchanged. Runs 1 and 2 and the previous saved file were not kept, so they are **not re-scored**; their C28 may have been counted wrong for the same reason, which cannot be checked now. The rows in the earlier-round tables below were made with older scripts and the old key and are also not re-scored. Their "restricted names" column used the older, broader pattern.
 
 Only run 3 met the bar for replacing the saved file on every measure (32 cited, at least 31 expected labels, 3 conflicts, 4 of 4, 9 questions or fewer, no restricted names). Run 1 lost two cases and a leaver-only claim. Run 2 had 30 labels and kept a sourceless gap and a loose title in the text. Run 3 also has fewer `unverified` statements than before (31, against 42).
 
@@ -109,7 +130,7 @@ Only run 3 met the bar for replacing the saved file on every measure (32 cited, 
 
 - **The score varies from run to run.** The model is not deterministic, which is why the saved fallback exists. In this round the expected label was 29, 30 and 31 of 32, and the wrong cases were different each time. Earlier rounds were weaker (table below), so a run can be clearly worse than the saved one. The saved file is the best of three runs, picked because it met the bar for saving. It is a real run but not typical.
 - **C02 depends on the run.** It is `verified` here because a second person confirms it, and `unverified` when only the leaver's message is cited. Both are correct under the leaver-only rule, and the answer key was not changed.
-- **C28 is wrong in the saved file** (labelled `missing`, expected `verified`), and C18 is not reliably `verified` in other runs (run 2 of the earlier round had it `unverified`).
+- **C18 is not reliably `verified` in other runs (run 2 of the earlier round had it `unverified`).
 - **The `missing` count is high** (18, against 13 in the earlier best run). Nine have a question, the others are gaps without one.
 - **Rule 10 removes names it can match.** It matches display names, file names, locators and loose forms made of the words of a restricted title. A phrase that matches none of these ("HR and Lead Private Notes" matches only if it contains enough of the title words) can pass. A statement that cites an open source and uses its own wording is not changed. The saved file has one: the open task row T15 is titled "Lead-only HR notes verified", and the statement that quotes it says so.
 - **Three conflict patterns are written into the code.** Any other kind of conflict is found only if the model finds it.
