@@ -108,7 +108,7 @@ The AI is never called in tests. How to run them on PostgreSQL, what each file c
 docker compose up --build
 ```
 
-This starts PostgreSQL and the backend at `http://localhost:8000` (if that port is taken, set `BACKEND_PORT=8010` first). Put your values in a `.env` file first (see `.env.example`), at least `JWT_SECRET` and `LLM_API_KEY`. The `frontend` service in `docker-compose.yml` needs a `frontend/Dockerfile`, which does not exist yet, so run the frontend with `npm run dev` as above. Saved analysis results are written to `backend/saved_results/`.
+This starts PostgreSQL and the backend at `http://localhost:8000` (if that port is taken, set `BACKEND_PORT=8010` first). Put your values in a `.env` file first (see `.env.example`), at least `JWT_SECRET` and `LLM_API_KEY`. Add the frontend with `docker compose --profile frontend up --build` (`frontend/Dockerfile`, a production build running as a non-root user, at `http://localhost:3000`). That Docker build has not been run yet because Docker was not running when it was written: the compose file was checked with `docker compose config` and the final image stage was reproduced without Docker (production dependencies plus the build, `next start`, page and synthetic files answered). The address the browser uses for the backend is a build argument (`NEXT_PUBLIC_API_URL`, default `http://localhost:8000`). `npm run dev` as above still works. Saved analysis results are written to `backend/saved_results/`.
 
 ## Deploying
 
@@ -130,7 +130,7 @@ This starts PostgreSQL and the backend at `http://localhost:8000` (if that port 
 - pgvector and similarity search are not used. The model is given all source pieces in one request instead, which is fine for a project of the demo size but would need chunking for a large repository.
 - Postgres row-level security is not built. Access is enforced in the backend and covered by tests.
 - Repository data comes from an uploaded export (JSON), not live from the GitHub REST API.
-- The frontend is not in Docker Compose yet (no `frontend/Dockerfile`).
+- The frontend Docker image (`frontend/Dockerfile`) has not been built yet. The compose file is valid and the runtime stage works outside Docker.
 
 ## How the AI analysis stays honest
 

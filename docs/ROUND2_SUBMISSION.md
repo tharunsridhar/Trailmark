@@ -39,7 +39,7 @@ Also built: Gemini, Groq and Anthropic clients, retries and an optional second m
 | PostgreSQL with pgvector and similarity search | PostgreSQL in deployment, SQLite locally, no pgvector | The demo project is small enough to give the model every piece in one request. Similarity search would add work without a benefit at this size |
 | Postgres row-level security as a second layer | Not built | Access is enforced in the backend and covered by tests. We say so instead of claiming a layer we do not have |
 | GitHub REST API for repository data | Upload of a repository export (JSON) | No tokens or live access to manage, and it works offline |
-| Backend, frontend and database in Docker Compose | Compose runs the backend and Postgres. The frontend has no Dockerfile yet | The frontend runs with `npm run dev` |
+| Backend, frontend and database in Docker Compose | Compose runs the backend and Postgres. The frontend has a Dockerfile and a `frontend` profile, but the image has not been built yet (Docker was not running) | The frontend runs with `npm run dev`, or build the image with `docker compose --profile frontend up --build` |
 
 ## Three improvements committed for Round 3
 

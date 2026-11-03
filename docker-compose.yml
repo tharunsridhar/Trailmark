@@ -45,12 +45,14 @@ services:
       timeout: 3s
       retries: 5
 
-  # Kishan's frontend. Needs a Dockerfile in frontend/, so it only starts with --profile frontend.
+  # The frontend only starts with --profile frontend. The browser calls the backend directly,
+  # so this address is the one your browser can reach, and it is baked in at build time.
   frontend:
     profiles: ["frontend"]
-    build: ./frontend
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     ports:
       - "3000:3000"
     depends_on:
