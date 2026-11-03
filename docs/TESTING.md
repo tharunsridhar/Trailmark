@@ -18,7 +18,7 @@ The AI is never called in tests. A scripted fake model plays back fixed replies,
 
 ## Latest result
 
-171 tests, all passing on SQLite (about 2 minutes). The earlier 149 also passed on PostgreSQL 16 (about 4 minutes). The 22 newest tests only exercise the analysis pipeline with a scripted model and do not touch the database, and the suite was not run on PostgreSQL again after adding them. Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the time is password hashing.
+177 tests, all passing on SQLite (about 2 minutes). The earlier 149 also passed on PostgreSQL 16 (about 4 minutes). The 28 newest tests only exercise the analysis pipeline with a scripted model and do not touch the database, and the suite was not run on PostgreSQL again after adding them. Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the time is password hashing.
 
 Also checked by hand: the Docker image builds, and with `docker compose up` the backend container ran against Postgres, answered `/health`, registered a user, created a handover, and returned `401` without a login.
 
@@ -29,7 +29,7 @@ Also checked by hand: the Docker image builds, and with `docker compose up` the 
 | `test_access.py` | 10 | A statement is hidden unless every source behind it is visible, drafts and rejected claims never shown |
 | `test_importers.py` | 11 | Each source type, empty and unreadable files, bad JSON, binary files |
 | `test_sources_api.py` | 10 | Upload, listing, source access levels passed to pieces, size and type checks, no uploads after approval |
-| `test_pipeline.py` | 57 | Quote check, fabricated and unknown citations dropped, verifier verdicts, conflicts, claims nobody backs up, claims only the leaver makes, gaps, bad model output, retries, rate limits, the second model, the Gemini and Groq clients, sources and document paragraphs the first request skipped, and the rules in code (conflicting values, unexplained commits, routine commits, statements on a conflicted source, tasks owned by the leaver) |
+| `test_pipeline.py` | 63 | Quote check, fabricated and unknown citations dropped, verifier verdicts, conflicts, claims nobody backs up, claims only the leaver makes, gaps, bad model output, retries, rate limits, the second model, the Gemini and Groq clients, sources and document paragraphs the first request skipped, and the rules in code (conflicting values, unexplained commits, routine commits, statements on a conflicted source, tasks owned by the leaver) |
 | `test_analysis_api.py` | 14 | Labels and dropped claims, questions ordered by risk, restricted evidence hidden, saved and basic fallbacks, re-runs, lost runs |
 | `test_review_flow.py` | 37 | Answering, review actions and versions, approval rules, the incoming view, redaction, receipt, who may do what |
 | `test_redact.py` | 6 | Emails, phone numbers, secrets, and things that must not be masked such as dates |
@@ -49,7 +49,7 @@ Run by hand on all sources of the synthetic Campus Events App (9 sources, 128 pi
 
 The default model gives a different answer from run to run, so the saved demo result is one real run, not an average. It took about 30 seconds in AI mode.
 
-**The saved run** (`backend/saved_results/campus-events-app.json`, 3 Nov 2026, run 2 of the final round below): 98 statements (58 verified, 24 unverified, 13 missing, 3 conflicting), 9 questions for the departing member. 32 of 32 cases cited, 29 with the expected label, all three planted conflicts reported (auditorium capacity, token lifetime, QR format), all four planted claims only the leaver makes are `unverified`, and the HR notes and the confidential lead chat were found. No `verified` statement repeats the auditorium conflict, and no routine commit is listed as a decision. It replaced the earlier 3 Nov run (86 statements, 31 cited, 29 with the expected label, 2 of 3 conflicts, 7 questions), which in turn replaced the 2 Nov run.
+**The saved run** (`backend/saved_results/campus-events-app.json`, 3 Nov 2026, run 2 of the label-fix round below): 104 statements (55 verified, 28 unverified, 18 missing, 3 conflicting), 9 questions for the departing member. 32 of 32 cases cited, 31 with the expected label, all three planted conflicts reported, all four planted claims only the leaver makes are `unverified`, and the HR notes and the confidential lead chat were found. The one case with the wrong label is C18 (task T09, see below). It replaced the run saved earlier on 3 Nov (98 statements, 32 cited, 29 with the expected label, 9 questions), the run before that (31 cited, 29 with the expected label, 2 of 3 conflicts) and the 2 Nov run.
 
 The result changes from run to run. (This paragraph and the next describe the earlier 3 Nov round.) The scoring script was re-written for this round (it matches a case to a statement by the location it cites, with the paragraph offset below) and used on every run in this paragraph. Without the paragraph top-up, two runs cited 22 and 24 cases and matched the expected label on 17 and 17. With it, three runs cited 31, 31 and 24 and matched the expected label on 29, 27 and 15. One in three runs was still weak, so the saved file is the best of the three, picked because it shows every feature (conflicts, gaps, unverified claims), and it is a real run, not edited.
 
@@ -114,7 +114,7 @@ Still wrong:
 - The routine-commit word list is a guess and was not tuned on other projects. Some real choices could be dropped if their message contains one of the words.
 - Only three real runs were made, so these numbers are not an average.
 
-### Final round: variance changes and question cap (3 Nov, night)
+### Earlier final round: variance changes and question cap (3 Nov, night)
 
 Three changes were merged before these runs: (1) unexplained commits only become gaps when they matter, ranked by risk (tiny and routine commits are skipped); (2) variance changes: pieces sorted by id, temperature 0 on every client, one more request for uncited commits, pull requests, issues and tasks, one repeat of the whole request when a big project gives fewer than 15 statements, and merging of near-identical statements; (3) after run 1 the departing member's questions are capped at nine across all gaps, riskiest first (the rest stay as gaps without a question). Run 1 was made before change (3), runs 2 and 3 after it. Each run was one real run on `gemini-3.6-flash` with the same 9 sources and took 50 to 60 seconds of analysis. Rate limits did not stop any run.
 
@@ -137,6 +137,29 @@ Still wrong:
 - **Two planted gaps are `verified` in the saved run.** The unowned tasks T05 (database backup) and T12 (SSL certificates) are stated as `verified` facts instead of `missing`, so cases C13 and C15 score as wrong. C08 (a leaver-only claim) is labelled `missing` instead of `unverified`; it is not verified, so the hard rule holds.
 - Only three real runs were made in this round, and the saved one is the best of them for the saved-file criteria. It is a real run but not typical: the table shows that a run can be clearly weaker.
 - The remarks above still apply: three fixed conflict patterns, a routine-commit word list that is a guess, and a model that cannot be made deterministic.
+
+### Label-fix round: unowned tasks, leaver gaps, records (3 Nov, late)
+
+Changes (all in code, `rules.py`): (1) an unfinished task with an empty owner column becomes a `missing` gap with a question, a model statement that says it has no owner is relabelled `missing`; (2) a `missing` gap that rests on something the departing member claimed in chat (the other pieces being questions) becomes `unverified` and loses its question; (3) the request for uncited commits, pull requests, issues and tasks now asks for statements and for a gap only when nothing explains the record, and a gap it returns about a task with an owner and status or a PR or issue with a description is dropped; (4) for such an explained record that only gaps mention, a plain verified statement of its own fields is added, quoted from the record. I did not relabel those gaps `verified` as first suggested: the quote of a task or PR does not say that anything is missing, so that would put a `verified` label on a claim the quote does not support. The gaps stay, and the fact is added next to them.
+
+On the suspicion about the extra request: the old wording of the request did tell the model it may report gaps ("any gap it raises"; the new test checks the new wording is what the model is sent), and with the new wording the gap count in the three real runs was 15, 18 and 17 `missing` statements (run 3 of the previous round had 28; the saved run before this had 13). I did not run the old wording again, so this is consistent with the suspicion but not proof.
+
+| Run | Statements | `missing` | Questions | Cited (of 32) | Expected label (of 32) | Conflicts found (of 3) | Leaver-only claims `unverified` |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Previous saved run | 98 | 13 | 9 | 32 | 29 | 3 | 4 of 4 |
+| Run 1 | 115 | 15 | 9 | 32 | 27 | 2 (see below) | 4 of 4 |
+| **Run 2 (saved)** | 104 | 18 | 9 | 32 | 31 | 3 | 4 of 4 |
+| Run 3 | 108 | 17 | 9 | 32 | 30 | 3 | 4 of 4 |
+
+Each run was one real run on `gemini-3.6-flash`, 52 to 54 seconds of analysis, no rate-limit trouble. Run 2 was saved because it beat the previous file on the expected label (31 against 29) and matched it on cited (32), conflicts (3), leaver-only claims (4 of 4) and questions (9). The file is the unedited output of that run. In all three runs, C13 and C15 (the unowned tasks T05 and T12) and C08 (the Redis claim) have the expected label, which is what the new rules are for. Checked with a wrong API key (the Gemini endpoint answered 400): the app shows the saved result in `saved` mode with the notice and the same counts, and 9 questions.
+
+Still wrong:
+
+- **The score still varies: 27, 31, 30.** Run 1 lost C02 (`unverified` because only the leaver backs it), C17 (PR #4) and C19 (issue #6), C32 as `unverified`, and its QR conflict was reported by the model with the commit and the document but not task T08, so the scorer counted 2 of 3 conflicts (a conflict is reported, but not with the key's pair; the code rule does not add a second statement when the model's already covers both sides). Run 3 lost C02 and C17.
+- **C18 is wrong in the saved run.** Task T09 (CSV export) is `unverified`: the statement cites chat message 25 (by the departing member) and task T09 (owned by the departing member), and the rule from earlier that a leaver-owned task does not back their own chat message makes it `unverified`. I think the label should be `verified` since the task row records the status, but I did not change that rule because it is what keeps the Google OAuth claim (C07) unverified.
+- **The `missing` count is still higher than before** (18 in the saved run, 13 in the one before). Nine of them have a question; the others are gaps without one.
+- The expected label is not 32 of 32 in any run. Three runs is a small sample.
+- The remarks about fixed conflict patterns, the routine-commit word list and the model not being deterministic still apply.
 
 **Hand check of the verified labels.** From the earlier 3 Nov saved run (not the current one, the check was not repeated), 20 of the 51 verified statements were picked at random (fixed seed 7) and each quote was read against its statement. In 19 of the 20 the quotes support the statement. The twentieth, about pull request 5 and the auditorium capacity, is supported by its quotes but it describes a conflict and should have been labelled conflicting. This was done by the team's AI assistant and not by an outside reviewer, and it is a small sample, so it shows the check is working but is not a measured error rate. Two weaknesses were seen:
 

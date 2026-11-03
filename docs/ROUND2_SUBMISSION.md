@@ -45,7 +45,7 @@ Also built: support for Gemini, Groq and Anthropic models, saved results from a 
 
 ## Known limitations
 
-- On the synthetic project the saved run cites 32 of the 32 planted cases and gets the expected label on 29, finds all three planted conflicts, marks all four leaver-only claims unverified and gives the departing member 9 questions. The other two runs of the final round also cited 32 but got the expected label on only 27 and 24, and earlier runs cited 24 to 31 and got 15 to 29, so a run can be clearly weaker. Two unowned tasks (T05, T12) are stated as verified facts in the saved run instead of gaps. Details are in `TESTING.md`.
+- On the synthetic project the saved run cites 32 of the 32 planted cases and gets the expected label on 31, finds all three planted conflicts, marks all four leaver-only claims unverified and gives the departing member 9 questions. The wrong one is a task owned by the leaver (T09) that is marked unverified instead of verified. The other two runs of the same round also cited 32 but got the expected label on 27 and 30, and earlier runs got 15 to 29, so a run can be clearly weaker than the saved one. Details are in `TESTING.md`.
 - The AI runs on the free tier of Gemini, which limits requests per day and per minute. The demo falls back to saved results from a real run if the service is unavailable.
 - Redaction is pattern based and will miss some sensitive text.
 - The analysis sends all pieces in one request, so very large sources would need chunking.
