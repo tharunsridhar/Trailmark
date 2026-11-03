@@ -14,10 +14,10 @@ How the system fits together, how data moves through it, and why the main techni
  PostgreSQL (SQLite for local work)
 ```
 
-- **Frontend:** Next.js (React, TypeScript), owned by Kishan. It only talks to the backend through the endpoints in [`API.md`](API.md).
+- **Frontend:** Next.js 14 (React, TypeScript), owned by Kishan. It only talks to the backend through the endpoints in [`API.md`](API.md).
 - **Backend:** Python, FastAPI. All permissions are enforced here, never in the frontend.
 - **Database:** PostgreSQL in deployment, SQLite for local development and fast tests. One schema for both.
-- **AI:** one provider behind a small client (`app/pipeline/llm.py`), with retries and an optional second model. Gemini is the default, Groq and Anthropic are also supported.
+- **AI:** one provider behind a small client (`app/pipeline/llm.py`), with two tries per model and an optional second model. Gemini is the default, Groq and Anthropic are also supported.
 
 ## Backend layout
 
@@ -30,16 +30,18 @@ How the system fits together, how data moves through it, and why the main techni
 | `app/access.py` | The rule for who may see a source piece or a statement |
 | `app/redact.py` | Masks secrets, emails and phone numbers for the incoming member |
 | `app/importers.py` | Repository export, documents, chat and task files into pieces |
-| `app/pipeline/` | LLM client, prompts, analysis, quote and verifier checks, fallbacks, background runner |
-| `app/routers/` | One file per area: auth, handovers, sources, analysis, questions, review, view |
+| `app/pipeline/` | `llm.py` (clients, retries), `prompts.py`, `analyze.py` (requests, quote and verifier checks), `rules.py` (checks in code), `fallback.py` (saved results and basic listing), `runner.py` (background run, picks ai, saved or basic mode) |
+| `app/routers/` | One file per area: health, auth, handovers, sources, analysis, questions, review, view |
 | `app/services.py` | Versioning and response building shared by routers |
 
 ## Data flow
 
 1. **Connect** (`POST /handovers/{id}/sources`). The lead uploads a source and chooses which roles may see it. The importer splits it into small pieces. Each piece keeps a locator ("commit a3f9c21", "chat message 14", "task T2") and a copy of its source's allowed roles. A file that is empty or cannot be read is recorded as such.
-2. **Reconstruct** (`POST /handovers/{id}/analyze`, runs in the background). All pieces go to the model in one request. It must return statements and gaps, each citing piece ids with a word-for-word quote. A long request makes models skip whole sources, so any source that nothing cites is sent again on its own, and so is any document paragraph that nothing cites. A failure of such a second request keeps the first results.
-3. **Verify.** In code, a quote that is not in the cited piece throws the claim away, and a statement with no valid evidence is dropped. A second, separate model call sees only the claim and its quotes and answers `supported`, `partly_supported` or `not_supported`. Only `supported` becomes `verified`. Two pieces that disagree become one `conflicting` statement that cites both. Missing information becomes a `missing` gap with a question, never a guess.
-4. **Ask** (`GET /handovers/{id}/questions`, `POST /questions/{id}/answer`). Each gap becomes a question for the departing member, highest risk first, shown with its evidence. An answer is stored as an `unverified` statement, the gap it covers is marked answered. Skipped and unknown questions stay open.
+2. **Reconstruct** (`POST /handovers/{id}/analyze`, runs in the background). All pieces, sorted by id, go to the model in one request with temperature 0. It must return statements and gaps, each citing piece ids with a word-for-word quote. A long request makes models skip things, so extra requests follow: any source that nothing cites, any document paragraph that nothing cites, and any commit, pull request, issue or task that nothing cites is sent again on its own. The departing member's own chat messages get a short request of their own. If a big project gives fewer than 15 statements, the whole request is repeated once. A failure of such an extra request keeps the first results.
+3. **Verify.** In code, a quote that is not in the cited piece throws the claim away, and a statement with no valid evidence is dropped. A second, separate model call sees only the claim and its quotes and answers `supported`, `partly_supported` or `not_supported`. Only `supported` becomes `verified`. Two pieces that disagree become one `conflicting` statement that cites both. Missing information becomes a `missing` gap with a question, never a guess. Near-identical statements are merged.
+
+   Then rules in code (`app/pipeline/rules.py`, `apply_rules` in `analyze.py`) run without the model: routine commits are dropped from decisions, conflicting values are detected for three fixed topics (token lifetime, auditorium capacity, QR format), statements that only restate a conflict are dropped or made `unverified`, unowned tasks become gaps, a gap that is only the leaver's own chat claim becomes `unverified`, a plain verified fact is added for records that explain themselves, and commits that matter and that nothing explains become gaps. A task owned by the leaver does not back their own chat claim. The list with reasons is in [`TESTING.md`](TESTING.md).
+4. **Ask** (`GET /handovers/{id}/questions`, `POST /questions/{id}/answer`). Each gap becomes a question for the departing member, highest risk first, shown with its evidence. At most nine questions are asked in total (`MAX_QUESTIONS` in `rules.py`). Gaps beyond that stay as gaps without a question. An answer is stored as an `unverified` statement, the gap it covers is marked answered. Skipped and unknown questions stay open.
 5. **Review** (`/statements/...`). The lead can edit, reject, resolve a conflict (a reason is required, the other source is kept and marked not chosen) or accept a gap. Every change is a new version with the editor and the reason.
 6. **Approve** (`POST /handovers/{id}/approve`). Blocked while a conflict is open. Statements still in draft become approved, rejected ones stay out, and the handover becomes read-only.
 7. **Hand over** (`GET /handovers/{id}/handover-view`). The incoming member gets sections for decisions, owners, unfinished work, risks, dependencies, contacts, the leaver's answers, open questions and ordered next actions, each with source links.
@@ -95,6 +97,8 @@ Garbage from the model (not JSON, wrong shape) counts as a failure and follows t
 
 - Quality depends on the sources provided. Tacit knowledge that is in no source only appears if the departing member answers.
 - Extraction can be wrong. Review and approval exist for that reason.
-- The AI has not yet been tuned on the final synthetic project (see `TESTING.md`).
+- AI results vary from run to run even at temperature 0. The saved result is one real run (see `TESTING.md`).
+- Only three kinds of conflict are detected by rules in code. Others depend on the model.
+- The frontend is not tested end to end and nothing is deployed yet.
 - No live integrations (Slack, Jira, GitHub API), no pgvector search, no Postgres row-level security yet.
 - Round 3 items are not built: follow-up questions, decision timeline, audit log.

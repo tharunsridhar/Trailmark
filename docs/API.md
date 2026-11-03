@@ -2,7 +2,7 @@
 
 Backend: FastAPI. Local base URL `http://localhost:8000`. Interactive docs for the live endpoints are at `/docs`.
 
-Status column: every endpoint listed here is **live**. Round 3 only (not built): follow-up questions, decision timeline, audit log.
+Every endpoint listed here is built and covered by the automated tests. Round 3 only (not built): follow-up questions, decision timeline, audit log.
 
 ## Rules for every request
 
@@ -19,6 +19,7 @@ Status column: every endpoint listed here is **live**. Round 3 only (not built):
 
 | Method | Path | Who | Status |
 | --- | --- | --- | --- |
+| GET | `/health` | anyone | live |
 | POST | `/auth/register` | anyone | live |
 | POST | `/auth/login` | anyone | live |
 | POST | `/auth/logout` | anyone | live |
@@ -47,7 +48,7 @@ Status column: every endpoint listed here is **live**. Round 3 only (not built):
 | POST | `/handovers/{id}/receipt` | incoming | live |
 | GET | `/handovers/{id}/receipt` | lead, incoming | live |
 
-Round 3 only, not built now: follow-up questions, decision timeline, audit log.
+`GET /health` returns `{"status": "ok"}` and needs no sign-in.
 
 ---
 
@@ -216,7 +217,7 @@ Poll this until `status` is `done` (`running`, `done`, `failed`, or `not_started
 
 ### GET /handovers/{id}/questions (lead, departing)
 
-Highest risk first. `evidence` lists the source pieces that raised the question, with the quoted words. A question is left out completely for a viewer who may not see all of its evidence, so the departing member never gets restricted text through a question.
+Highest risk first, at most nine in total per handover (gaps beyond that stay as gaps without a question). `evidence` lists the source pieces that raised the question, with the quoted words. A question is left out completely for a viewer who may not see all of its evidence, so the departing member never gets restricted text through a question.
 
 ```json
 [

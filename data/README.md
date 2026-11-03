@@ -1,15 +1,15 @@
-# Synthetic project (Kishan)
+# Synthetic project
 
-This folder is yours. Build the fake project the whole pipeline is tested against. The importers read the exact formats below, so please stick to them.
+The invented project the whole pipeline is demonstrated and scored against, in `synthetic/`. The importers read the exact formats below. A copy is served by the frontend from `frontend/public/synthetic/`.
 
 ## Rules
 
 1. Everything is fake: invented people, company, emails. Label it as synthetic.
-2. Make it in the official build window and commit it.
-3. Make it feel real: casual chat, half-finished notes, inconsistent naming.
-4. Keep it small enough to check by hand: about 5 people, 2 to 3 months of activity, 60 to 100 chat messages, 20 to 30 commits, 5 to 8 issues or PRs, 3 to 4 documents, 15 to 20 tasks.
+2. It was made in the official build window.
+3. It is meant to feel real: casual chat, half-finished notes, inconsistent naming.
+4. It is small enough to check by hand. The target was about 5 people, 2 to 3 months of activity, 60 to 100 chat messages, 20 to 30 commits, 5 to 8 issues or PRs, 3 to 4 documents, 15 to 20 tasks.
 5. One project, one leaver, one successor.
-6. Every planted case must be written in the answer key.
+6. Every planted case is written in the answer key (32 cases).
 
 ## Layout
 
@@ -17,8 +17,12 @@ This folder is yours. Build the fake project the whole pipeline is tested agains
 data/synthetic/
   manifest.json
   repo/export.json
-  docs/*.md
+  docs/architecture_overview.md
+  docs/deployment_guide.md
+  docs/hr_private_notes.md
+  docs/meeting_notes_august.md
   chat/chat.json
+  chat/lead_private_chat.json
   tasks/tasks.csv
   tasks/empty_tasks.csv
   answer_key.json
@@ -34,7 +38,7 @@ data/synthetic/
   "people": [{ "name": "Asha", "role": "leaver" }],
   "sources": [
     { "file": "repo/export.json", "type": "repo", "name": "Code repository", "allowed_roles": ["lead", "departing", "incoming"] },
-    { "file": "docs/hr_notes.md", "type": "doc", "name": "HR notes", "allowed_roles": ["lead"] }
+    { "file": "docs/hr_private_notes.md", "type": "doc", "name": "HR notes", "allowed_roles": ["lead"] }
   ]
 }
 ```
@@ -76,7 +80,7 @@ data/synthetic/
 | Restricted item: fake password, salary, private HR chat | 2 to 3 | never visible to the incoming member |
 | A normal message that quotes a restricted document | 1 | derived statement inherits the restriction |
 
-The leaver (Asha) must know things that exist nowhere else, so the question step matters.
+The leaver (Asha) knows things that exist nowhere else, so the question step matters.
 
 ## answer_key.json
 
@@ -99,7 +103,3 @@ One entry per planted case.
 ```
 
 `type` is one of `decision`, `unverified_claim`, `conflict`, `missing`, `unfinished`, `dependency`, `recurring`, `contact`, `restricted`, `derived_restricted`. `expected_label` is `verified`, `unverified`, `conflicting` or `missing`.
-
-## When to finish
-
-As soon as you can. Phase 2 (importers and the AI pipeline) is tested against this data.

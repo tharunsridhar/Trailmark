@@ -1,6 +1,6 @@
 # Deploying Trailmark
 
-The backend and its database go on Render, the frontend on Vercel. This needs your own accounts, so it is a checklist and not a script.
+The backend and its database go on Render, the frontend on Vercel. This needs your own accounts, so it is a checklist and not a script. Nothing has been deployed with it yet, so these steps are untested.
 
 ## 1. Backend and database on Render
 
@@ -37,4 +37,4 @@ Browsers can block cookies set by another domain (strict tracking protection, pr
 
 ## After deploying
 
-Put the live address in `docs/ROUND2_SUBMISSION.md` (the "Deployed link" row).
+Put the live address in `docs/ROUND2_SUBMISSION.md` (the "Deployed link" row) and in the README.
