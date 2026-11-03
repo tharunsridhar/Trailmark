@@ -39,7 +39,7 @@ The full list of libraries, models and services is in [`docs/TOOLS.md`](docs/TOO
 
 Round 2 build. Nothing is deployed yet.
 
-- **Backend:** covers the whole workflow and has 180 automated tests, all passing on SQLite. An earlier 149 also passed on PostgreSQL, the suite has not been run on PostgreSQL since. Sign-in with roles, handovers and members, source import, the AI analysis with quote and verification checks, the saved-results and basic fallbacks, the departing member's answers, the lead's review and approval, the incoming member's redacted and permission-filtered handover, and the receipt.
+- **Backend:** covers the whole workflow and has 192 automated tests, all passing on both SQLite and PostgreSQL 16. Sign-in with roles, handovers and members, source import, the AI analysis with quote and verification checks, the saved-results and basic fallbacks, the departing member's answers, the lead's review and approval, the incoming member's redacted and permission-filtered handover, and the receipt.
 - **AI run:** the AI has been run on the synthetic project and the result is saved in `backend/saved_results/` (114 statements, 9 questions). It cites 32 of 32 planted cases, 31 with the expected label, finds all three planted conflicts and marks all four claims only the leaver makes as unverified. Other runs vary and some are weaker (31, 30 and 27 in the last round, 15 in an earlier one). Details in [`docs/TESTING.md`](docs/TESTING.md).
 - **Frontend:** the screens call the backend. One full journey (lead, departing member, lead review and approval, incoming member) was clicked through by hand in a browser against a local backend in saved-results mode, and the small bugs it showed were fixed ([`docs/TESTING.md`](docs/TESTING.md)). There are no automated frontend tests, and it has not been run on a deployed instance.
 - **Deployment:** the Docker and Render configuration is written but untested on Render. Steps are in [`docs/DEPLOY.md`](docs/DEPLOY.md).
@@ -162,7 +162,7 @@ This starts PostgreSQL and the backend at `http://localhost:8000` (if that port 
 ## Known limitations
 
 - The AI result varies from run to run. The saved result is the best of its round, not a typical one.
-- Not tested yet: a deployed instance, the frontend in AI mode and in browsers other than the one used, and the current suite on PostgreSQL.
+- Not tested yet: a deployed instance, the frontend in AI mode and in browsers other than the one used.
 - The server never sends a departing member's answer text back, so after a reload the screen says the question was answered but cannot show the text.
 - A gap statement that has no source of its own is shown to the incoming member. In an earlier saved run one of them named a restricted document's location (no content from it). The current saved run has none, but an AI re-run could produce one.
 - The AI runs on a free tier with request limits. When it is unavailable, the app shows saved results from a real run, then a basic listing.
