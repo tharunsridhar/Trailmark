@@ -126,14 +126,27 @@ def is_one_of(sender: str, names: list[str]) -> bool:
     return any(sender in name.lower() or name.lower() in sender for name in names if name)
 
 
+def author_of(piece) -> str | None:
+    """Who wrote a piece, where the piece says: a chat message has a sender, a task has an owner."""
+    sender = chat_sender(piece)
+    if sender:
+        return sender
+    if getattr(piece.source, "type", None) == "tasks":
+        return (getattr(piece, "meta", None) or {}).get("owner") or None
+    return None
+
+
 def mark_leaver_only_claims(drafts: list[Draft], pieces_by_id: dict, leavers: list[str]) -> None:
-    """Something only the departing person says in chat, with no code, document, task or
-    other person behind it, is their word and nothing more, so it cannot be verified."""
+    """Something only the departing person says in chat, with no code, document or other person
+    behind it, is their word and nothing more, so it cannot be verified. A task they own is their
+    own note, so it does not back up their chat message."""
     for draft in drafts:
         if draft.label != "verified" or not draft.evidence:
             continue
-        senders = [chat_sender(pieces_by_id[e.piece_id]) for e in draft.evidence]
-        if all(s and is_one_of(s, leavers) for s in senders):
+        pieces = [pieces_by_id[e.piece_id] for e in draft.evidence]
+        authors = [author_of(p) for p in pieces]
+        in_chat = any(chat_sender(p) for p in pieces)
+        if in_chat and all(a and is_one_of(a, leavers) for a in authors):
             draft.label = "unverified"
 
 
@@ -188,7 +201,17 @@ def analyze(llm, pieces, leavers: list[str] | None = None) -> AnalysisResult:
         claims, claims_dropped = leaver_claims(llm, pieces, pieces_by_id, drafts, leavers)
         drafts += claims
         dropped += claims_dropped
-    return AnalysisResult(drafts, dropped)
+    return AnalysisResult(apply_rules(pieces, pieces_by_id, drafts), dropped)
+
+
+def apply_rules(pieces, pieces_by_id: dict, drafts: list[Draft]) -> list[Draft]:
+    """The checks that the sources alone can decide, so they do not depend on what the model said."""
+    from app.pipeline import rules  # rules builds on this module, so it is imported late
+
+    drafts = rules.drop_routine_commits(drafts, pieces_by_id)
+    drafts += rules.find_conflicts(pieces, drafts)
+    drafts = rules.settle_conflicted_statements(drafts)
+    return drafts + rules.unexplained_commits(pieces, drafts)
 
 
 def build_drafts(llm, raw: dict, pieces_by_id: dict) -> tuple[list[Draft], int]:

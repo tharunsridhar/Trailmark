@@ -27,12 +27,13 @@ def test_ai_run_labels_and_drops(client, loaded, db_session, use_llm):
     assert run["status"] == "done"
     assert run["mode"] == "ai"
     assert run["notice"] is None
-    assert run["counts"] == {"verified": 1, "unverified": 1, "missing": 2, "conflicting": 1}
+    # the Render decision cites a piece that is part of the reported host conflict, so it cannot stay verified
+    assert run["counts"] == {"verified": 0, "unverified": 2, "missing": 2, "conflicting": 1}
     # the Fly.io claim cited words that are not in the source
     assert run["dropped"] == 1
 
     found = statements(db_session)
-    assert found["Hosting is on Render because the free tier is enough"].label == "verified"
+    assert found["Hosting is on Render because the free tier is enough"].label == "unverified"
     assert found["Payment retry keeps timing out"].label == "unverified"
     assert found["Sources disagree on the host"].label == "conflicting"
     assert "Deploys go to Fly.io" not in found
@@ -111,7 +112,7 @@ def test_ai_failure_falls_back_to_saved_results(client, loaded, db_session, use_
     run = client.get(f"/handovers/{loaded}/analysis").json()
     assert run["mode"] == "saved"
     assert "saved results" in run["notice"]
-    assert run["counts"] == {"verified": 1, "unverified": 1, "missing": 2, "conflicting": 1}
+    assert run["counts"] == {"verified": 0, "unverified": 2, "missing": 2, "conflicting": 1}
     assert statements(db_session)["Sources disagree on the host"].label == "conflicting"
 
 

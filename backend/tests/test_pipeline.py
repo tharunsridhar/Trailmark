@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.pipeline.analyze import analyze, parse_json, quote_in_piece
+from app.pipeline.analyze import Draft, Evidence, analyze, parse_json, quote_in_piece
 from app.pipeline.llm import AnthropicClient, ChatCompletionsClient, LLMError, build_llm
 from tests.helpers import FakeLLM
 
@@ -390,3 +390,139 @@ def test_claim_already_covered_is_not_repeated_and_a_failed_claims_request_is_ig
 
     failing = FakeLLM({"statements": [covered], "gaps": []}, verdict("supported"), LLMError("down"))
     assert len(analyze(failing, pieces, leavers=["Asha"]).drafts) == 1
+
+
+# ---- rules in code (rules.py) ----
+
+
+def repo_piece(piece_id, sha, message, author="Asha"):
+    return SimpleNamespace(
+        id=piece_id, content=f"Commit {sha} by {author} on 2026-08-01: {message}", locator=f"commit {sha}",
+        meta={"kind": "commit", "author": author}, source=SimpleNamespace(name="Repo", type="repo"),
+    )
+
+
+def run_rules(pieces, drafts=()):
+    from app.pipeline.analyze import apply_rules
+
+    return apply_rules(pieces, {p.id: p for p in pieces}, list(drafts))
+
+
+def test_token_lifetime_values_that_differ_become_a_conflict_with_both_sources():
+    pieces = [
+        repo_piece(1, "c18d402", "Set ACCESS_TOKEN_EXPIRE_MINUTES = 60 for student sessions"),
+        chat_piece(2, "Deepak", "Wait, all student JWT tokens must strictly expire after 15 minutes."),
+    ]
+    conflicts = [d for d in run_rules(pieces) if d.label == "conflicting"]
+    assert len(conflicts) == 1
+    assert {e.piece_id for e in conflicts[0].evidence} == {1, 2}
+    assert all(quote_in_piece(e.quote, pieces[e.piece_id - 1]) for e in conflicts[0].evidence)
+    assert "60 minutes" in conflicts[0].text and "15 minutes" in conflicts[0].text
+
+
+def test_same_value_in_two_sources_and_one_message_naming_both_are_not_conflicts():
+    same = [chat_piece(1, "A", "Tokens expire after 60 minutes."), chat_piece(2, "B", "JWT lifetime is 1 hours.")]
+    assert not [d for d in run_rules(same) if d.label == "conflicting"]
+    discussion = [
+        SimpleNamespace(id=3, content="[t] B: T08 says the QR is a UUID but the doc says QR is an HMAC token",
+                        locator="chat message 3", meta={}, source=SimpleNamespace(name="Chat", type="chat")),
+        SimpleNamespace(id=4, content="QR codes use UUID v4 strings", locator="task T08", meta={},
+                        source=SimpleNamespace(name="Tasks", type="tasks")),
+    ]
+    assert not [d for d in run_rules(discussion) if d.label == "conflicting"]
+
+
+def test_capacity_and_qr_format_conflicts_are_found_and_not_repeated_when_the_model_found_them():
+    pieces = [
+        SimpleNamespace(id=1, content="Pull request #5 'Auditorium limit' (open): Limits auditorium bookings to 350 seats.",
+                        locator="PR #5", meta={}, source=SimpleNamespace(name="Repo", type="repo")),
+        SimpleNamespace(id=2, content="The auditorium capacity is hard-capped at 500 attendees.",
+                        locator="architecture.md paragraph 2", meta={}, source=SimpleNamespace(name="Docs", type="doc")),
+    ]
+    found = [d for d in run_rules(pieces) if d.label == "conflicting"]
+    assert len(found) == 1 and "350" in found[0].text and "500" in found[0].text
+    model_made = Draft("decision", "Capacity differs", "conflicting",
+                       [Evidence(1, "Limits auditorium bookings to 350 seats"), Evidence(2, "hard-capped at 500 attendees")])
+    assert len([d for d in run_rules(pieces, [model_made]) if d.label == "conflicting"]) == 1
+
+
+def test_unexplained_commit_becomes_a_missing_gap_with_a_question():
+    pieces = [
+        repo_piece(1, "f710a34", "Import campus_sms_sdk for automated SMS ticket dispatch"),
+        chat_piece(2, "Asha", "Imported campus_sms_sdk in commit f710a34 to dispatch SMS."),
+        chat_piece(3, "Ravi", "Where are the keys for campus_sms_sdk? It is failing in staging."),
+    ]
+    gaps = [d for d in run_rules(pieces) if d.label == "missing"]
+    assert len(gaps) == 1
+    assert gaps[0].question and "f710a34" in gaps[0].question
+    assert [e.piece_id for e in gaps[0].evidence] == [1] and gaps[0].risk == 3
+
+
+def test_commit_explained_by_another_source_or_already_a_gap_is_not_flagged_again():
+    commit = repo_piece(1, "e4b1029", "Store JWT in HTTP-only cookies instead of localStorage to prevent credential theft")
+    pr = SimpleNamespace(id=2, content="Pull request #3 (merged): Replaces localStorage token storage with HTTP-only cookies to protect credential theft",
+                         locator="PR #3", meta={"kind": "PR"}, source=SimpleNamespace(name="Repo", type="repo"))
+    assert not [d for d in run_rules([commit, pr]) if d.label == "missing"]
+    named_by_colleague = [repo_piece(1, "b1b1b1b", "Tweak scanner retry"), chat_piece(2, "Ravi", "b1b1b1b made the scanner retry, fine by me")]
+    assert not [d for d in run_rules(named_by_colleague) if d.label == "missing"]
+    already = Draft("risk", "SMS", "missing", [Evidence(1, "Import campus_sms_sdk")], question="Why?")
+    alone = [repo_piece(1, "f710a34", "Import campus_sms_sdk for automated SMS ticket dispatch")]
+    assert len([d for d in run_rules(alone, [already]) if d.label == "missing"]) == 1
+
+
+def test_statement_citing_a_conflict_source_is_merged_or_no_longer_verified():
+    pieces = [
+        SimpleNamespace(id=1, content="Pull request #5: Limits auditorium bookings to 350 seats.", locator="PR #5", meta={},
+                        source=SimpleNamespace(name="Repo", type="repo")),
+        SimpleNamespace(id=2, content="The auditorium capacity is hard-capped at 500 attendees. Doors open at 9.",
+                        locator="architecture.md paragraph 2", meta={}, source=SimpleNamespace(name="Docs", type="doc")),
+        SimpleNamespace(id=3, content="Ops runbook: doors open at 9", locator="runbook paragraph 1", meta={},
+                        source=SimpleNamespace(name="Docs", type="doc")),
+    ]
+    repeat = Draft("decision", "The conflict, restated", "verified", [Evidence(1, "350 seats"), Evidence(2, "500 attendees")])
+    one_side = Draft("decision", "Doors open at 9", "verified", [Evidence(2, "Doors open at 9"), Evidence(3, "doors open at 9")])
+    unrelated = Draft("decision", "Doors", "verified", [Evidence(3, "doors open at 9")])
+    out = run_rules(pieces, [repeat, one_side, unrelated])
+    assert [(d.text, d.label) for d in out if d.label != "conflicting"] == [("Doors open at 9", "unverified"), ("Doors", "verified")]
+
+
+def test_routine_commits_are_not_listed_as_decisions_but_real_choices_stay():
+    pieces = [
+        repo_piece(1, "5be7c10", "Fix typo in registration confirmation email template"),
+        repo_piece(2, "a90d3e4", "Pin celery version in requirements"),
+        repo_piece(3, "e08b5c9", "Switch the session store to Redis"),
+    ]
+    drafts = [Draft("decision", f"Decision {i}", "verified", [Evidence(i, pieces[i - 1].content)]) for i in (1, 2, 3)]
+    kept = [d.text for d in run_rules(pieces, drafts) if d.kind == "decision"]
+    assert kept == ["Decision 3"]
+
+
+def test_rules_never_make_a_statement_verified_or_touch_leaver_only_claims():
+    pieces = [chat_piece(1, "Asha", "I stress-tested the scanner to 5,000 scans a minute")]
+    claim = Draft("decision", "Stress tested", "unverified", [Evidence(1, "stress-tested the scanner")])
+    assert [d.label for d in run_rules(pieces, [claim])] == ["unverified"]
+
+
+def test_task_owned_by_the_leaver_does_not_back_up_their_chat_message():
+    task = SimpleNamespace(id=2, content="T06 Integrate student email verification endpoint, owner: Asha, status: done",
+                           locator="task T06", meta={"owner": "Asha"}, source=SimpleNamespace(name="Tasks", type="tasks"))
+    chat = chat_piece(1, "Asha", "The Google OAuth client secret was locked to campus domains")
+    claim = statement(text="OAuth is locked to campus domains",
+                      evidence=[{"piece_id": 1, "quote": "OAuth client secret was locked"}, {"piece_id": 2, "quote": "status: done"}])
+    result = analyze(FakeLLM({"statements": [claim], "gaps": []}, verdict("supported")), [chat, task], leavers=["Asha"])
+    assert result.drafts[0].label == "unverified"
+    other_owner = SimpleNamespace(**{**task.__dict__, "meta": {"owner": "Ravi"}})
+    result = analyze(FakeLLM({"statements": [claim], "gaps": []}, verdict("supported")), [chat, other_owner], leavers=["Asha"])
+    assert result.drafts[0].label == "verified"
+
+
+def test_conflict_shows_up_to_two_pieces_on_each_side():
+    pieces = [
+        repo_piece(1, "993c10a", "Implement QR code encoding using UUID v4 identifier"),
+        SimpleNamespace(id=2, content="T08 QR codes use UUID v4 strings", locator="task T08", meta={"owner": "Asha"},
+                        source=SimpleNamespace(name="Tasks", type="tasks")),
+        SimpleNamespace(id=3, content="All ticket QR codes encode a signed HMAC-SHA256 JSON token.", locator="a.md paragraph 3",
+                        meta={}, source=SimpleNamespace(name="Docs", type="doc")),
+    ]
+    conflict = [d for d in run_rules(pieces) if d.label == "conflicting"][0]
+    assert [e.piece_id for e in conflict.evidence] == [1, 2, 3]

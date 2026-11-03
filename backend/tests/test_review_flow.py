@@ -113,7 +113,8 @@ def test_lead_lists_and_filters_statements(client, analysed):
     everything = client.get(f"/handovers/{analysed}/statements").json()
     assert len(everything) == 5
     first = everything[0]
-    assert first["label"] == "verified" and first["status"] == "draft"
+    # the Render statement cites a piece that is part of the reported host conflict, so it is not verified
+    assert first["label"] == "unverified" and first["status"] == "draft"
     assert first["sources"][0]["quote"].startswith("go with Render")
     assert first["sources"][0]["source_name"] == "Team chat"
 
