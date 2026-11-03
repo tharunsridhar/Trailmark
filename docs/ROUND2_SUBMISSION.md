@@ -14,7 +14,7 @@ WCC Forge 48, Round 2 (The Build). Team Trailmark: Kishan S and Tharun Sridhar.
 
 ## Features done
 
-Against the seven core features in the Round 1 plan. "Backend" means built and covered by the 177 automated tests. The frontend screens call the backend but have not been tested end to end yet.
+Against the seven core features in the Round 1 plan. "Backend" means built and covered by the 180 automated tests. The frontend screens call the backend but have not been tested end to end yet.
 
 | Core feature | Status |
 | --- | --- |
@@ -30,7 +30,7 @@ Also built: Gemini, Groq and Anthropic clients, retries and an optional second m
 
 ## Saved run on the synthetic project
 
-`backend/saved_results/campus-events-app.json`, one real run: 104 statements (55 verified, 28 unverified, 18 missing, 3 conflicting) and 9 questions. Scored against the answer key: 32 of 32 planted cases cited, 31 with the expected label, 3 of 3 conflicts, 4 of 4 leaver-only claims unverified. The one wrong label is task T09 (C18), `unverified` instead of `verified`. Details are in [`TESTING.md`](TESTING.md).
+`backend/saved_results/campus-events-app.json`, one real run: 114 statements (51 verified, 42 unverified, 18 missing, 3 conflicting) and 9 questions. Scored against the answer key: 32 of 32 planted cases cited, 31 with the expected label, 3 of 3 conflicts, 4 of 4 leaver-only claims unverified. The one wrong label is C02 (chat message 5), `unverified` because only the leaver's own message backs it; task T09 (C18) is now `verified` in this run, but not in every run. Details are in [`TESTING.md`](TESTING.md).
 
 ## Changes from the Round 1 plan
 

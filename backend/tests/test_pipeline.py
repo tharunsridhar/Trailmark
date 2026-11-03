@@ -516,6 +516,60 @@ def test_task_owned_by_the_leaver_does_not_back_up_their_chat_message():
     assert result.drafts[0].label == "verified"
 
 
+def row_piece(piece_id, task_id, title, owner, status, notes=""):
+    return SimpleNamespace(
+        id=piece_id, content=f"Task {task_id}: {title} | owner: {owner} | status: {status} | due: 2026-08-12 | notes: {notes}",
+        locator=f"task {task_id}", meta={"owner": owner}, source=SimpleNamespace(name="Tasks", type="tasks"),
+    )
+
+
+def test_leaver_owned_task_row_backs_a_statement_about_its_own_status():
+    chat = chat_piece(1, "Asha", "Still in progress, got blocked on role permission checking in api/exports.py.")
+    task = row_piece(2, "T09", "Implement CSV export for registered attendees", "Asha", "in_progress",
+                      "Stalled waiting for admin role permission check refactor")
+    claim = statement(
+        kind="unfinished",
+        text="Task T09 (Implement CSV export for registered attendees) is in progress, stalled waiting for the admin role permission check refactor.",
+        evidence=[{"piece_id": 1, "quote": "Still in progress, got blocked on role permission checking"},
+                  {"piece_id": 2, "quote": "status: in_progress"}],
+    )
+    result = analyze(FakeLLM({"statements": [claim], "gaps": []}, verdict("supported")), [chat, task], leavers=["Asha"])
+    assert [d.label for d in result.drafts if d.kind == "unfinished"] == ["verified"]
+
+
+def test_leaver_owned_task_that_does_not_state_the_fact_still_leaves_it_unverified():
+    chat = chat_piece(1, "Asha", "The Google OAuth client secret was already locked down to only allow campus domains")
+    task = row_piece(2, "T09", "Implement CSV export for registered attendees", "Asha", "in_progress")
+    claim = statement(
+        text="The Google OAuth client secret is restricted to campus domains.",
+        evidence=[{"piece_id": 1, "quote": "client secret was already locked down"},
+                  {"piece_id": 2, "quote": "status: in_progress"}],
+    )
+    result = analyze(FakeLLM({"statements": [claim], "gaps": []}, verdict("supported")), [chat, task], leavers=["Asha"])
+    assert result.drafts[0].label == "unverified"
+
+
+def test_the_planted_leaver_only_claims_stay_unverified():
+    import json
+    from pathlib import Path
+
+    data = Path(__file__).resolve().parents[2] / "data" / "synthetic"
+    messages = {m["id"]: m for m in json.loads((data / "chat" / "chat.json").read_text(encoding="utf-8"))["messages"]}
+    key = json.loads((data / "answer_key.json").read_text(encoding="utf-8"))
+    planted = [c for c in key["cases"] if c["type"] == "unverified_claim"]
+    assert len(planted) == 4
+    task = row_piece(100, "T09", "Implement CSV export for registered attendees", "Asha", "in_progress")
+    pieces, statements = [task], []
+    for n, case in enumerate(planted, start=1):
+        message = messages[int(case["location"].rsplit(" ", 1)[1])]
+        text = message["text"]
+        pieces.append(chat_piece(n, message["sender"], text))
+        statements.append(statement(text=text, evidence=[{"piece_id": n, "quote": text[:30]}, {"piece_id": 100, "quote": "status: in_progress"}]))
+    result = analyze(FakeLLM({"statements": statements, "gaps": []}, verdict(*["supported"] * 4)), pieces, leavers=["Asha"])
+    labels = [d.label for d in result.drafts if d.kind == "decision"]
+    assert len(labels) == 4 and set(labels) == {"unverified"}
+
+
 def test_conflict_shows_up_to_two_pieces_on_each_side():
     pieces = [
         repo_piece(1, "993c10a", "Implement QR code encoding using UUID v4 identifier"),

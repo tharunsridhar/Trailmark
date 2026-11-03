@@ -18,7 +18,7 @@ The AI is never called in tests. A scripted fake model plays back fixed replies,
 
 ## Latest result
 
-177 tests, all passing on SQLite (112 seconds, run on 3 Nov 2026 from the `backend` folder). An earlier 149 tests also passed on PostgreSQL 16 (about 4 minutes). The suite has 28 more tests since then, and it was not run on PostgreSQL again. Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the time is password hashing.
+180 tests, all passing on SQLite (97 seconds, run on 3 Nov 2026 from the `backend` folder). An earlier 149 tests also passed on PostgreSQL 16 (about 4 minutes). The suite has 31 more tests since then, and it was not run on PostgreSQL again. Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the time is password hashing.
 
 Also checked by hand, on an earlier build: the Docker image builds, and with `docker compose up` the backend container ran against Postgres, answered `/health`, registered a user, created a handover, and returned `401` without a login. This was not repeated for the current build.
 
@@ -29,13 +29,13 @@ Also checked by hand, on an earlier build: the Docker image builds, and with `do
 | `test_access.py` | 10 | A statement is hidden unless every source behind it is visible, drafts and rejected claims never shown |
 | `test_importers.py` | 11 | Each source type, empty and unreadable files, bad JSON, binary files |
 | `test_sources_api.py` | 10 | Upload, listing, source access levels passed to pieces, size and type checks, no uploads after approval |
-| `test_pipeline.py` | 63 | Quote check, fabricated and unknown citations dropped, verifier verdicts, conflicts, claims nobody backs up, claims only the leaver makes, gaps, bad model output, retries, rate limits, the second model, the Gemini and Groq clients, sources and document paragraphs the first request skipped, and the rules in code (below) |
+| `test_pipeline.py` | 66 | Quote check, fabricated and unknown citations dropped, verifier verdicts, conflicts, claims nobody backs up, claims only the leaver makes, gaps, bad model output, retries, rate limits, the second model, the Gemini and Groq clients, sources and document paragraphs the first request skipped, and the rules in code (below) |
 | `test_analysis_api.py` | 15 | Labels and dropped claims, questions ordered by risk, restricted evidence hidden, saved and basic fallbacks, re-runs, lost runs |
 | `test_review_flow.py` | 37 | Answering, review actions and versions, approval rules, the incoming view, redaction, receipt, who may do what |
 | `test_redact.py` | 6 | Emails, phone numbers, secrets, and things that must not be masked such as dates |
 | `test_config.py` | 5 | Database URL handling, refusing to start in deployment with a weak secret |
 | `test_health.py` | 1 | Health check |
-| **Total** | **177** | |
+| **Total** | **180** | |
 
 ## Rules in code
 
@@ -49,7 +49,7 @@ These run after the model's statements are built (`apply_rules` in `backend/app/
 6. **Records that explain themselves.** For a task with an owner and status, or a pull request or issue with a description, that only gaps mention, a plain `verified` statement of the record's own fields is added next to the gaps. The gaps are not relabelled, because the record's quote does not say anything is missing.
 7. **Unexplained commits.** A commit that is not routine or tiny, and that no pull request, issue, document, task or *other person's* chat message talks about, becomes a `missing` gap with a question. "Talks about" means it names the sha, a file or a distinctive name from the commit, or shares three content words. A question is not an explanation, and the author describing their own commit in chat does not count. Commits already in a gap or conflict are skipped. The risk is 3 when the commit brings in a service, secret or package, 2 when it touches auth, payments, deployment or security, otherwise 1.
 8. **Question cap.** The departing member is asked at most nine questions in total, riskiest first (`MAX_QUESTIONS = 9`). The other gaps stay as gaps without a question.
-9. **Leaver and tasks.** A task owned by the departing member does not count as independent backing for their own chat message.
+9. **Leaver and tasks.** A task owned by the departing member does not count as independent backing for a different claim they make in chat. It does back a statement about the task itself (the statement names the task id, or repeats most of the task title, and quotes the task row), because the task row is the record of its own status, owner and due date. The leaver-only chat rule is unchanged: the four planted claims stay `unverified`.
 
 ## Real AI run on the synthetic project
 
@@ -57,29 +57,45 @@ Run by hand on all sources of the synthetic Campus Events App (9 sources, 128 pi
 
 ### The saved run
 
-`backend/saved_results/campus-events-app.json`, saved 3 Nov 2026, one real run on `gemini-3.6-flash`, unedited.
+`backend/saved_results/campus-events-app.json`, saved 3 Nov 2026 (the third run after the rule 9 change, table below), one real run on `gemini-3.6-flash`, copied unedited.
 
 From the file itself:
 
-- 104 statements: 55 `verified`, 28 `unverified`, 18 `missing`, 3 `conflicting`.
+- 114 statements: 51 `verified`, 42 `unverified`, 18 `missing`, 3 `conflicting`.
 - 9 questions for the departing member.
 
-From the scoring script, as reported when the run was made:
+From the scoring script (not kept in the repository), run on this file:
 
 - 32 of 32 planted cases cited, 31 with the expected label.
-- All three planted conflicts reported (auditorium capacity, token lifetime, QR format).
-- All four planted claims only the leaver makes are `unverified`.
-- The HR notes and the confidential lead chat were found.
-- The unowned tasks T05 and T12 (C13, C15) and the Redis claim (C08) have the expected label.
+- All three planted conflicts reported (auditorium capacity, token lifetime, QR format), as 3 `conflicting` statements and no duplicates.
+- All four planted claims only the leaver makes (C06 to C09) are `unverified`.
+- C18 (task T09, CSV export) has a `verified` statement and C07 (the Google OAuth claim) is `unverified`.
+- The one case with a wrong label is C02 (chat message 5, "Team chose Render over Heroku"). The only statement that cites it is `unverified`, because the departing member wrote that message and nothing else backs it. That is the leaver-only rule working as designed, so the key's `verified` is probably too generous for this case.
 
-The one case with a wrong label is C18. Task T09 (CSV export) is `unverified`. The statement cites chat message 25 (by the departing member) and task T09 (owned by the departing member), and rule 9 makes that the leaver's word. The label should probably be `verified` because the task row records the status. The rule was not changed because it is what keeps the Google OAuth claim (C07) unverified.
+**C18 and the rule change, honestly.** The `verified` statement for T09 in the saved file cites only the task row, so it would have been `verified` before the change too. The change itself is shown by the unit tests (a statement about T09's own status that cites chat message 25 and the task row stays `verified`; the OAuth claim stays `unverified`). In run 2 below the model again wrote a T09 statement citing chat message 25 and the task row and it was still `unverified`. The cause was not found, it could be the separate verifier or the leaver-claims request, which marks its statements `unverified` directly. So the fix is covered by tests, but a real run does not always give C18 `verified`.
 
-A run takes about 50 to 60 seconds in AI mode. Checked with a wrong API key (the Gemini endpoint answered 400): the app shows the saved result in `saved` mode with the notice "AI unavailable: showing saved results from an earlier run." and the same counts.
+A run takes about 1 to 3 minutes in AI mode. Checked again with a wrong API key on the new file: the app shows the saved result in `saved` mode with the notice "AI unavailable: showing saved results from an earlier run." and the same 114 statements and 9 questions.
+
+### Runs after the rule 9 change (3 Nov 2026)
+
+Scored with a new script, because the old one was not kept. It reproduces the previous saved file as 32 cited, 31 expected labels, 3 conflicts, 4 of 4, 9 questions, so the figures are comparable with the table below. Run 3 is the saved file.
+
+| Run | Statements | Questions | Cited (of 32) | Expected label (of 32) | Conflicts (of 3) | Leaver-only `unverified` (of 4) | `missing` | Conflict duplicates | C18 | C07 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 108 | 9 | 31 | 27 | 3 | 4 | 16 | none | a `verified` and a `missing` statement | `unverified` |
+| 2 | 108 | 9 | 32 | 30 | 3 | 4 | 16 | none | `unverified` | `unverified` |
+| 3 (saved) | 114 | 9 | 32 | 31 | 3 | 4 | 18 | none | `verified` (and an `unverified` one) | `unverified` |
+| Previous saved file, for comparison | 104 | 9 | 32 | 31 | 3 | 4 | 18 | none | `unverified` | `unverified` |
+
+Wrong labels: run 1 C02, C29, C31 (`unverified`), C32 (`missing`) and C27 not cited. Run 2 C02 and C18. Run 3 C02. The new saved file has 42 `unverified` statements, against 28 before, so it is not better on that count.
 
 ### Still wrong
 
-- **The score varies from run to run.** The model cannot be made deterministic. In the same round the expected label was 31, 30 and 27. Earlier rounds were weaker (table below), so a run can be clearly worse than the saved one. The saved file is the best of three runs, picked because it shows every feature. It is a real run but not typical.
+- **The score varies from run to run.** The model cannot be made deterministic. In the last round the expected label was 27, 30 and 31. Earlier rounds were weaker (table below), so a run can be clearly worse than the saved one. The saved file is the best of three runs, picked because it met the bar for saving (at least 31 expected labels, C18 `verified`, C07 `unverified`). It is a real run but not typical.
 - **The `missing` count is higher than in earlier saved runs** (18, against 13 before). Nine of them have a question, the others are gaps without one.
+- **C02 stays `unverified`.** Only the leaver's chat message backs it, so the leaver-only rule keeps it `unverified`.
+- **C18 is not reliably `verified`.** See the note under the saved run. The new saved file has it `verified`, run 2 did not.
+- **More `unverified` statements** in the saved file (42, against 28).
 - **Three conflict patterns are written into the code.** Any other kind of conflict is found only if the model finds it.
 - **The routine-commit word list is a guess** and was not tuned on other projects. A real choice could be dropped if its message contains one of the words.
 - **Only three real runs per round.** The figures are not averages.

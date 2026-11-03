@@ -137,15 +137,31 @@ def author_of(piece) -> str | None:
     return None
 
 
+def task_records_statement(piece, text: str) -> bool:
+    """A task row is a record, not the leaver's chat claim. It backs a statement that is about the task
+    itself (its title or id, so its status, owner or due date), as long as the quote checked earlier is
+    from that row. A statement about something else that merely cites the row is not backed by it."""
+    if getattr(piece.source, "type", None) != "tasks":
+        return False
+    match = re.match(r"\s*Task\s+(\S+?):\s*([^|]+)", piece.content)
+    if not match:
+        return False
+    task_id, title = match.group(1), word_set(match.group(2))
+    hits = len(title & word_set(text))
+    names_task = re.search(r"(?<![A-Za-z0-9])" + re.escape(task_id) + r"(?![A-Za-z0-9])", text, re.IGNORECASE) is not None
+    return hits >= max(2, -(-len(title) * 3 // 5)) or (names_task and hits >= 1)
+
+
 def mark_leaver_only_claims(drafts: list[Draft], pieces_by_id: dict, leavers: list[str]) -> None:
     """Something only the departing person says in chat, with no code, document or other person
     behind it, is their word and nothing more, so it cannot be verified. A task they own is their
-    own note, so it does not back up their chat message."""
+    own note, so it does not back up a different claim they make in chat. It does back a statement
+    about the task's own fields, because the task row is the record of those."""
     for draft in drafts:
         if draft.label != "verified" or not draft.evidence:
             continue
         pieces = [pieces_by_id[e.piece_id] for e in draft.evidence]
-        authors = [author_of(p) for p in pieces]
+        authors = [None if task_records_statement(p, draft.text) else author_of(p) for p in pieces]
         in_chat = any(chat_sender(p) for p in pieces)
         if in_chat and all(a and is_one_of(a, leavers) for a in authors):
             draft.label = "unverified"
