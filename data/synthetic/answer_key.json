@@ -232,7 +232,7 @@
       "id": "C26",
       "type": "contact",
       "source_file": "docs/deployment_guide.md",
-      "location": "deployment_guide.md paragraph 3, chat message 9",
+      "location": "deployment_guide.md paragraph 4, chat message 9",
       "description": "For DNS records, SSL certificates, and Render environment variables, ask Ravi (ravi@campus-synthetic.internal) directly",
       "expected_label": "verified",
       "expected_visible_to": ["lead", "departing", "incoming"]
@@ -250,7 +250,7 @@
       "id": "C28",
       "type": "contact",
       "source_file": "docs/deployment_guide.md",
-      "location": "deployment_guide.md paragraph 3",
+      "location": "deployment_guide.md paragraph 4",
       "description": "For production database restore access and escalated permissions, contact Deepak (deepak-lead@campus-synthetic.internal)",
       "expected_label": "verified",
       "expected_visible_to": ["lead", "departing", "incoming"]

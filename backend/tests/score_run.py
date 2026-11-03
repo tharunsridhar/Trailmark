@@ -32,14 +32,23 @@ leav = [i for i in ("C06", "C07", "C08", "C09") if i in ok]
 nconf = sum(1 for x in d if x["label"] == "conflicting")
 dup = nconf - len({i for i in ("C10", "C11", "C12") if res[i][1]})
 q = sum(1 for x in d if x.get("question"))
-pat = re.compile(r"hr[ _]private|lead[ _]private|private[ _](notes|chat)|Lead 1-on-1|\(confidential\)|confidential|restricted", re.I)
-named = [x for x in d if pat.search(x["text"] + " " + (x.get("question") or ""))]
+# names: a restricted file name, path, title or paragraph number in the text. The generic word
+# "restricted" is counted apart: it names no source, and such a statement is lead-only if every
+# source it cites is lead-only in the manifest (so the incoming member never sees it).
+allowed = {s["name"]: s["allowed_roles"] for s in json.loads((R / "manifest.json").read_text(encoding="utf-8"))["sources"]}
+pat = re.compile(r"hr[ _]private|lead[ _]private|private[ _](notes|chat)|Lead 1-on-1|\(confidential\)", re.I)
+text_of = lambda x: x["text"] + " " + (x.get("question") or "")
+named = [x for x in d if pat.search(text_of(x))]
+generic = [x for x in d if re.search(r"restricted|confidential", text_of(x), re.I) and x not in named]
+open_generic = [x for x in generic if not x["evidence"] or any(allowed.get(e["source"]) != ["lead"] for e in x["evidence"])]
 nolab = {}
 for x in d: nolab[x["label"]] = nolab.get(x["label"], 0) + 1
 print(f"statements {len(d)} {nolab}  questions {q}")
 print(f"cited {cited}/32  expected label {len(ok)}/32  conflicts {len(confl)}/3 (conflicting statements {nconf}, duplicates {dup})  leaver-only {len(leav)}/4")
 print("wrong:", wrong, " uncited:", [i for i, (c, s) in res.items() if not s])
 print("C18:", [x["label"] for x in res["C18"][1]], "C07:", [x["label"] for x in res["C07"][1]])
-print("restricted names in text:", len(named))
+print("restricted names in text (file name, path, title, paragraph number):", len(named))
 for x in named: print("  ", x["label"], x["text"][:160], "|", x.get("question"))
+print("generic word 'restricted'/'confidential' only:", len(generic), " of which not lead-only:", len(open_generic))
+for x in generic: print("  ", x["label"], x["text"][:160], "| cites", sorted({e["source"] for e in x["evidence"]}))
 print("sourceless:", sum(1 for x in d if not x["evidence"]))
