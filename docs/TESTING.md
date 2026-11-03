@@ -18,9 +18,20 @@ The AI is never called in tests. A scripted fake model plays back fixed replies,
 
 ## Latest result
 
-197 tests, all passing on SQLite (about 10.6 minutes with other sessions running tests at the same time, run on 3 Nov 2026 from the `backend` folder). The first 192 also passed on PostgreSQL 16 from `docker compose` (`TEST_DATABASE_URL`, about 10.8 minutes), with no PostgreSQL-only failure. The 5 tests added after that (the restricted-name rule, `test_pipeline.py`) use no database and were not run on PostgreSQL. Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the time is password hashing.
+197 tests, all passing on SQLite (3 Nov 2026, details in the table below). An older run on PostgreSQL 16 from `docker compose` (`TEST_DATABASE_URL`, about 10.8 minutes) passed the first 192 tests, with no PostgreSQL-only failure. That run is from before the merge of the departing-member work, so it does not count as a PostgreSQL result for the current suite. Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the time is password hashing.
 
-Also checked by hand on the current backend code (3 Nov 2026): `docker compose build backend` and `up` ran the backend against Postgres. `GET /health` returned `{"status": "ok"}`, a user registered (`201`), a handover was created (`201`), and `GET /handovers` without a login returned `401`. With a wrong `LLM_API_KEY` and the nine synthetic files uploaded, the analysis finished in `saved` mode with the notice "AI unavailable: showing saved results from an earlier run." and 114 statements (51 verified, 42 unverified, 18 missing, 3 conflicting), none without a source, and 9 questions for the lead. The frontend image was not built in this check.
+Checked again for the final documents (3 Nov 2026, merge commit `24c7afc`):
+
+| Check | Command, from | Result |
+| --- | --- | --- |
+| Backend tests, SQLite | `.venv\Scripts\python.exe -m pytest -q`, `backend` | 197 passed, 1 warning (an `httpx` deprecation notice from Starlette's test client), 3 min 7 s |
+| Backend tests, SQLite, clean checkout | same command, in a separate checkout of `24c7afc` with no uncommitted edits | 197 passed, 1 warning, 1 min 43 s. Made because the first checkout had uncommitted edits to `backend/tests/score_run.py` and `data/synthetic/answer_key.json` |
+| TypeScript | `node_modules\.bin\tsc --noEmit`, `frontend` | No errors |
+| Production build | `node_modules\.bin\next build`, `frontend` | Compiled, 6 static pages generated, no type or lint errors |
+
+These show that the code compiles and the backend tests pass. They do not run the frontend in a browser.
+
+**Older Docker and PostgreSQL result, from before the latest merges.** It was not repeated on the current code (see "Not tested yet"). On the backend code of earlier on 3 Nov 2026, `docker compose build backend` and `up` ran the backend against Postgres. `GET /health` returned `{"status": "ok"}`, a user registered (`201`), a handover was created (`201`), and `GET /handovers` without a login returned `401`. With a wrong `LLM_API_KEY` and the nine synthetic files uploaded, the analysis finished in `saved` mode with the notice "AI unavailable: showing saved results from an earlier run." and 114 statements (51 verified, 42 unverified, 18 missing, 3 conflicting), none without a source, and 9 questions for the lead. The frontend image was not built in this check.
 
 | File | Tests | What it covers |
 | --- | --- | --- |
@@ -135,7 +146,7 @@ Each row is one real run on the same 9 sources. Rounds used different versions o
 | | 2 | 98 | 9 | 32 | 29 | 3 | 4 of 4 |
 | | 3 | 102 | 9 | 32 | 24 | 3 | 4 of 4 |
 | Label fixes (rules 4, 5, 6) | 1 | 115 | 9 | 32 | 27 | 2 | 4 of 4 |
-| | | 2 | 104 | 9 | 32 | 31 | 3 | 4 of 4 |
+| | 2 | 104 | 9 | 32 | 31 | 3 | 4 of 4 |
 | | 3 | 108 | 9 | 32 | 30 | 3 | 4 of 4 |
 | Rule 9 (leaver and tasks) | 1 | 108 | 9 | 31 | 27 | 3 | 4 of 4 |
 | | 2 | 108 | 9 | 32 | 30 | 3 | 4 of 4 |
@@ -207,7 +218,9 @@ Done on the 3 Nov saved run from before the label fixes (86 statements), not on 
 - Every endpoint is checked for `401` without sign-in and `403` for the wrong role, including outsiders.
 - Secrets, emails and phone numbers are masked for the incoming member and not for the lead.
 
-## Frontend run by hand (local, 3 Nov 2026)
+## Frontend run by hand (local, 3 Nov 2026, before the merge of the departing-member work)
+
+This table predates the merge `24c7afc` (editable answers, the saved `answer` text returned by the server, voice answers, the follow-up box removed). It was not repeated after the merge, so it describes the earlier frontend, not the one in the repository now. Rows marked "since the merge" say what changed.
 
 Backend on port 8000 with an empty AI key and a fresh SQLite file, so the analysis ran in `saved` mode (the saved file of that time: 104 statements, 9 questions). Frontend with `next dev`. Driven in the Claude desktop app's built-in browser. Nothing here was run against Render or Vercel and the AI was not called.
 
@@ -215,9 +228,10 @@ Backend on port 8000 with an empty AI key and a fresh SQLite file, so the analys
 | --- | --- |
 | Lead: sign in, create a handover, upload the 9 synthetic files | Pass. 8 imported, the empty test file was reported and shown as "Empty, not imported" (after a fix, see below) |
 | Lead: run the analysis | Pass. The notice said `saved`; 55 verified, 28 unverified, 18 missing, 3 conflicting; statements show labels and quotes |
-| Departing member: answer, Next, reload, and edit/replace answer | Pass. Answer is stored in backend and returned by GET /questions in the nswer field. On reload, the response box and review checkpoint display the saved answer. Editing the response replaces the previous answer without conflict. |
-| Departing member: voice transcription | Pass. Web Speech API transcribes directly into the response editor without word duplication; auto-save on speech end removed so departing member can review before saving. |
-| Departing member: follow-up clarification box | Pass. Non-functional follow-up answer box removed cleanly from the interview screen. |
+| Departing member: answer, Next, reload | Pass at the time (before the merge `24c7afc`). The question showed as answered after a reload |
+| Departing member: edit or replace an answer, saved text shown after reload | Reported by Kishan (b8fc04a, 3 Nov 2026), not re-run by me. Kishan's note: the answer is returned by `GET /questions` in the `answer` field, the response box shows it after a reload, and editing replaces the previous answer. The server side (a second answer replaces the first, the `answer` field) is covered by the automated tests |
+| Departing member: voice transcription | Reported by Kishan (b8fc04a, 3 Nov 2026), not re-run by me. Kishan's note: the browser's Web Speech API writes into the response box and auto-save on speech end was removed, so the member can review before saving |
+| Departing member: follow-up clarification box removed | Reported by Kishan (b8fc04a, 3 Nov 2026), not re-run by me. Kishan's note: the follow-up answer box that did nothing was removed from the interview screen |
 | Departing member: Skip and "I don't know" | Pass. Both are stored (`skipped`, `unknown`) and shown on the review page |
 | Departing member: save after approval | Pass. The screen says the handover is approved and the response is "Not saved". The server answered `409` |
 | Lead: edit a statement | Pass. Version 2 appears and the version history names the editor (Deepak) |
@@ -242,9 +256,17 @@ A second defence was added in the pipeline (rule 10, `rules.py`): restricted sou
 
 ## Not tested yet
 
+Each item is listed separately. "Not tested yet" means no result has been recorded for it. As of 3 Nov 2026 the only checks run on the current code (`24c7afc`) are the SQLite suite, `tsc --noEmit` and `next build` above.
+
+- **PostgreSQL with the current suite (197 tests).** Not tested yet. The last PostgreSQL run covered 192 tests from before the merge.
+- **Docker with the current build.** Not tested yet. `docker compose build` and `up` for the backend and Postgres, `/health`, a register call and a `401` without login were last run on earlier 3 Nov code (see "Latest result"). `docker compose config` on the current compose file was not run.
+- **The frontend Docker image** (`--profile frontend`). Not tested yet. It has not been built or started. The runtime stage was reproduced without Docker earlier (production install, build, `next start`).
+- **The frontend journey after the merge of the departing-member work.** Not tested yet in a browser. The hand-run table above is from before the merge. Since then: answers can be edited until approval, the saved answer is returned and shown after a reload, voice answers were added, and the follow-up box was removed. `tsc` and `next build` pass on the merged code, which shows it compiles, not that it works.
+- **The frontend in AI mode.** Not tested yet. The hand-run was in `saved` mode with an empty AI key.
+- **Other browsers and window widths.** Not tested yet. The earlier run used one browser (the Claude desktop app's built-in one) at one window size. Chrome and a 375 px width were not checked.
+- **Voice answers.** Not tested yet, in any browser.
+- **A deployed instance.** Not tested yet. `render.yaml` is written and nothing is deployed to Render or Vercel. Same-origin forwarding through Vercel to Render is also untested.
 - **The AI in the automated tests.** The test suite never calls a real model. The real AI was run by hand on the synthetic project (above).
-- **A deployed instance.** `render.yaml` is written but nothing is deployed to Render yet.
-- **The frontend, beyond one local run.** The by-hand browser run is described above. The frontend has no automated tests (skipped for Round 2) and was not run in live AI mode (saved mode was used). Window responsiveness was tested down to 375px phone width with mobile navigation drawer.
-- **The frontend Docker image.** Only the backend and Postgres were built and run in Docker.
+- **Automated frontend tests.** None exist (skipped for Round 2).
 - **Load and long inputs.** A very large repository would need chunking, which is not built.
 - **Outside users.** No structured feedback has been collected yet. The script and a table to fill in are in [`FEEDBACK.md`](FEEDBACK.md).
