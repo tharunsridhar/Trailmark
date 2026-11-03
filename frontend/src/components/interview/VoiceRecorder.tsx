@@ -210,7 +210,7 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
             >
               {isPlaying ? <Pause size={13} /> : <Play size={13} />}
               <span>{isPlaying ? 'Pause' : 'Play'}</span>
-              <span className="text-[10px] text-[#7A7B72]">({formatTime(recordingSeconds)})</span>
+              <span className="text-[10px] text-[#62635A]">({formatTime(recordingSeconds)})</span>
             </button>
           )}
 
@@ -218,7 +218,7 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
             <button
               type="button"
               onClick={resetRecording}
-              className="p-1.5 text-[#7A7B72] hover:text-[#1F201B] rounded-full hover:bg-[#EAEAE2]"
+              className="p-1.5 text-[#62635A] hover:text-[#1F201B] rounded-full hover:bg-[#EAEAE2]"
               title="Discard"
               aria-label="Discard"
             >
@@ -227,7 +227,7 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
           )}
         </div>
 
-        <span className="text-[11px] text-[#7A7B72]">Auto-transcribes into text. Editable before saving.</span>
+        <span className="text-[11px] text-[#62635A]">Auto-transcribes into text. Editable before saving.</span>
       </div>
 
       <div>
@@ -249,7 +249,7 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
           }}
           rows={3}
           placeholder="Speak or refine the transcribed answer here..."
-          className="w-full px-4 py-2.5 rounded-2xl border border-[#E6E6DE] text-xs text-[#1F201B] bg-white placeholder-[#A2A399] focus:outline-none focus:ring-1 focus:ring-[#5A5B4C] resize-none leading-relaxed"
+          className="w-full px-4 py-2.5 rounded-2xl border border-[#E6E6DE] text-xs text-[#1F201B] bg-white placeholder-[#6B6C62] focus:outline-none focus:ring-1 focus:ring-[#5A5B4C] resize-none leading-relaxed"
         />
       </div>
     </div>

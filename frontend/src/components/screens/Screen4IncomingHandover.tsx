@@ -77,7 +77,7 @@ function IncomingStatementCard({
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <StatementLabelChip label={st.label} />
         {st.id && (
-          <span className="text-[10px] text-[#A2A399] font-mono">Statement #{st.id}</span>
+          <span className="text-[10px] text-[#6B6C62] font-mono">Statement #{st.id}</span>
         )}
       </div>
 
@@ -106,7 +106,7 @@ function IncomingStatementCard({
                 <span className="font-semibold text-[#1F201B] flex items-center gap-1.5 text-[11px]">
                   <FileText size={12} className="text-[#5A5B4C] shrink-0" />
                   <span>{src.source_name}</span>
-                  <span className="text-[#7A7B72] font-mono">({src.locator})</span>
+                  <span className="text-[#62635A] font-mono">({src.locator})</span>
                 </span>
                 <button
                   type="button"
@@ -175,7 +175,7 @@ export function Screen4IncomingHandover() {
     return (
       <div className="max-w-3xl mx-auto py-16 text-center">
         <Loader2 size={32} className="animate-spin text-[#5A5B4C] mx-auto mb-3" />
-        <p className="text-xs text-[#7A7B72]">Loading handover knowledge base...</p>
+        <p className="text-xs text-[#62635A]">Loading handover knowledge base...</p>
       </div>
     );
   }
@@ -186,7 +186,7 @@ export function Screen4IncomingHandover() {
       <div className="max-w-3xl mx-auto py-10 select-none">
         <div role="alert" className="bg-white rounded-3xl border border-red-200 p-10 text-center shadow-soft space-y-4">
           <h2 className="text-xl font-bold text-red-800">Could not load the handover</h2>
-          <p className="text-xs text-[#7A7B72] max-w-md mx-auto leading-relaxed">{handoverViewError}</p>
+          <p className="text-xs text-[#62635A] max-w-md mx-auto leading-relaxed">{handoverViewError}</p>
           <button
             type="button"
             onClick={loadHandoverView}
@@ -209,7 +209,7 @@ export function Screen4IncomingHandover() {
             <Clock size={24} />
           </div>
           <h2 className="text-xl font-bold text-[#1F201B]">Handover Awaiting Lead Approval</h2>
-          <p className="text-xs text-[#7A7B72] max-w-md mx-auto leading-relaxed">
+          <p className="text-xs text-[#62635A] max-w-md mx-auto leading-relaxed">
             Team Lead Deepak has not yet approved and published this handover package. Once verified and approved, the complete knowledge base, verified decisions, and remaining technical gaps will unlock here for your review.
           </p>
 
@@ -217,7 +217,7 @@ export function Screen4IncomingHandover() {
             <p className="font-bold text-[#1F201B]">
               {activeHandover?.project_name || 'Campus Events App'}
             </p>
-            <p className="text-[#7A7B72]">Title: {activeHandover?.title || 'Knowledge Handover'}</p>
+            <p className="text-[#62635A]">Title: {activeHandover?.title || 'Knowledge Handover'}</p>
             <p className="text-[#5A5B4C] font-semibold">Status: Draft (Pending Lead Review)</p>
           </div>
 
@@ -268,7 +268,7 @@ export function Screen4IncomingHandover() {
               Approved Handover
             </span>
           </div>
-          <p className="text-xs text-[#7A7B72] mt-0.5">
+          <p className="text-xs text-[#62635A] mt-0.5">
             Successor knowledge handover package from Asha to <strong className="text-[#1F201B]">Kiran</strong>.
           </p>
         </div>
@@ -310,7 +310,7 @@ export function Screen4IncomingHandover() {
             <strong className="text-[#1F201B]">Verification &amp; Evidence Grounding Notice: </strong>
             Every statement below carries its own evidence verification chip (<span className="font-semibold text-emerald-800">Verified</span>, <span className="font-semibold text-amber-800">Unverified</span>, <span className="font-semibold text-purple-800">Missing Gap</span>, or <span className="font-semibold text-rose-800">Conflicting</span>) and links directly to its quoted source piece.
           </div>
-          <div className="text-[11px] text-[#7A7B72]">
+          <div className="text-[11px] text-[#62635A]">
             Sensitive data (passwords, private API keys, emails) has been pattern-redacted by the backend security filter for this view.
           </div>
         </div>
@@ -441,7 +441,7 @@ export function Screen4IncomingHandover() {
               <h3 className="text-base font-bold text-[#1F201B]">
                 Answers From Departing Member ({handoverView.from_departing_member.length})
               </h3>
-              <p className="text-xs text-[#7A7B72] mt-0.5">
+              <p className="text-xs text-[#62635A] mt-0.5">
                 Explanations provided by Asha during the AI knowledge interview.
               </p>
             </div>
@@ -471,7 +471,7 @@ export function Screen4IncomingHandover() {
               <h3 className="text-base font-bold text-[#1F201B]">
                 Open Technical Questions &amp; Gaps ({handoverView.open_questions.length})
               </h3>
-              <p className="text-xs text-[#7A7B72] mt-0.5">
+              <p className="text-xs text-[#62635A] mt-0.5">
                 Items accepted as known unknowns or unconfirmed during handover review.
               </p>
             </div>
@@ -500,7 +500,7 @@ export function Screen4IncomingHandover() {
               <ListOrdered size={16} className="text-[#5A5B4C]" />
               Recommended Next Actions ({handoverView.next_actions.length})
             </h3>
-            <p className="text-xs text-[#7A7B72] mt-0.5">
+            <p className="text-xs text-[#62635A] mt-0.5">
               Suggested next steps for team lead and successor review (in recommended priority order).
             </p>
           </div>
@@ -519,7 +519,7 @@ export function Screen4IncomingHandover() {
                     <StatementLabelChip label={act.label} />
                   </div>
                   {act.statement_id && (
-                    <span className="text-[10px] text-[#A2A399] font-mono">Linked #{act.statement_id}</span>
+                    <span className="text-[10px] text-[#6B6C62] font-mono">Linked #{act.statement_id}</span>
                   )}
                 </div>
 
@@ -538,7 +538,7 @@ export function Screen4IncomingHandover() {
                           <span className="font-semibold text-[#1F201B] flex items-center gap-1.5 text-[11px]">
                             <FileText size={11} className="text-[#5A5B4C] shrink-0" />
                             <span>{src.source_name}</span>
-                            <span className="text-[#7A7B72] font-mono">({src.locator})</span>
+                            <span className="text-[#62635A] font-mono">({src.locator})</span>
                           </span>
                           <button
                             type="button"
@@ -580,14 +580,14 @@ export function Screen4IncomingHandover() {
                 onClick={() => setInspectPiece(null)}
                 aria-label="Close modal"
                 title="Close"
-                className="p-1.5 rounded-lg text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors"
+                className="p-1.5 rounded-lg text-[#62635A] hover:text-[#1F201B] hover:bg-[#F4F4F0] flex items-center gap-1 text-xs font-semibold transition-colors"
               >
                 <X size={16} aria-hidden="true" />
                 <span className="sr-only sm:not-sr-only">Close</span>
               </button>
             </div>
 
-            <div className="text-xs text-[#7A7B72] font-mono bg-[#F4F4F0] px-3 py-1.5 rounded-lg w-fit">
+            <div className="text-xs text-[#62635A] font-mono bg-[#F4F4F0] px-3 py-1.5 rounded-lg w-fit">
               Locator: {inspectPiece.locator} (Piece #{inspectPiece.id})
             </div>
 

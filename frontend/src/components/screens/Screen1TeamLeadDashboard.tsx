@@ -72,11 +72,14 @@ export function Screen1TeamLeadDashboard() {
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberRole, setNewMemberRole] = useState<'departing' | 'incoming'>('departing');
   const [isAddingMember, setIsAddingMember] = useState(false);
+  const [isCreatingHandover, setIsCreatingHandover] = useState(false);
 
   const handleCreateNewHandover = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newHandoverTitle.trim() || !newHandoverProject.trim()) return;
+    if (isCreatingHandover || !newHandoverTitle.trim() || !newHandoverProject.trim()) return;
+    setIsCreatingHandover(true);
     const newId = await createHandover(newHandoverTitle.trim(), newHandoverProject.trim());
+    setIsCreatingHandover(false);
     if (newId) {
       setShowNewHandoverModal(false);
     }
@@ -170,7 +173,7 @@ export function Screen1TeamLeadDashboard() {
               </span>
             )}
           </div>
-          <p className="text-xs text-[#7A7B72] mt-0.5">
+          <p className="text-xs text-[#62635A] mt-0.5">
             Manage handover setup, upload project sources, run the evidence-grounded AI analysis, and approve the final package.
           </p>
         </div>
@@ -179,6 +182,7 @@ export function Screen1TeamLeadDashboard() {
           {handovers.length > 1 && (
             <div className="relative">
               <select
+                aria-label="Choose handover"
                 value={activeHandoverId || ''}
                 onChange={(e) => selectHandover(Number(e.target.value))}
                 className="px-3.5 py-2 rounded-full bg-white border border-[#E6E6DE] text-xs font-medium text-[#3A3B34] pr-8 appearance-none focus:outline-none"
@@ -189,7 +193,7 @@ export function Screen1TeamLeadDashboard() {
                   </option>
                 ))}
               </select>
-              <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#7A7B72] pointer-events-none" />
+              <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#62635A] pointer-events-none" />
             </div>
           )}
 
@@ -222,15 +226,15 @@ export function Screen1TeamLeadDashboard() {
               <button
                 type="button"
                 onClick={() => setShowNewHandoverModal(false)}
-                className="text-xs text-[#7A7B72] hover:text-[#1F201B]"
+                className="text-xs text-[#62635A] hover:text-[#1F201B]"
               >
                 Cancel
               </button>
             </div>
             <form onSubmit={handleCreateNewHandover} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-[#1F201B] mb-1">Project Name</label>
-                <input
+                <label htmlFor="f1-field-1" className="block text-xs font-semibold text-[#1F201B] mb-1">Project Name</label>
+                <input id="f1-field-1"
                   type="text"
                   value={newHandoverProject}
                   onChange={(e) => setNewHandoverProject(e.target.value)}
@@ -240,8 +244,8 @@ export function Screen1TeamLeadDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#1F201B] mb-1">Handover Title / Summary</label>
-                <input
+                <label htmlFor="f1-field-2" className="block text-xs font-semibold text-[#1F201B] mb-1">Handover Title / Summary</label>
+                <input id="f1-field-2"
                   type="text"
                   value={newHandoverTitle}
                   onChange={(e) => setNewHandoverTitle(e.target.value)}
@@ -250,22 +254,23 @@ export function Screen1TeamLeadDashboard() {
                   className="w-full px-3.5 py-2 rounded-xl border border-[#E6E6DE] text-xs text-[#1F201B] focus:outline-none focus:ring-1 focus:ring-[#5A5B4C]"
                 />
               </div>
-              <div className="p-3 rounded-xl bg-[#F4F4F0] text-[11px] text-[#7A7B72]">
+              <div className="p-3 rounded-xl bg-[#F4F4F0] text-[11px] text-[#62635A]">
                 Creates a new handover via <code className="text-[#5A5B4C]">POST /handovers</code>. Asha and Kiran will be automatically registered and invited.
               </div>
               <div className="pt-2 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowNewHandoverModal(false)}
-                  className="px-4 py-2 rounded-full border border-[#E6E6DE] text-xs text-[#7A7B72] hover:bg-[#EAEAE2]"
+                  className="px-4 py-2 rounded-full border border-[#E6E6DE] text-xs text-[#62635A] hover:bg-[#EAEAE2]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-full bg-[#5A5B4C] text-white text-xs font-semibold hover:bg-[#4A4B3E]"
+                  disabled={isCreatingHandover}
+                  className="px-5 py-2 rounded-full bg-[#5A5B4C] text-white text-xs font-semibold hover:bg-[#4A4B3E] disabled:opacity-50"
                 >
-                  Create Handover
+                  {isCreatingHandover ? 'Creating...' : 'Create Handover'}
                 </button>
               </div>
             </form>
@@ -276,7 +281,7 @@ export function Screen1TeamLeadDashboard() {
       {/* KPI Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl p-5 border border-[#E6E6DE] shadow-soft">
-          <p className="text-xs text-[#7A7B72] font-medium">Uploaded Sources</p>
+          <p className="text-xs text-[#62635A] font-medium">Uploaded Sources</p>
           <p className="text-2xl font-bold text-[#1F201B] mt-1">{sources.filter((s) => s.status === 'ok').length}</p>
           <p className="text-[11px] text-[#5A5B4C] mt-1 font-medium">
             {sources.reduce((acc, s) => acc + (s.piece_count || 0), 0)} extracted pieces
@@ -284,25 +289,25 @@ export function Screen1TeamLeadDashboard() {
         </div>
 
         <div className="bg-white rounded-2xl p-5 border border-[#E6E6DE] shadow-soft">
-          <p className="text-xs text-[#7A7B72] font-medium">AI Questions</p>
+          <p className="text-xs text-[#62635A] font-medium">AI Questions</p>
           <p className="text-2xl font-bold text-[#1F201B] mt-1">{questions.length}</p>
-          <p className="text-[11px] text-[#7A7B72] mt-1">
+          <p className="text-[11px] text-[#62635A] mt-1">
             {questions.filter((q) => q.status === 'answered').length} answered by Asha
           </p>
         </div>
 
         <div className="bg-white rounded-2xl p-5 border border-[#E6E6DE] shadow-soft">
-          <p className="text-xs text-[#7A7B72] font-medium">Analysis Verification</p>
+          <p className="text-xs text-[#62635A] font-medium">Analysis Verification</p>
           <p className="text-2xl font-bold text-[#5A5B4C] mt-1">
             {analysis?.counts ? `${analysis.counts.verified} V / ${analysis.counts.conflicting} C` : 'Pending'}
           </p>
-          <p className="text-[11px] text-[#7A7B72] mt-1">
+          <p className="text-[11px] text-[#62635A] mt-1">
             {analysis ? `Mode: ${analysis.mode}` : 'Run analysis to compute'}
           </p>
         </div>
 
         <div className="bg-white rounded-2xl p-5 border border-[#E6E6DE] shadow-soft">
-          <p className="text-xs text-[#7A7B72] font-medium">Handover State</p>
+          <p className="text-xs text-[#62635A] font-medium">Handover State</p>
           <p className="text-base font-bold text-[#1F201B] mt-1 truncate">
             {activeHandover?.status === 'approved' ? 'Approved & Published' : 'In Draft Review'}
           </p>
@@ -321,7 +326,7 @@ export function Screen1TeamLeadDashboard() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-base font-bold text-[#1F201B]">1. Project Sources & Evidence</h3>
-                <p className="text-xs text-[#7A7B72] mt-0.5">
+                <p className="text-xs text-[#62635A] mt-0.5">
                   Upload repositories, ADRs, tasks, and team chat from <code className="text-[#5A5B4C]">data/synthetic/manifest.json</code>.
                 </p>
               </div>
@@ -357,7 +362,7 @@ export function Screen1TeamLeadDashboard() {
             {/* Uploaded Sources List */}
             {sources.length > 0 ? (
               <div className="border border-[#E6E6DE] rounded-2xl overflow-hidden divide-y divide-[#E6E6DE]">
-                <div className="bg-[#F4F4F0] px-4 py-2.5 text-[11px] font-bold text-[#7A7B72] grid grid-cols-12 uppercase tracking-wider">
+                <div className="bg-[#F4F4F0] px-4 py-2.5 text-[11px] font-bold text-[#62635A] grid grid-cols-12 uppercase tracking-wider">
                   <div className="col-span-5">Source File / Name</div>
                   <div className="col-span-2">Type</div>
                   <div className="col-span-3">Access Control</div>
@@ -377,7 +382,7 @@ export function Screen1TeamLeadDashboard() {
                         </span>
                       )}
                     </div>
-                    <div className="col-span-2 text-[#7A7B72] uppercase font-bold text-[10px]">
+                    <div className="col-span-2 text-[#62635A] uppercase font-bold text-[10px]">
                       {s.type}
                     </div>
                     <div className="col-span-3">
@@ -401,7 +406,7 @@ export function Screen1TeamLeadDashboard() {
               <div className="border border-dashed border-[#DCDCD2] rounded-2xl p-6 text-center bg-[#FAF9F6] space-y-2.5">
                 <AlertCircle size={24} className="text-amber-600 mx-auto" />
                 <p className="text-xs font-semibold text-[#1F201B]">No handover created yet</p>
-                <p className="text-[11px] text-[#7A7B72] max-w-sm mx-auto">
+                <p className="text-[11px] text-[#62635A] max-w-sm mx-auto">
                   Please create a handover project first before uploading project sources or synthetic manifests.
                 </p>
                 <button
@@ -415,9 +420,9 @@ export function Screen1TeamLeadDashboard() {
               </div>
             ) : (
               <div className="border border-dashed border-[#DCDCD2] rounded-2xl p-6 text-center bg-[#FAF9F6]">
-                <Upload size={24} className="text-[#7A7B72] mx-auto mb-2" />
+                <Upload size={24} className="text-[#62635A] mx-auto mb-2" />
                 <p className="text-xs font-semibold text-[#1F201B]">No sources uploaded yet</p>
-                <p className="text-[11px] text-[#7A7B72] mt-0.5 max-w-sm mx-auto">
+                <p className="text-[11px] text-[#62635A] mt-0.5 max-w-sm mx-auto">
                   Click &ldquo;Upload Synthetic Manifest&rdquo; above to load the 9 Campus Events app files (architecture docs, chats, tasks, git commits).
                 </p>
               </div>
@@ -425,14 +430,14 @@ export function Screen1TeamLeadDashboard() {
 
             {/* Custom file upload input */}
             <div className="flex items-center justify-between pt-1">
-              <label className="text-xs text-[#7A7B72] flex items-center gap-2 cursor-pointer hover:text-[#1F201B]">
+              <label className="text-xs text-[#62635A] flex items-center gap-2 cursor-pointer hover:text-[#1F201B] focus-within:ring-2 focus-within:ring-[#5A5B4C] rounded-md">
                 <span className="underline font-semibold text-[#5A5B4C]">Upload additional custom files (pick one or many)</span>
-                <input type="file" multiple onChange={handleCustomFileUpload} className="hidden" />
+                <input type="file" multiple onChange={handleCustomFileUpload} className="sr-only" />
               </label>
               <button
                 type="button"
                 onClick={refreshSources}
-                className="text-xs text-[#7A7B72] hover:text-[#1F201B] flex items-center gap-1"
+                className="text-xs text-[#62635A] hover:text-[#1F201B] flex items-center gap-1"
               >
                 <RefreshCw size={12} /> Refresh sources
               </button>
@@ -447,7 +452,7 @@ export function Screen1TeamLeadDashboard() {
                   <Sparkles size={16} className="text-[#5A5B4C]" />
                   2. AI Analysis &amp; Evidence Verification
                 </h3>
-                <p className="text-xs text-[#7A7B72] mt-0.5">
+                <p className="text-xs text-[#62635A] mt-0.5">
                   Reconstructs architectural decisions, verifies claims across sources, and detects conflicts and gaps.
                 </p>
               </div>
@@ -507,12 +512,12 @@ export function Screen1TeamLeadDashboard() {
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-[#F4F4F0] border border-[#E6E6DE] text-center col-span-2 sm:col-span-1">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A7B72]">Dropped</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#62635A]">Dropped</p>
                   <p className="text-xl font-bold text-[#1F201B] mt-0.5">{analysis.dropped || 0}</p>
                 </div>
               </div>
             ) : (
-              <div className="p-4 rounded-2xl bg-[#F4F4F0] border border-[#E6E6DE] text-center text-xs text-[#7A7B72]">
+              <div className="p-4 rounded-2xl bg-[#F4F4F0] border border-[#E6E6DE] text-center text-xs text-[#62635A]">
                 Pipeline not run yet. Click &ldquo;Run AI Analysis Pipeline&rdquo; above to extract knowledge statements and formulate departing questions.
               </div>
             )}
@@ -526,7 +531,7 @@ export function Screen1TeamLeadDashboard() {
                   <Users size={16} className="text-[#5A5B4C]" />
                   3. Handover Members
                 </h3>
-                <p className="text-xs text-[#7A7B72] mt-0.5">
+                <p className="text-xs text-[#62635A] mt-0.5">
                   Designate departing engineer and incoming successor to participate in the handover.
                 </p>
               </div>
@@ -542,7 +547,7 @@ export function Screen1TeamLeadDashboard() {
                       </div>
                       <div>
                         <p className="text-xs font-bold text-[#1F201B]">{m.name}</p>
-                        <p className="text-[11px] text-[#7A7B72]">{m.email}</p>
+                        <p className="text-[11px] text-[#62635A]">{m.email}</p>
                       </div>
                     </div>
                     <span
@@ -559,7 +564,7 @@ export function Screen1TeamLeadDashboard() {
                   </div>
                 ))
               ) : (
-                <div className="p-4 text-center text-xs text-[#7A7B72]">
+                <div className="p-4 text-center text-xs text-[#62635A]">
                   Deepak (Lead), Asha (Departing), Kiran (Incoming)
                 </div>
               )}
@@ -569,12 +574,14 @@ export function Screen1TeamLeadDashboard() {
             <form onSubmit={handleAddMember} className="pt-2 flex flex-col sm:flex-row gap-2.5">
               <input
                 type="email"
+                aria-label="Member email"
                 value={newMemberEmail}
                 onChange={(e) => setNewMemberEmail(e.target.value)}
                 placeholder="Enter user email (e.g. kiran@campus-synthetic.internal)"
                 className="flex-1 px-3.5 py-2 rounded-xl border border-[#E6E6DE] text-xs text-[#1F201B] focus:outline-none focus:ring-1 focus:ring-[#5A5B4C]"
               />
               <select
+                aria-label="Member role"
                 value={newMemberRole}
                 onChange={(e) => setNewMemberRole(e.target.value as any)}
                 className="px-3.5 py-2 rounded-xl border border-[#E6E6DE] text-xs text-[#1F201B] bg-white focus:outline-none"
@@ -605,7 +612,7 @@ export function Screen1TeamLeadDashboard() {
             </span>
           </div>
 
-          <p className="text-xs text-[#7A7B72] leading-relaxed">
+          <p className="text-xs text-[#62635A] leading-relaxed">
             Formulated from git commits, PRs, and task boards. Departing member answers these via the AI Knowledge Interview.
           </p>
 
@@ -626,7 +633,7 @@ export function Screen1TeamLeadDashboard() {
                           ? 'bg-emerald-100 text-emerald-800'
                           : q.status === 'skipped'
                           ? 'bg-amber-100 text-amber-800'
-                          : 'bg-white text-[#7A7B72]'
+                          : 'bg-white text-[#62635A]'
                       }`}
                     >
                       {q.status}
@@ -634,14 +641,14 @@ export function Screen1TeamLeadDashboard() {
                   </div>
                   <p className="font-semibold text-[#1F201B] leading-snug">{q.text}</p>
                   {q.evidence?.[0] && (
-                    <p className="text-[11px] text-[#7A7B72] leading-relaxed italic border-l-2 border-[#5A5B4C] pl-2 mt-1">
+                    <p className="text-[11px] text-[#62635A] leading-relaxed italic border-l-2 border-[#5A5B4C] pl-2 mt-1">
                       {q.evidence[0].locator}: &ldquo;{q.evidence[0].quote}&rdquo;
                     </p>
                   )}
                 </div>
               ))
             ) : (
-              <div className="p-6 rounded-2xl bg-[#F4F4F0] text-center text-xs text-[#7A7B72]">
+              <div className="p-6 rounded-2xl bg-[#F4F4F0] text-center text-xs text-[#62635A]">
                 Upload sources and run analysis to populate AI questions for Asha.
               </div>
             )}

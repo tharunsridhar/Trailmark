@@ -29,7 +29,7 @@ export function InterviewIntroduction() {
             <Sparkles size={12} />
             AI Handover Agent
           </span>
-          <span className="text-xs text-[#7A7B72]">
+          <span className="text-xs text-[#62635A]">
             Assigned: {project.departingMember}
           </span>
         </div>
@@ -38,7 +38,7 @@ export function InterviewIntroduction() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1F201B] mb-2">
             Project Knowledge Handover
           </h1>
-          <p className="text-xs sm:text-sm text-[#7A7B72] leading-relaxed">
+          <p className="text-xs sm:text-sm text-[#62635A] leading-relaxed">
             The AI agent formulated questions from repository commits, PR reviews, and ADR documents to ensure complete transition of your backend components to <strong className="text-[#1F201B]">{project.incomingMember}</strong>.
           </p>
         </div>
@@ -47,17 +47,17 @@ export function InterviewIntroduction() {
         <div className="p-6 rounded-2xl bg-[#F4F4F0] border border-[#E6E6DE] space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <p className="text-[#7A7B72] font-semibold mb-0.5">Project</p>
+              <p className="text-[#62635A] font-semibold mb-0.5">Project</p>
               <p className="font-bold text-[#1F201B]">{project.name}</p>
             </div>
             <div>
-              <p className="text-[#7A7B72] font-semibold mb-0.5">Role</p>
+              <p className="text-[#62635A] font-semibold mb-0.5">Role</p>
               <p className="font-bold text-[#1F201B]">{project.departingRole}</p>
             </div>
           </div>
 
           <div className="text-xs pt-2 border-t border-[#E6E6DE]">
-            <p className="text-[#7A7B72] font-semibold mb-0.5">Scope & Tech Stack</p>
+            <p className="text-[#62635A] font-semibold mb-0.5">Scope & Tech Stack</p>
             <p className="text-[#3A3B34] leading-relaxed">{project.techStack}</p>
           </div>
         </div>
@@ -65,27 +65,27 @@ export function InterviewIntroduction() {
         {/* 4 Feature Badges */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
           <div className="p-4 rounded-2xl bg-white border border-[#E6E6DE] shadow-2xs">
-            <span className="text-[#7A7B72]">Checkpoints</span>
+            <span className="text-[#62635A]">Checkpoints</span>
             <p className="text-base font-bold text-[#1F201B] mt-0.5">{totalQuestions} Questions</p>
           </div>
           <div className="p-4 rounded-2xl bg-white border border-[#E6E6DE] shadow-2xs">
-            <span className="text-[#7A7B72]">Pacing</span>
+            <span className="text-[#62635A]">Pacing</span>
             <p className="text-base font-bold text-[#1F201B] mt-0.5">~15 mins</p>
           </div>
           <div className="p-4 rounded-2xl bg-white border border-[#E6E6DE] shadow-2xs">
-            <span className="text-[#7A7B72]">Text Option</span>
+            <span className="text-[#62635A]">Text Option</span>
             <p className="text-base font-bold text-[#1F201B] mt-0.5">Full Editor</p>
           </div>
           <div className="p-4 rounded-2xl bg-white border border-[#E6E6DE] shadow-2xs">
-            <span className="text-[#7A7B72]">Voice Option</span>
-            <p className="text-base font-bold text-[#1F201B] mt-0.5">Auto-Transcribed</p>
+            <span className="text-[#62635A]">Voice Option</span>
+            <p className="text-base font-bold text-[#1F201B] mt-0.5">Browser dictation</p>
           </div>
         </div>
 
         {/* Start Button */}
         <div className="pt-4 border-t border-[#E6E6DE] flex items-center justify-between">
-          <p className="text-xs text-[#7A7B72]">
-            {answeredCount > 0 ? `${answeredCount} of ${totalQuestions} answered` : 'All responses saved automatically.'}
+          <p className="text-xs text-[#62635A]">
+            {answeredCount > 0 ? `${answeredCount} of ${totalQuestions} answered` : 'An answer is saved when you press Save Answer.'}
           </p>
 
           <button

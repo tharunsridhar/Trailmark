@@ -40,22 +40,22 @@ export function InterviewCompletion({ onRevisitQuestion }: InterviewCompletionPr
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1F201B]">
               Handover Knowledge Submitted
             </h2>
-            <p className="text-xs text-[#7A7B72] mt-1 max-w-md mx-auto leading-relaxed">
+            <p className="text-xs text-[#62635A] mt-1 max-w-md mx-auto leading-relaxed">
               Your responses have been recorded and sent to <strong className="text-[#1F201B]">Deepak (Team Lead)</strong> for verification against repository code and documentation.
             </p>
           </div>
 
           <div className="p-4 rounded-2xl bg-[#F4F4F0] border border-[#E6E6DE] text-xs max-w-sm mx-auto text-left space-y-2">
             <div className="flex justify-between">
-              <span className="text-[#7A7B72]">Project:</span>
+              <span className="text-[#62635A]">Project:</span>
               <span className="font-bold text-[#1F201B]">{project.name}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#7A7B72]">Questions Answered:</span>
+              <span className="text-[#62635A]">Questions Answered:</span>
               <span className="font-bold text-[#5A5B4C]">{answered} / {total}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#7A7B72]">Status:</span>
+              <span className="text-[#62635A]">Status:</span>
               <span className="font-bold text-amber-800">Pending Lead Approval</span>
             </div>
           </div>
@@ -86,7 +86,7 @@ export function InterviewCompletion({ onRevisitQuestion }: InterviewCompletionPr
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-[#1F201B]">Review Before Submission</h1>
-          <p className="text-xs text-[#7A7B72] mt-0.5">
+          <p className="text-xs text-[#62635A] mt-0.5">
             Verify your answers before forwarding the knowledge handover to Deepak.
           </p>
         </div>
@@ -115,7 +115,7 @@ export function InterviewCompletion({ onRevisitQuestion }: InterviewCompletionPr
                 </div>
                 <p className="text-[#3A3B34] bg-[#F4F4F0] p-2.5 rounded-xl border border-[#E6E6DE]">
                   {q.answer || (
-                    <span className="italic text-[#A2A399]">
+                    <span className="italic text-[#6B6C62]">
                       {q.status === 'answered'
                         ? 'Answered and saved. The text is not shown again after a reload.'
                         : q.status === 'skipped'
@@ -130,7 +130,7 @@ export function InterviewCompletion({ onRevisitQuestion }: InterviewCompletionPr
               <button
                 type="button"
                 onClick={() => onRevisitQuestion(idx)}
-                className="p-1.5 text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] rounded-lg shrink-0 mt-1"
+                className="p-1.5 text-[#62635A] hover:text-[#1F201B] hover:bg-[#F4F4F0] rounded-lg shrink-0 mt-1"
                 title="Edit response"
                 aria-label="Edit response"
               >
@@ -141,7 +141,7 @@ export function InterviewCompletion({ onRevisitQuestion }: InterviewCompletionPr
         </div>
 
         <div className="pt-4 border-t border-[#E6E6DE] flex items-center justify-between">
-          <p className="text-xs text-[#7A7B72]">
+          <p className="text-xs text-[#62635A]">
             {answered} answered, {skipped} skipped, {unknown} unknown.
           </p>
 

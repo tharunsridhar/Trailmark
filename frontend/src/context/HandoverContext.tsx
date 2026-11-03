@@ -291,6 +291,10 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
         setErrorMessage(authRes.error || 'Could not sign in.');
         return false;
       }
+      // Drop what the previous persona loaded, but keep the chosen handover so it is reloaded for this one
+      const keepHandoverId = activeHandoverId;
+      resetSessionData();
+      setActiveHandoverId(keepHandoverId);
       setAuthUser(authRes.data);
     }
     setActiveRole(role);
@@ -346,7 +350,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       console.warn('Post-login refetch notice:', e);
     }
     return true;
-  }, [activeHandoverId, clearMessages]);
+  }, [activeHandoverId, clearMessages, resetSessionData]);
 
   // ─── HANDOVERS (docs/api.md) ───────────────────────────────────────────────
 
