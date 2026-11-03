@@ -360,3 +360,71 @@ def facts_for_records(pieces, drafts: list[Draft]) -> list[Draft]:
         if quote_in_piece(quote, piece):
             added.append(Draft(kind, text, "verified", [Evidence(piece.id, squash(quote))]))
     return added
+
+
+# ---- restricted places ----
+
+PLACEHOLDER = "a restricted source"
+# a gap about a source nobody may read says where something is hidden, which is itself the leak
+ACCESS_GAP = re.compile(r"confidential|restricted|inaccessible|not accessible|cannot be accessed", re.I)
+
+
+def restricted_pieces(pieces) -> list:
+    """Pieces of a source that the departing or the incoming member may not read."""
+    return [
+        p for p in pieces
+        if getattr(p.source, "allowed_roles", None) is not None
+        and not {"departing", "incoming"} <= set(p.source.allowed_roles)
+    ]
+
+
+def location_patterns(restricted) -> list[re.Pattern]:
+    """Every way a restricted place is written: the source name, with and without the bracket, the file
+    name found in a locator, and the locator itself (file name and paragraph or message number)."""
+    names: set[str] = set()
+    for piece in restricted:
+        name = piece.source.name.strip()
+        names |= {name, re.sub(r"\s*\([^)]*\)", "", name).strip()}
+        files = re.findall(r"[\w-]+\.(?:md|txt|csv|json|pdf|docx)", piece.locator)
+        for file_name in files:
+            names |= {file_name, file_name.rsplit(".", 1)[0]}
+        if files:
+            # "chat message 3" alone would also match the open chat, so only locators with a file name count
+            names.add(piece.locator)
+    patterns = []
+    for name in sorted((n for n in names if len(n) >= 4), key=len, reverse=True):
+        flexible = re.escape(name).replace(r"\ ", r"[ _]").replace("_", "[ _]")
+        patterns.append(re.compile(flexible + r"(?:,?\s+(?:paragraph|message|row|line)\s+\d+)?", re.I))
+    return patterns
+
+
+def scrub_text(text: str | None, patterns: list[re.Pattern]) -> str | None:
+    if not text:
+        return text
+    for pattern in patterns:
+        text = pattern.sub(PLACEHOLDER, text)
+    return text
+
+
+def hide_restricted_locations(pieces, drafts: list[Draft]) -> list[Draft]:
+    """No statement or question names a restricted place, whatever the model or another rule wrote.
+    A gap that rests only on restricted pieces (or none) and names one, or only says a source is closed,
+    is dropped. The quotes are not touched: they
+    stay behind the statement's own access check."""
+    restricted = restricted_pieces(pieces)
+    if not restricted:
+        return drafts
+    restricted_ids = {p.id for p in restricted}
+    patterns = location_patterns(restricted)
+    kept = []
+    for draft in drafts:
+        cited = {e.piece_id for e in draft.evidence}
+        text, question = scrub_text(draft.text, patterns), scrub_text(draft.question, patterns)
+        only_restricted = cited <= restricted_ids
+        # a gap that only points at a closed source, by name or by saying it is closed, has no use left
+        if draft.label == "missing" and only_restricted and (ACCESS_GAP.search(draft.text) or text != draft.text):
+            continue
+        draft.text, draft.question = text, question
+        kept.append(draft)
+    return kept
+

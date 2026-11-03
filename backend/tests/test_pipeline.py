@@ -2,6 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from app.pipeline import analyze as analyze_module, rules
 from app.pipeline.analyze import Draft, Evidence, analyze, parse_json, quote_in_piece
 from app.pipeline.llm import AnthropicClient, ChatCompletionsClient, LLMError, build_llm
 from tests.helpers import FakeLLM
@@ -803,3 +804,66 @@ def test_explained_record_that_only_gaps_mention_gets_a_verified_fact_quoted_fro
     # a record that already has a non-gap statement is left alone
     done = Draft("unfinished", "T09 owned by Asha", "unverified", [Evidence(1, "owner: Asha")])
     assert not [d for d in run_rules([task], gaps[:1] + [done]) if d.label == "verified"]
+
+
+# ---- restricted places never named in statements or questions ----
+
+def restricted_piece(piece_id, name, locator, roles=("lead",)):
+    return SimpleNamespace(id=piece_id, content="x", locator=locator, source=SimpleNamespace(name=name, allowed_roles=list(roles)))
+
+
+HR = restricted_piece(1, "HR Private Notes (Confidential)", "hr_private_notes.md paragraph 2")
+OPEN = restricted_piece(2, "Team Chat Archive", "chat message 56", roles=("lead", "departing", "incoming"))
+
+
+def names_nothing_restricted(draft):
+    text = f"{draft.text} {draft.question or ''}".lower()
+    return not any(w in text for w in ("hr_private_notes", "hr private notes", "hr private", "paragraph 2"))
+
+
+def test_sourceless_gap_naming_a_restricted_file_is_dropped():
+    gap = Draft("owner", "The contents of 'hr_private_notes paragraph 2' are not provided in the sources", "missing", [],
+                question="What is in hr_private_notes.md paragraph 2?", risk=3)
+    assert rules.hide_restricted_locations([HR, OPEN], [gap]) == []
+
+
+def test_other_statement_naming_a_restricted_file_is_rewritten():
+    draft = Draft("risk", "Per hr_private_notes.md paragraph 2 the bonus is fixed", "unverified", [Evidence(2, "q")])
+    kept = rules.hide_restricted_locations([HR, OPEN], [draft])
+    assert kept[0].text == "Per a restricted source the bonus is fixed"
+
+
+def test_display_name_and_file_name_variants_are_cleaned():
+    drafts = [
+        Draft("risk", "See HR Private Notes (Confidential) before the handover", "unverified", [Evidence(2, "q")]),
+        Draft("risk", "See HR Private Notes for the amounts", "unverified", [Evidence(2, "q")]),
+        Draft("risk", "Ask about hr_private_notes", "missing", [Evidence(2, "q")], question="Is hr private notes complete?"),
+    ]
+    assert all(names_nothing_restricted(d) for d in rules.hide_restricted_locations([HR, OPEN], drafts))
+
+
+def test_gap_that_only_says_a_source_is_closed_is_dropped():
+    meta = Draft("risk", "Confidential HR notes document content is restricted and inaccessible", "missing",
+                       [Evidence(1, "q")], question="Can you share the HR notes?")
+    real = Draft("risk", "Nobody knows the payment webhook secret", "missing", [Evidence(2, "q")], question="Who has it?")
+    kept = rules.hide_restricted_locations([HR, OPEN], [meta, real])
+    assert kept == [real]
+
+
+def test_open_locations_are_left_alone():
+    draft = Draft("decision", "Chat message 56 says to use Render", "verified", [Evidence(2, "q")])
+    assert rules.hide_restricted_locations([HR, OPEN], [draft])[0].text == "Chat message 56 says to use Render"
+
+
+def test_nothing_changes_when_every_source_is_open():
+    draft = Draft("decision", "Confidential restricted words in an open project", "missing", [], question="Why?")
+    assert rules.hide_restricted_locations([OPEN], [draft]) == [draft]
+
+
+def test_apply_rules_cleans_conflict_text_built_from_a_restricted_source():
+    a = SimpleNamespace(id=1, content="The ticket token lifetime is 60 minutes.", locator="hr_private_notes.md paragraph 2",
+                        source=SimpleNamespace(name="HR Private Notes (Confidential)", allowed_roles=["lead"], type="doc"))
+    b = SimpleNamespace(id=2, content="The ticket token lifetime is 15 minutes.", locator="doc paragraph 1",
+                        source=SimpleNamespace(name="Notes", allowed_roles=["lead", "departing", "incoming"], type="doc"))
+    out = analyze_module.apply_rules([a, b], {1: a, 2: b}, [])
+    assert out and all(names_nothing_restricted(d) for d in out)
