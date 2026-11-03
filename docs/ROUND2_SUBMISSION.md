@@ -30,7 +30,7 @@ Also built: Gemini, Groq and Anthropic clients, retries and an optional second m
 
 ## Saved run on the synthetic project
 
-`backend/saved_results/campus-events-app.json`, one real run: 106 statements (54 verified, 31 unverified, 18 missing, 3 conflicting) and 9 questions. Scored against the answer key: 32 of 32 planted cases cited, 31 with the expected label, 3 of 3 conflicts, 4 of 4 leaver-only claims unverified. The one wrong label is C28 (deployment guide, the persistent volume), which the model called a gap. No statement or question names a restricted source's file name, path, paragraph number or title. The earlier wrong label, C02 (chat message 5, "Render over Heroku"), is `verified` in this run only because Deepak's message 6 agrees; when only the leaver's own message is cited it stays `unverified`, which is the leaver-only rule working as designed. Details are in [`TESTING.md`](TESTING.md).
+`backend/saved_results/campus-events-app.json`, one real run: 106 statements (54 verified, 31 unverified, 18 missing, 3 conflicting) and 9 questions. Scored against the answer key: 32 of 32 planted cases cited, 32 with the expected label, 3 of 3 conflicts, 4 of 4 leaver-only claims unverified. The score was 31 until we audited the key: C28 (deployment guide, contact Deepak) had its location in the key pointing at the wrong paragraph, so a correct `verified` statement was counted wrong. We corrected the location of C28 (and C26, same paragraph) only, after checking all ten document cases; the saved run and the pipeline were not changed. No statement or question names a restricted source's file name, path, paragraph number or title. Two lead-only statements use the generic word "restricted" ("a restricted source"); the incoming member does not see them. The earlier wrong label, C02 (chat message 5, "Render over Heroku"), is `verified` in this run only because Deepak's message 6 agrees; when only the leaver's own message is cited it stays `unverified`, which is the leaver-only rule working as designed. Details are in [`TESTING.md`](TESTING.md).
 
 ## Changes from the Round 1 plan
 
@@ -52,6 +52,7 @@ Not built yet.
 ## Known limitations
 
 - The score varies from run to run, because the model is not deterministic. In the last round the three runs got the expected label on 29, 30 and 31 of 32 cases (30, 32 and 32 cited). Earlier rounds were weaker, down to 15. The saved run is the best of its round, so it is not typical, which is why the saved fallback exists.
+- Other limits: the code looks for three fixed conflict topics (any other conflict is found only if the model finds it), the routine-commit word list is a guess that was not tuned on other projects, and a score of 32 of 32 is one run scored by a generous script, not an average.
 - Not tested yet: a deployed instance, and the frontend in AI mode. All 197 tests pass on SQLite. The first 192 also passed on PostgreSQL; the 5 added since are pipeline-only tests with no database.
 - The AI runs on the free tier of Gemini, which limits requests. If the service is unavailable the app shows the saved results.
 - Redaction is pattern based and will miss some sensitive text.
