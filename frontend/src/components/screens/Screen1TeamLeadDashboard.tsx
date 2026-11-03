@@ -277,7 +277,7 @@ export function Screen1TeamLeadDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl p-5 border border-[#E6E6DE] shadow-soft">
           <p className="text-xs text-[#7A7B72] font-medium">Uploaded Sources</p>
-          <p className="text-2xl font-bold text-[#1F201B] mt-1">{sources.length}</p>
+          <p className="text-2xl font-bold text-[#1F201B] mt-1">{sources.filter((s) => s.status === 'ok').length}</p>
           <p className="text-[11px] text-[#5A5B4C] mt-1 font-medium">
             {sources.reduce((acc, s) => acc + (s.piece_count || 0), 0)} extracted pieces
           </p>
@@ -368,6 +368,14 @@ export function Screen1TeamLeadDashboard() {
                     <div className="col-span-5 font-semibold text-[#1F201B] flex items-center gap-2">
                       <FileText size={13} className="text-[#5A5B4C] shrink-0" />
                       <span className="truncate">{s.name}</span>
+                      {s.status !== 'ok' && (
+                        <span
+                          className="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200"
+                          title={s.note || undefined}
+                        >
+                          {s.status === 'empty' ? 'Empty, not imported' : 'Unreadable, not imported'}
+                        </span>
+                      )}
                     </div>
                     <div className="col-span-2 text-[#7A7B72] uppercase font-bold text-[10px]">
                       {s.type}

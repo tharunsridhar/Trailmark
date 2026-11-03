@@ -429,7 +429,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
         if (res.data) setMembers(res.data);
       });
     }
-  }, [activeHandoverId, activeRole]);
+  }, [activeHandoverId, activeRole, authUser?.id]);
 
   // ─── SOURCES & ANALYSIS (docs/api.md) ──────────────────────────────────────
 
@@ -445,7 +445,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     if (activeHandoverId && activeRole === 'lead') {
       refreshSources();
     }
-  }, [activeHandoverId, activeRole, refreshSources]);
+  }, [activeHandoverId, activeRole, authUser?.id, refreshSources]);
 
   const uploadSyntheticSources = useCallback(async () => {
     if (!activeHandoverId) {
@@ -535,14 +535,18 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeHandoverId, activeRole, loadQuestions]);
 
+  // The server never sends answer text back, so keep what was typed in this session.
+  const [localAnswers, setLocalAnswers] = useState<Record<number, string>>({});
+
   const answerQuestionApi = useCallback(
     async (questionId: number, action: 'answer' | 'skip' | 'unknown', text?: string): Promise<boolean> => {
       clearMessages();
       const res = await HandoverApiService.answerQuestion(questionId, action, text);
       if (res.data) {
+        if (action === 'answer' && text) setLocalAnswers((prev) => ({ ...prev, [questionId]: text }));
         setSuccessMessage(action === 'answer' ? 'Answer saved.' : action === 'skip' ? 'Question skipped.' : 'Marked as unknown.');
         await loadQuestions();
-        if (activeHandoverId) {
+        if (activeHandoverId && activeRole === 'lead') {
           const sRes = await HandoverApiService.listStatements(activeHandoverId);
           if (sRes.data) setBackendStatements(sRes.data);
         }
@@ -551,7 +555,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       setErrorMessage(res.error || 'Failed to submit response.');
       return false;
     },
-    [activeHandoverId, clearMessages, loadQuestions]
+    [activeHandoverId, activeRole, clearMessages, loadQuestions]
   );
 
   // ─── STATEMENTS & REVIEW (docs/api.md) ──────────────────────────────────────
@@ -718,12 +722,13 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
           reason: primaryEvidence ? `${primaryEvidence.locator}: "${primaryEvidence.quote}"` : 'Identified during source analysis',
           roleTarget: 'Backend Developer',
           status: bq.status as QuestionStatus,
+          answer: bq.status === 'answered' ? localAnswers[bq.id] : undefined,
           evidenceStatus: (bq.risk >= 3 ? 'missing_conflicting' : bq.risk === 2 ? 'unverified' : 'verified') as EvidenceStatus,
         };
       });
     }
     return [];
-  }, [backendQuestions]);
+  }, [backendQuestions, localAnswers]);
 
   const adaptedStatements: Statement[] = useMemo(() => {
     if (backendStatements.length > 0) {

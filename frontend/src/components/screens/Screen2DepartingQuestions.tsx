@@ -537,6 +537,7 @@ export function Screen2DepartingQuestions() {
                 <textarea
                   value={answerText}
                   onChange={(e) => handleAnswerChange(e.target.value)}
+                  readOnly={activeHandover?.status === 'approved'}
                   rows={8}
                   placeholder="Detail your architecture decisions, edge cases, deployment keys, or unfinished code branches..."
                   className="w-full px-5 py-4 pr-14 rounded-3xl border border-[#E6E6DE] bg-white text-sm text-[#1F201B] placeholder-[#A2A399] focus:outline-none focus:ring-2 focus:ring-[#5A5B4C]/25 focus:border-[#5A5B4C] leading-relaxed resize-none transition-all shadow-soft font-[inherit]"

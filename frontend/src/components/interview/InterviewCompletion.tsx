@@ -114,7 +114,17 @@ export function InterviewCompletion({ onRevisitQuestion }: InterviewCompletionPr
                   <span className="font-bold text-[#1F201B]">{q.shortTitle || q.question}</span>
                 </div>
                 <p className="text-[#3A3B34] bg-[#F4F4F0] p-2.5 rounded-xl border border-[#E6E6DE]">
-                  {q.answer || <span className="italic text-[#A2A399]">No answer recorded.</span>}
+                  {q.answer || (
+                    <span className="italic text-[#A2A399]">
+                      {q.status === 'answered'
+                        ? 'Answered and saved. The text is not shown again after a reload.'
+                        : q.status === 'skipped'
+                          ? 'Skipped.'
+                          : q.status === 'unknown'
+                            ? "Marked as \"I don't know\"."
+                            : 'No answer recorded.'}
+                    </span>
+                  )}
                 </p>
               </div>
               <button
