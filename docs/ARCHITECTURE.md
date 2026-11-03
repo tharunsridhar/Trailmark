@@ -99,6 +99,6 @@ Garbage from the model (not JSON, wrong shape) counts as a failure and follows t
 - Extraction can be wrong. Review and approval exist for that reason.
 - AI results vary from run to run even at temperature 0. The saved result is one real run (see `TESTING.md`).
 - Only three kinds of conflict are detected by rules in code. Others depend on the model.
-- The frontend is not tested end to end and nothing is deployed yet.
+- The frontend has no automated tests. One journey was clicked through by hand locally (see `TESTING.md`), and nothing is deployed yet.
 - No live integrations (Slack, Jira, GitHub API), no pgvector search, no Postgres row-level security yet.
 - Round 3 items are not built: follow-up questions, decision timeline, audit log.

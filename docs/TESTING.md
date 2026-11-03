@@ -185,12 +185,39 @@ Done on the 3 Nov saved run from before the label fixes (86 statements), not on 
 - Every endpoint is checked for `401` without sign-in and `403` for the wrong role, including outsiders.
 - Secrets, emails and phone numbers are masked for the incoming member and not for the lead.
 
+## Frontend run by hand (local, 3 Nov 2026)
+
+Backend on port 8000 with an empty AI key and a fresh SQLite file, so the analysis ran in `saved` mode (the saved file of that time: 104 statements, 9 questions). Frontend with `next dev`. Driven in the Claude desktop app's built-in browser. Nothing here was run against Render or Vercel and the AI was not called.
+
+| Step | Result |
+| --- | --- |
+| Lead: sign in, create a handover, upload the 9 synthetic files | Pass. 8 imported, the empty test file was reported and shown as "Empty, not imported" (after a fix, see below) |
+| Lead: run the analysis | Pass. The notice said `saved`; 55 verified, 28 unverified, 18 missing, 3 conflicting; statements show labels and quotes |
+| Departing member: answer, Next, reload | Pass. The question shows as answered after a reload. The answer text is not shown again, because the server does not send it back (said on screen) |
+| Departing member: Skip and "I don't know" | Pass. Both are stored (`skipped`, `unknown`) and shown on the review page |
+| Departing member: save after approval | Pass. The screen says the handover is approved and the response is "Not saved". The server answered `409` |
+| Lead: edit a statement | Pass. Version 2 appears and the version history names the editor (Deepak) |
+| Lead: reject with a reason | Pass. The statement is marked rejected |
+| Lead: resolve the three conflicts with a written reason, accept a gap with a reason | Pass |
+| Lead: approve while a conflict is open | The Approve button stays disabled until the last conflict is resolved. This was checked in the screen only. The backend rule is covered by the automated tests |
+| Lead: approve | Pass |
+| Incoming member: sees only the approved handover | Pass. The rejected statement is not shown, every statement lists its source quote, emails are masked, and no text from the HR notes or the lead-only chat appears (also checked in the raw response: none of the HR amounts or the database credential) |
+| Incoming member: confirm receipt, reload | Pass. "Receipt confirmed by Kiran" stays after a reload |
+| Wrong password, or an unknown email | Pass. "Wrong email or password" |
+| Incoming member calling a lead-only endpoint (`curl`) | `403` with "Your role cannot do this" |
+| Backend stopped | Pass. "Cannot reach the Trailmark server. Check that the backend is running and try again.", not a blank page |
+| Same-origin mode (`BACKEND_URL`, empty `NEXT_PUBLIC_API_URL`) | Pass locally: the page, sign-in and every request went through the frontend's own port. Not tested on Vercel |
+
+Bugs found and fixed in the frontend during this run: the review page said "No answer recorded" for questions that were answered; the lead dashboard showed no sources after switching from another persona (stale cookie, the sources and members requests were not repeated after the new sign-in); the empty file was counted as an uploaded source; the departing member's answers called a lead-only endpoint and got a `403` each time; the answer box could still be typed in after approval. Fixed but only partly re-tested in the browser: the review page now shows the text typed in the same session, which was not clicked through again because the handover was already approved.
+
+One backend finding, not fixed: for a handover that includes a lead-only document, a `missing` gap with no source of its own is shown to the incoming member. In the earlier saved file one such statement read "The contents of 'hr_private_notes paragraph 2' are not provided in the sources" (`GET /handovers/1/handover-view` as the incoming member, status `200`, statement 37). It leaks the name of a restricted location, not its content. The current saved file has no statement without a source. A fix needs a decision (hide such gaps from the incoming member, or drop them in the pipeline), so it is left for Round 3 with the access-control work.
+
 ## Not tested yet
 
 - **The AI in the automated tests.** The test suite never calls a real model. The real AI was run by hand on the synthetic project (above).
 - **A deployed instance.** `render.yaml` is written but nothing is deployed to Render yet.
-- **The frontend.** The screens call the backend, but the integration has not been tested end to end and the frontend has no automated tests.
-- **PostgreSQL with the current suite.** The 28 newest tests have not been run on PostgreSQL.
+- **The frontend, beyond one local run.** The by-hand browser run is described above. The frontend has no automated tests, was not run in AI mode, only in one browser (the Claude desktop app's built-in one) and one window size, and not with voice answers.
+- **PostgreSQL with the current suite.** The 31 newest tests have not been run on PostgreSQL.
 - **Docker with the current build.** The last check by hand was on an earlier build.
 - **Load and long inputs.** A very large repository would need chunking, which is not built.
 - **Outside users.** No structured feedback has been collected yet. The script and a table to fill in are in [`FEEDBACK.md`](FEEDBACK.md).
