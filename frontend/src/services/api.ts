@@ -164,7 +164,7 @@ async function request<T>(
 
     return { data, status: res.status };
   } catch (err: any) {
-    return { data: null, status: 0, error: err?.message || 'Network error' };
+    return { data: null, status: 0, error: 'Cannot reach the Trailmark server. Check that the backend is running and try again.' };
   }
 }
 
@@ -200,11 +200,11 @@ export const HandoverApiService = {
    */
   async ensureDemoAuth(email: string, name: string, password = 'password123') {
     const loginRes = await this.login(email, password);
-    if (loginRes.data) return loginRes.data;
+    // A network failure (status 0) or a server error is not "no such user", so do not register on it
+    if (loginRes.data || (loginRes.status !== 401 && loginRes.status !== 404)) return loginRes;
 
-    // If login failed (e.g. 401/404), auto-register to establish the cookie
-    const regRes = await this.register(email, name, password);
-    return regRes.data;
+    // Wrong credentials or no account yet: register to establish the cookie
+    return this.register(email, name, password);
   },
 
   // ─── HANDOVERS (docs/api.md) ─────────────────────────────────────────────
@@ -308,6 +308,9 @@ export const HandoverApiService = {
         if (uploadRes.error) {
           failed++;
           errors.push(`${src.name}: ${uploadRes.error}`);
+        } else if (uploadRes.data?.status === 'empty') {
+          failed++;
+          errors.push(`${src.name}: ${uploadRes.data.note || 'The file has no content to import'}`);
         } else {
           success++;
         }

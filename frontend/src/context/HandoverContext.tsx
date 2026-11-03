@@ -92,7 +92,7 @@ interface HandoverContextType {
   login: (email: string, password?: string) => Promise<boolean>;
   register: (email: string, name: string, password?: string) => Promise<boolean>;
   logout: () => Promise<void>;
-  switchDemoRole: (role: Role) => Promise<void>;
+  switchDemoRole: (role: Role) => Promise<boolean>;
 
   // Handovers state
   handovers: HandoverOut[];
@@ -153,7 +153,6 @@ interface HandoverContextType {
     completedHandovers: number;
   };
   saveAnswer: (questionId: string | number, answer: string, options?: { hasVoice?: boolean; durationSeconds?: number }) => Promise<boolean>;
-  saveFollowUpAnswer: (questionId: string | number, answer: string) => void;
   markDontKnow: (questionId: string | number) => Promise<boolean>;
   skipQuestion: (questionId: string | number) => Promise<boolean>;
   submitDepartingAnswers: () => void;
@@ -227,45 +226,72 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     checkCurrentUser();
   }, [checkCurrentUser]);
 
+  // Drop everything loaded for the previous user so a new sign-in never shows their data
+  const resetSessionData = useCallback(() => {
+    setHandovers([]);
+    setActiveHandoverId(null);
+    setActiveHandover(null);
+    setMembers([]);
+    setSources([]);
+    setAnalysis(null);
+    setBackendQuestions([]);
+    setBackendStatements([]);
+    setHandoverView(null);
+    setHandoverViewError(null);
+    setReceipt(null);
+  }, []);
+
+  // After a custom sign-in, open the screen that matches the user's role in their latest handover
+  const enterAfterAuth = useCallback(async () => {
+    const res = await HandoverApiService.listHandovers();
+    const role: Role = res.data?.[0]?.my_role ?? 'lead';
+    setActiveRole(role);
+    setActiveScreen(role === 'departing' ? 'departing-intro' : role === 'incoming' ? 'incoming-handover' : 'dashboard');
+  }, []);
+
   const login = useCallback(async (email: string, password = 'password123'): Promise<boolean> => {
     clearMessages();
     const res = await HandoverApiService.login(email, password);
     if (res.data) {
+      resetSessionData();
       setAuthUser(res.data);
+      await enterAfterAuth();
       return true;
     }
     setErrorMessage(res.error || 'Login failed. Please check credentials.');
     return false;
-  }, [clearMessages]);
+  }, [clearMessages, resetSessionData, enterAfterAuth]);
 
   const register = useCallback(async (email: string, name: string, password = 'password123'): Promise<boolean> => {
     clearMessages();
     const res = await HandoverApiService.register(email, name, password);
     if (res.data) {
+      resetSessionData();
       setAuthUser(res.data);
+      await enterAfterAuth();
       return true;
     }
     setErrorMessage(res.error || 'Registration failed.');
     return false;
-  }, [clearMessages]);
+  }, [clearMessages, resetSessionData, enterAfterAuth]);
 
   const logout = useCallback(async () => {
     await HandoverApiService.logout();
     setAuthUser(null);
     setActiveScreen('role-select');
-    setHandovers([]);
-    setActiveHandoverId(null);
-    setActiveHandover(null);
-  }, []);
+    resetSessionData();
+  }, [resetSessionData]);
 
   const switchDemoRole = useCallback(async (role: Role) => {
     clearMessages();
     const cred = DEMO_CREDENTIALS[role];
     if (cred) {
-      const user = await HandoverApiService.ensureDemoAuth(cred.email, cred.name, 'password123');
-      if (user) {
-        setAuthUser(user);
+      const authRes = await HandoverApiService.ensureDemoAuth(cred.email, cred.name, 'password123');
+      if (!authRes.data) {
+        setErrorMessage(authRes.error || 'Could not sign in.');
+        return false;
       }
+      setAuthUser(authRes.data);
     }
     setActiveRole(role);
 
@@ -294,9 +320,14 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
           const vRes = await HandoverApiService.getHandoverView(targetId);
           if (vRes.data) {
             setHandoverView(vRes.data);
+            setHandoverViewError(null);
           } else if (vRes.status === 409) {
+            // 409 means "not approved yet", the screen shows that when there is no error
             setHandoverView(null);
-            setHandoverViewError('Handover has not been approved by the Team Lead yet. Once approved, the knowledge base will be unlocked.');
+            setHandoverViewError(null);
+          } else {
+            setHandoverView(null);
+            setHandoverViewError(vRes.error || 'Could not load handover view.');
           }
           const rRes = await HandoverApiService.getReceipt(targetId);
           setReceipt(rRes.data || null);
@@ -314,6 +345,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.warn('Post-login refetch notice:', e);
     }
+    return true;
   }, [activeHandoverId, clearMessages]);
 
   // ─── HANDOVERS (docs/api.md) ───────────────────────────────────────────────
@@ -437,8 +469,12 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       clearMessages();
       const res = await HandoverApiService.uploadSource(activeHandoverId, file, type, name, allowedRoles);
       if (res.data) {
-        setSuccessMessage(`Uploaded ${name} (${res.data.piece_count} pieces extracted).`);
         await refreshSources();
+        if (res.data.status === 'empty') {
+          setErrorMessage(`${name}: ${res.data.note || 'The file has no content to import'}.`);
+          return false;
+        }
+        setSuccessMessage(`Uploaded ${name} (${res.data.piece_count} pieces extracted).`);
         return true;
       }
       setErrorMessage(res.error || 'Failed to upload source file.');
@@ -626,9 +662,10 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     if (res.data) {
       setHandoverView(res.data);
     } else if (res.status === 409) {
+      // 409 means "not approved yet", the screen shows that when there is no error
       setHandoverView(null);
-      setHandoverViewError('Handover has not been approved by the Team Lead yet. Once approved, the knowledge base will be unlocked.');
     } else {
+      setHandoverView(null);
       setHandoverViewError(res.error || 'Could not load handover view.');
     }
 
@@ -771,7 +808,6 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     [answerQuestionApi]
   );
 
-  const saveFollowUpAnswer = useCallback((_qId: string | number, _ans: string) => {}, []);
 
   const markDontKnow = useCallback(
     async (questionId: string | number): Promise<boolean> => {
@@ -930,7 +966,6 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
         project: currentProjectHandover,
         dashboardMetrics,
         saveAnswer,
-        saveFollowUpAnswer,
         markDontKnow,
         skipQuestion,
         submitDepartingAnswers,

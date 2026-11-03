@@ -70,8 +70,12 @@ export function Screen0RoleSelection() {
     setSelectedRole(r.key);
 
     try {
-      await switchDemoRole(r.key);
-      setActiveScreen(r.targetScreen);
+      // Stay on this screen (with the error shown) if the sign-in failed
+      if (await switchDemoRole(r.key)) {
+        setActiveScreen(r.targetScreen);
+      } else {
+        setSelectedRole(null);
+      }
     } catch (err) {
       console.error('Role auth error:', err);
     } finally {
@@ -84,17 +88,14 @@ export function Screen0RoleSelection() {
     setCustomAuthLoading(true);
     clearMessages();
 
-    let ok = false;
     if (isRegisterMode) {
-      ok = await register(email, name, password);
+      await register(email, name, password);
     } else {
-      ok = await login(email, password);
+      await login(email, password);
     }
 
     setCustomAuthLoading(false);
-    if (ok) {
-      setActiveScreen('dashboard');
-    }
+    // On success the context has already opened the screen for the user's role
   };
 
   return (

@@ -60,7 +60,6 @@ export function Screen2DepartingQuestions() {
     activeScreen,
     setActiveScreen,
     saveAnswer,
-    saveFollowUpAnswer,
     skipQuestion,
     markDontKnow,
     getPiece,
@@ -68,7 +67,6 @@ export function Screen2DepartingQuestions() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answerText, setAnswerText] = useState('');
-  const [followUpText, setFollowUpText] = useState('');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved');
   const [whyOpen, setWhyOpen] = useState(false);
   const [showVoice, setShowVoice] = useState(false);
@@ -96,7 +94,6 @@ export function Screen2DepartingQuestions() {
   useEffect(() => {
     if (currentQuestion) {
       setAnswerText(currentQuestion.answer || '');
-      setFollowUpText(currentQuestion.followUp?.answer || '');
       setSaveStatus('saved');
       setWhyOpen(false);
       setShowVoice(false);
@@ -135,11 +132,6 @@ export function Screen2DepartingQuestions() {
       setSaveStatus('error');
       return false;
     }
-  };
-
-  const handleSaveFollowUp = () => {
-    if (!currentQuestion || !followUpText.trim()) return;
-    saveFollowUpAnswer(currentQuestion.id, followUpText.trim());
   };
 
   const navigate = useCallback(
@@ -536,6 +528,11 @@ export function Screen2DepartingQuestions() {
               </div>
 
               {/* Big Answer Textarea */}
+              {currentQuestion.status === 'answered' && !answerText.trim() && (
+                <p role="status" className="text-xs font-semibold text-[#3F7D4E]">
+                  Answered and saved. The server does not send the saved text back, so this box is empty. Ask the Team Lead to edit it if it needs to change.
+                </p>
+              )}
               <div className="relative">
                 <textarea
                   value={answerText}
@@ -650,21 +647,15 @@ export function Screen2DepartingQuestions() {
                     {currentQuestion.followUp.question}
                   </p>
                   <textarea
-                    value={followUpText}
-                    onChange={(e) => setFollowUpText(e.target.value)}
+                    value=""
+                    disabled
+                    readOnly
                     rows={2}
-                    placeholder="Provide additional technical clarity..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E6E6DE] bg-[#F4F4F0] text-xs text-[#1F201B] focus:outline-none focus:ring-1 focus:ring-[#5A5B4C] font-[inherit] resize-none"
+                    aria-label="Follow-up clarification, not available yet"
+                    placeholder="Follow-up questions are coming in Round 3. Nothing typed here would be saved."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E6E6DE] bg-[#EAEAE2] text-xs text-[#7A7B72] font-[inherit] resize-none cursor-not-allowed"
                   />
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleSaveFollowUp}
-                      className="px-3.5 py-1.5 rounded-full bg-[#5A5B4C] text-white text-[11px] font-semibold hover:bg-[#4A4B3E] transition-colors"
-                    >
-                      Save Clarification
-                    </button>
-                  </div>
+                  <p className="text-[11px] text-[#7A7B72]">Coming in Round 3. Follow-up answers are not saved yet.</p>
                 </div>
               )}
             </div>
