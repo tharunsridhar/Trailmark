@@ -262,3 +262,12 @@ def unexplained_commits(pieces, drafts: list[Draft]) -> list[Draft]:
     for draft in sorted(gaps, key=lambda g: -g.risk)[budget:]:
         draft.question = None
     return gaps
+
+
+def limit_questions(drafts: list[Draft]) -> list[Draft]:
+    """However many gaps there are, the departing member is asked about the riskiest MAX_QUESTIONS of
+    them. The others stay as gaps without a question, so nothing is hidden and nothing is guessed."""
+    asked = [d for d in drafts if d.label == "missing" and d.question]
+    for draft in sorted(asked, key=lambda d: -d.risk)[MAX_QUESTIONS:]:
+        draft.question = None
+    return drafts

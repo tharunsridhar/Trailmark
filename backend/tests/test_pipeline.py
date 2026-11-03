@@ -649,3 +649,11 @@ def test_merging_never_joins_different_labels():
     claim = statement(text="We chose Render for hosting", relation="claim_only", evidence=[{"piece_id": 1, "quote": "chose Render"}])
     result = analyze(FakeLLM({"statements": [supported, claim], "gaps": []}, verdict("supported")), pieces)
     assert sorted(d.label for d in result.drafts) == ["unverified", "verified"]
+
+
+def test_the_riskiest_gaps_keep_their_question_and_the_rest_stay_as_gaps_without_one():
+    gaps = [Draft("owner", f"Gap {i}", "missing", [], question=f"Who owns {i}?", risk=1 + i % 3) for i in range(15)]
+    out = run_rules([], gaps)
+    asked = [d for d in out if d.question]
+    assert len(out) == 15 and len(asked) == 9
+    assert min(d.risk for d in asked) >= max(d.risk for d in out if not d.question)

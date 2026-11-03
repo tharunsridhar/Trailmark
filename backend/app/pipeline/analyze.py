@@ -273,7 +273,7 @@ def apply_rules(pieces, pieces_by_id: dict, drafts: list[Draft]) -> list[Draft]:
     drafts = rules.drop_routine_commits(drafts, pieces_by_id)
     drafts += rules.find_conflicts(pieces, drafts)
     drafts = rules.settle_conflicted_statements(drafts)
-    return drafts + rules.unexplained_commits(pieces, drafts)
+    return rules.limit_questions(drafts + rules.unexplained_commits(pieces, drafts))
 
 
 def build_drafts(llm, raw: dict, pieces_by_id: dict) -> tuple[list[Draft], int]:
