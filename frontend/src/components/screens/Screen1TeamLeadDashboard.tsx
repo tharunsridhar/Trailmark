@@ -152,7 +152,7 @@ export function Screen1TeamLeadDashboard() {
       )}
 
       {/* Top Action Bar with Active Handover Selector & Quick Nav */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
             <h2 className="text-xl font-bold tracking-tight text-[#1F201B]">Team Lead Handover Control</h2>
@@ -302,7 +302,7 @@ export function Screen1TeamLeadDashboard() {
             {analysis?.counts ? `${analysis.counts.verified} V / ${analysis.counts.conflicting} C` : 'Pending'}
           </p>
           <p className="text-[11px] text-[#62635A] mt-1">
-            {analysis ? `Mode: ${analysis.mode}` : 'Run analysis to compute'}
+            {analysis ? (analysis.mode ? `Mode: ${analysis.mode}` : analysis.status === 'running' ? 'Analysis running...' : 'Run analysis to compute') : 'Run analysis to compute'}
           </p>
         </div>
 

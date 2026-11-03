@@ -344,6 +344,11 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
             setBackendStatements(sRes.data);
           }
           setStatementsLoading(false);
+          // After a reload the dashboard must show the last analysis, not "Pending"
+          const aRes = await HandoverApiService.getAnalysis(targetId);
+          if (aRes.data && aRes.data.status !== 'not_started') {
+            setAnalysis(aRes.data);
+          }
         }
       }
     } catch (e) {

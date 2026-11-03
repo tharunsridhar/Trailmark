@@ -102,7 +102,7 @@ function IncomingStatementCard({
               key={src.piece_id}
               className="p-3 rounded-xl bg-[#F4F4F0] border border-[#E6E6DE] text-xs space-y-1.5"
             >
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold text-[#1F201B] flex items-center gap-1.5 text-[11px]">
                   <FileText size={12} className="text-[#5A5B4C] shrink-0" />
                   <span>{src.source_name}</span>
