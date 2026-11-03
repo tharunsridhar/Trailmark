@@ -75,7 +75,6 @@ export function Screen2DepartingQuestions() {
     activeScreen,
     setActiveScreen,
     saveAnswer,
-    saveFollowUpAnswer,
     skipQuestion,
     markDontKnow,
     getPiece,
@@ -83,7 +82,6 @@ export function Screen2DepartingQuestions() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answerText, setAnswerText] = useState('');
-  const [followUpText, setFollowUpText] = useState('');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved');
   const [whyOpen, setWhyOpen] = useState(false);
   const [showVoice, setShowVoice] = useState(false);
@@ -111,7 +109,6 @@ export function Screen2DepartingQuestions() {
   useEffect(() => {
     if (currentQuestion) {
       setAnswerText(currentQuestion.answer || '');
-      setFollowUpText(currentQuestion.followUp?.answer || '');
       setSaveStatus('saved');
       setWhyOpen(false);
       setShowVoice(false);
@@ -154,10 +151,7 @@ export function Screen2DepartingQuestions() {
     }
   };
 
-  const handleSaveFollowUp = () => {
-    if (!currentQuestion || !followUpText.trim()) return;
-    saveFollowUpAnswer(currentQuestion.id, followUpText.trim());
-  };
+
 
   const navigate = useCallback(
     async (dir: 'next' | 'prev') => {
@@ -705,36 +699,7 @@ export function Screen2DepartingQuestions() {
                 </div>
               )}
 
-              {/* Follow-up Clarification */}
-              {currentQuestion.followUp && answerText.trim().length > 15 && (
-                <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E6E6DE] shadow-soft space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-[#5A5B4C] uppercase tracking-wider">
-                      Follow-up Clarification
-                    </span>
-                    <span className="text-[10px] text-[#7A7B72]">For {project.incomingMember}</span>
-                  </div>
-                  <p className="text-xs font-bold text-[#1F201B] leading-snug">
-                    {currentQuestion.followUp.question}
-                  </p>
-                  <textarea
-                    value={followUpText}
-                    onChange={(e) => setFollowUpText(e.target.value)}
-                    rows={2}
-                    placeholder="Provide additional technical clarity..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E6E6DE] bg-[#F4F4F0] text-xs text-[#1F201B] focus:outline-none focus:ring-1 focus:ring-[#5A5B4C] font-[inherit] resize-none"
-                  />
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleSaveFollowUp}
-                      className="px-3.5 py-1.5 rounded-full bg-[#5A5B4C] text-white text-[11px] font-semibold hover:bg-[#4A4B3E] transition-colors"
-                    >
-                      Save Clarification
-                    </button>
-                  </div>
-                </div>
-              )}
+
             </div>
           </div>
         </main>
