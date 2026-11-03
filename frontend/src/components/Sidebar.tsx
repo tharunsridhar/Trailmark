@@ -39,7 +39,7 @@ const INCOMING_NAV: NavItem[] = [
 ];
 
 export function Sidebar() {
-  const { activeRole, activeScreen, setActiveScreen, currentUser } = useHandover();
+  const { activeRole, activeScreen, setActiveScreen, currentUser, logout } = useHandover();
 
   const navItems =
     activeRole === 'lead'
@@ -47,6 +47,10 @@ export function Sidebar() {
       : activeRole === 'departing'
         ? DEPARTING_NAV
         : INCOMING_NAV;
+
+  const isNavActive = (id: string) =>
+    activeScreen === id ||
+    (id === 'interview' && (activeScreen === 'questions' || activeScreen === 'my-handover-departing'));
 
   return (
     <aside className="hidden md:flex w-[260px] bg-[#F4F4F0] flex-col border-r border-[#E6E6DE] h-screen shrink-0 select-none">
@@ -57,7 +61,7 @@ export function Sidebar() {
         </div>
         <div className="flex flex-col">
           <span className="text-lg font-bold tracking-tight text-[#1F201B]">Trailmark</span>
-          <span className="text-[10px] font-semibold text-[#7A7B72] tracking-[0.15em] uppercase -mt-0.5">
+          <span className="text-[10px] font-semibold text-[#62635A] tracking-[0.15em] uppercase -mt-0.5">
             Handover OS
           </span>
         </div>
@@ -67,7 +71,7 @@ export function Sidebar() {
       <div className="flex-1 px-4 py-2 space-y-6 overflow-y-auto">
         {/* Active Role Category */}
         <div>
-          <div className="px-3 pb-2 text-[10px] font-bold text-[#7A7B72] uppercase tracking-[0.18em]">
+          <div className="px-3 pb-2 text-[10px] font-bold text-[#62635A] uppercase tracking-[0.18em]">
             {activeRole === 'lead' ? 'Team Lead Workspace' : activeRole === 'departing' ? 'Departing Member' : 'Incoming Successor'}
           </div>
           <div className="space-y-1">
@@ -80,14 +84,16 @@ export function Sidebar() {
               return (
                 <button
                   key={item.id}
+                  type="button"
                   onClick={() => setActiveScreen(item.id)}
+                  aria-current={isActive ? 'page' : undefined}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                     isActive
                       ? 'bg-[#5A5B4C] text-white shadow-soft font-semibold'
                       : 'text-[#3A3B34] hover:bg-[#EAEAE2] hover:text-[#1F201B]'
                   }`}
                 >
-                  <span className={isActive ? 'text-white' : 'text-[#7A7B72]'}>{item.icon}</span>
+                  <span className={isActive ? 'text-white' : 'text-[#62635A]'}>{item.icon}</span>
                   <span>{item.label}</span>
                 </button>
               );
@@ -97,7 +103,7 @@ export function Sidebar() {
 
         {/* Global Access */}
         <div>
-          <div className="px-3 pb-2 text-[10px] font-bold text-[#7A7B72] uppercase tracking-[0.18em]">
+          <div className="px-3 pb-2 text-[10px] font-bold text-[#62635A] uppercase tracking-[0.18em]">
             Governance
           </div>
           <div className="space-y-1">
@@ -105,8 +111,16 @@ export function Sidebar() {
               onClick={() => setActiveScreen('role-select')}
               className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#3A3B34] hover:bg-[#EAEAE2] transition-colors"
             >
-              <Users size={17} className="text-[#7A7B72]" />
+              <Users size={17} className="text-[#62635A]" />
               <span>Switch Persona</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => void logout()}
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#3A3B34] hover:bg-[#EAEAE2] transition-colors"
+            >
+              <LogOut size={17} className="text-[#62635A]" aria-hidden="true" />
+              <span>Sign out</span>
             </button>
           </div>
         </div>
@@ -123,13 +137,13 @@ export function Sidebar() {
               <p className="text-xs font-bold text-[#1F201B] truncate leading-tight">
                 {currentUser.name}
               </p>
-              <p className="text-[10px] text-[#7A7B72] truncate">{currentUser.roleTitle}</p>
+              <p className="text-[10px] text-[#62635A] truncate">{currentUser.roleTitle}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setActiveScreen('role-select')}
-            className="px-2 py-1 text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#F4F4F0] rounded-lg transition-colors flex items-center gap-1 text-xs font-medium"
+            className="px-2 py-1 text-[#62635A] hover:text-[#1F201B] hover:bg-[#F4F4F0] rounded-lg transition-colors flex items-center gap-1 text-xs font-medium"
             title="Switch demo persona"
             aria-label="Switch demo persona"
           >

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHandover } from '@/context/HandoverContext';
 import { Search, Bell, ChevronDown, RefreshCcw, Menu, X, Compass, LayoutDashboard, FilePlus, ClipboardCheck, FileText, Sparkles } from 'lucide-react';
 import { Role } from '@/types';
@@ -34,8 +34,17 @@ const NAV_ITEMS_BY_ROLE: Record<Role, { id: string; label: string; icon: React.R
 };
 
 export function TopNav() {
-  const { activeScreen, activeRole, setActiveScreen, currentUser, resetDemoData } = useHandover();
+  const { activeScreen, activeRole, setActiveScreen, currentUser, resetDemoData, logout } = useHandover();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobileMenuOpen]);
 
   const title = SCREEN_TITLES[activeScreen] || 'Dashboard';
   const navItems = NAV_ITEMS_BY_ROLE[activeRole] || NAV_ITEMS_BY_ROLE.lead;
@@ -63,10 +72,11 @@ export function TopNav() {
           <div className="relative hidden lg:block">
             <input
               type="text"
+              aria-label="Search projects, decisions"
               placeholder="Search projects, decisions..."
-              className="w-52 xl:w-64 pl-4 pr-9 py-2 rounded-full border border-[#E6E6DE] bg-white text-xs text-[#1F201B] placeholder-[#A2A399] focus:outline-none focus:ring-1 focus:ring-[#5A5B4C] transition-all shadow-2xs"
+              className="w-52 xl:w-64 pl-4 pr-9 py-2 rounded-full border border-[#E6E6DE] bg-white text-xs text-[#1F201B] placeholder-[#6B6C62] focus:outline-none focus:ring-1 focus:ring-[#5A5B4C] transition-all shadow-2xs"
             />
-            <Search size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#7A7B72]" />
+            <Search size={14} aria-hidden="true" className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#62635A]" />
           </div>
 
           {/* Bell Notification Pill */}
@@ -78,18 +88,18 @@ export function TopNav() {
           >
             <Bell size={13} aria-hidden="true" />
             <span className="text-[11px] sm:text-xs font-semibold hidden xs:inline">Alerts</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#5A5B4C]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#5A5B4C]" aria-hidden="true" />
           </button>
 
           {/* Reset Demo Pill */}
           <button
             type="button"
             onClick={resetDemoData}
-            className="h-8 sm:h-9 px-2 sm:px-3 rounded-full bg-white border border-[#E6E6DE] flex items-center gap-1.5 text-xs font-medium text-[#7A7B72] hover:text-[#1F201B] hover:bg-[#EAEAE2] transition-colors shadow-2xs"
-            title="Reset demo data"
-            aria-label="Reset demo data"
+            className="h-8 sm:h-9 px-2 sm:px-3 rounded-full bg-white border border-[#E6E6DE] flex items-center gap-1.5 text-xs font-medium text-[#62635A] hover:text-[#1F201B] hover:bg-[#EAEAE2] transition-colors shadow-2xs"
+            title="Start over as Team Lead"
+            aria-label="Start over as Team Lead"
           >
-            <RefreshCcw size={12} />
+            <RefreshCcw size={12} aria-hidden="true" />
             <span className="hidden sm:inline">Reset</span>
           </button>
 
@@ -106,17 +116,17 @@ export function TopNav() {
             </div>
             <div className="text-left hidden sm:block">
               <p className="text-xs font-bold text-[#1F201B] leading-none">{currentUser.name}</p>
-              <p className="text-[10px] text-[#7A7B72] leading-none mt-0.5">{currentUser.roleTitle.split(' ')[0]}</p>
+              <p className="text-[10px] text-[#62635A] leading-none mt-0.5">{currentUser.roleTitle.split(' ')[0]}</p>
             </div>
-            <ChevronDown size={12} className="text-[#7A7B72]" />
+            <ChevronDown size={12} className="text-[#62635A]" aria-hidden="true" />
           </button>
         </div>
       </header>
 
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex">
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-xs" onClick={() => setMobileMenuOpen(false)} />
+        <div className="fixed inset-0 z-50 md:hidden flex" role="dialog" aria-modal="true" aria-label="Navigation menu">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-xs" aria-hidden="true" onClick={() => setMobileMenuOpen(false)} />
           <div className="relative w-72 max-w-[80vw] bg-[#F4F4F0] h-full shadow-elevated border-r border-[#E6E6DE] p-5 flex flex-col justify-between z-10">
             <div>
               {/* Brand Header */}
@@ -127,7 +137,7 @@ export function TopNav() {
                   </div>
                   <div>
                     <span className="text-base font-bold text-[#1F201B]">Trailmark</span>
-                    <span className="block text-[9px] font-semibold text-[#7A7B72] tracking-[0.15em] uppercase -mt-0.5">
+                    <span className="block text-[9px] font-semibold text-[#62635A] tracking-[0.15em] uppercase -mt-0.5">
                       Handover OS
                     </span>
                   </div>
@@ -135,7 +145,7 @@ export function TopNav() {
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-1 rounded-lg text-[#7A7B72] hover:bg-[#EAEAE2]"
+                  className="p-1 rounded-lg text-[#62635A] hover:bg-[#EAEAE2]"
                   aria-label="Close menu"
                 >
                   <X size={18} />
@@ -149,6 +159,8 @@ export function TopNav() {
                   return (
                     <button
                       key={item.id}
+                      type="button"
+                      aria-current={isActive ? 'page' : undefined}
                       onClick={() => {
                         setActiveScreen(item.id);
                         setMobileMenuOpen(false);
@@ -156,10 +168,10 @@ export function TopNav() {
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
                         isActive
                           ? 'bg-white text-[#1F201B] shadow-2xs border border-[#E6E6DE]'
-                          : 'text-[#7A7B72] hover:bg-[#EAEAE2] hover:text-[#1F201B]'
+                          : 'text-[#62635A] hover:bg-[#EAEAE2] hover:text-[#1F201B]'
                       }`}
                     >
-                      <span className={isActive ? 'text-[#5A5B4C]' : 'text-[#7A7B72]'}>{item.icon}</span>
+                      <span className={isActive ? 'text-[#5A5B4C]' : 'text-[#62635A]'}>{item.icon}</span>
                       <span>{item.label}</span>
                     </button>
                   );
@@ -183,10 +195,20 @@ export function TopNav() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-[#1F201B]">{currentUser.name}</p>
-                    <p className="text-[10px] text-[#7A7B72]">{currentUser.roleTitle}</p>
+                    <p className="text-[10px] text-[#62635A]">{currentUser.roleTitle}</p>
                   </div>
                 </div>
                 <span className="text-[10px] font-semibold text-[#5A5B4C] underline">Switch</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  void logout();
+                }}
+                className="w-full mt-2 p-2.5 rounded-2xl bg-white border border-[#E6E6DE] text-xs font-semibold text-[#3A3B34]"
+              >
+                Sign out
               </button>
             </div>
           </div>
