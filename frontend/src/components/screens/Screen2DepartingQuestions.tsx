@@ -528,6 +528,11 @@ export function Screen2DepartingQuestions() {
               </div>
 
               {/* Big Answer Textarea */}
+              {currentQuestion.status === 'answered' && !answerText.trim() && (
+                <p role="status" className="text-xs font-semibold text-[#3F7D4E]">
+                  Answered and saved. The server does not send the saved text back, so this box is empty. Ask the Team Lead to edit it if it needs to change.
+                </p>
+              )}
               <div className="relative">
                 <textarea
                   value={answerText}

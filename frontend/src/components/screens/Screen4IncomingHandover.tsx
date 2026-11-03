@@ -180,6 +180,26 @@ export function Screen4IncomingHandover() {
     );
   }
 
+  // Real failures (server down, not signed in, wrong role) must not look like "not approved yet"
+  if (!handoverView && handoverViewError) {
+    return (
+      <div className="max-w-3xl mx-auto py-10 select-none">
+        <div role="alert" className="bg-white rounded-3xl border border-red-200 p-10 text-center shadow-soft space-y-4">
+          <h2 className="text-xl font-bold text-red-800">Could not load the handover</h2>
+          <p className="text-xs text-[#7A7B72] max-w-md mx-auto leading-relaxed">{handoverViewError}</p>
+          <button
+            type="button"
+            onClick={loadHandoverView}
+            className="px-4 py-2 rounded-full bg-white border border-[#E6E6DE] text-xs font-semibold text-[#3A3B34] hover:bg-[#EAEAE2] inline-flex items-center gap-1.5 transition-colors shadow-2xs"
+          >
+            <RefreshCw size={12} />
+            <span>Try again</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // If unapproved (409) or no view available yet
   if (!handoverView) {
     return (
