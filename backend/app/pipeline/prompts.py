@@ -54,6 +54,13 @@ DOC_FOCUS = (
     "gap it raises. Report nothing that is not in the paragraph."
 )
 
+# commits, pull requests, issues and tasks nothing cites are often skipped too, so they get one request of their own
+RECORD_FOCUS = (
+    "Every piece below is a commit, pull request, issue or task that the first pass did not cover. Report each "
+    "decision (with its reason), unfinished item, dependency, blocker, risk or owner it states, and any gap it "
+    "raises. Report nothing that is not in the piece."
+)
+
 
 VERIFY_SYSTEM = """You check whether quoted evidence supports a claim. You see only the claim and the quoted text, \
 nothing else.
