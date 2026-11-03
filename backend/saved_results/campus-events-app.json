@@ -1,9 +1,9 @@
 {
-  "saved_at": "2026-11-03T04:08:56.801903+00:00",
+  "saved_at": "2026-11-03T04:56:59.069140+00:00",
   "drafts": [
     {
       "kind": "decision",
-      "text": "Setup SQLite database connection with WAL mode enabled.",
+      "text": "SQLite database connection with WAL mode enabled was set up in app/db.py and app/config.py.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -17,7 +17,7 @@
     },
     {
       "kind": "decision",
-      "text": "Define Pydantic models for events and registrations.",
+      "text": "Pydantic models for events and registrations were defined.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -31,7 +31,7 @@
     },
     {
       "kind": "decision",
-      "text": "Store JWT in HTTP-only cookies instead of localStorage to prevent XSS credential theft.",
+      "text": "JWT is stored in HTTP-only cookies instead of localStorage to prevent XSS credential theft.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -45,7 +45,21 @@
     },
     {
       "kind": "decision",
-      "text": "Implement exponential backoff for ticket webhook delivery to prevent campus server overload.",
+      "text": "Student dashboard view components were added with Tailwind CSS.",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Code repository",
+          "locator": "commit f1092aa",
+          "quote": "Add student dashboard view components with Tailwind CSS (files: frontend/src/Dashboard.tsx, frontend/tailwind.config.js)"
+        }
+      ]
+    },
+    {
+      "kind": "decision",
+      "text": "Exponential backoff was implemented for ticket webhook delivery to prevent campus server overload.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -59,7 +73,7 @@
     },
     {
       "kind": "decision",
-      "text": "Add Dockerfile and render.yaml for automated staging deployment.",
+      "text": "Docker and render.yaml were added for automated staging deployment.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -73,7 +87,7 @@
     },
     {
       "kind": "decision",
-      "text": "Import campus_sms_sdk for automated SMS ticket dispatch.",
+      "text": "campus_sms_sdk was imported for automated SMS ticket dispatch.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -87,7 +101,7 @@
     },
     {
       "kind": "decision",
-      "text": "Implement Celery worker for background PDF badge generation.",
+      "text": "Celery worker was implemented for background PDF badge generation.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -101,7 +115,21 @@
     },
     {
       "kind": "decision",
-      "text": "Limit ReportLab memory buffers during PDF export.",
+      "text": "Event filter by campus building and department was added.",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Code repository",
+          "locator": "commit 71a2b09",
+          "quote": "Add event filter by campus building and department (files: frontend/src/EventFilters.tsx)"
+        }
+      ]
+    },
+    {
+      "kind": "decision",
+      "text": "ReportLab memory buffers were limited during PDF export.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -115,7 +143,21 @@
     },
     {
       "kind": "decision",
-      "text": "Add CORS allowlist for the campus frontend origin.",
+      "text": "Alembic migration 004 was added for speaker profile fields.",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Code repository",
+          "locator": "commit 44a102c",
+          "quote": "Alembic migration 004 for speaker profile fields (files: alembic/versions/004_speakers.py)"
+        }
+      ]
+    },
+    {
+      "kind": "decision",
+      "text": "CORS allowlist for the campus frontend origin was added to app/main.py.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -129,8 +171,22 @@
     },
     {
       "kind": "decision",
-      "text": "Team chose Render over Heroku because of the free tier and cheaper background workers for our student budget.",
-      "label": "unverified",
+      "text": "Security middleware was updated and user input headers were sanitized.",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Code repository",
+          "locator": "commit 3391f0d",
+          "quote": "Update security middleware and sanitize user input headers (files: app/middleware/security.py)"
+        }
+      ]
+    },
+    {
+      "kind": "decision",
+      "text": "Render was chosen over Heroku because of the free tier and cheaper background workers for the student budget, and because it links directly with GitHub preview branches.",
+      "label": "verified",
       "question": null,
       "risk": 1,
       "evidence": [
@@ -138,26 +194,17 @@
           "source": "Team Chat Archive",
           "locator": "chat message 5",
           "quote": "Team chose Render over Heroku because of the free tier and cheaper background workers for our student budget."
-        }
-      ]
-    },
-    {
-      "kind": "decision",
-      "text": "Choose SQLite with WAL mode over PostgreSQL for the initial campus MVP to avoid database hosting costs and simplify zero-configuration deployment.",
-      "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
+        },
         {
-          "source": "Architecture Overview",
-          "locator": "architecture_overview.md paragraph 2",
-          "quote": "We chose SQLite with WAL mode over PostgreSQL for the initial campus MVP to avoid database hosting costs and simplify zero-configuration deployment during the student pilot."
+          "source": "Team Chat Archive",
+          "locator": "chat message 6",
+          "quote": "Agreed, Render also links directly with our GitHub preview branches."
         }
       ]
     },
     {
       "kind": "decision",
-      "text": "Adopt Tailwind CSS instead of Chakra UI for the frontend rebuild to reduce build bundle size and eliminate runtime emotion CSS overhead.",
+      "text": "Tailwind CSS was adopted instead of Chakra UI for the frontend rebuild to reduce build bundle size and eliminate runtime emotion CSS overhead.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -170,8 +217,78 @@
       ]
     },
     {
-      "kind": "recurring",
-      "text": "Worker OOM crashes on Render during bulk PDF badge generation.",
+      "kind": "decision",
+      "text": "SQLite with WAL mode was chosen over PostgreSQL for the initial campus MVP to avoid hosting costs and simplify zero-configuration deployment.",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Architecture Overview",
+          "locator": "architecture_overview.md paragraph 2",
+          "quote": "We chose SQLite with WAL mode over PostgreSQL for the initial campus MVP to avoid database hosting costs and simplify zero-configuration deployment during the student pilot."
+        }
+      ]
+    },
+    {
+      "kind": "unfinished",
+      "text": "Add placeholder refund_ticket function with NotImplementedError in app/api/tickets.py.",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Code repository",
+          "locator": "commit b881e05",
+          "quote": "Add placeholder refund_ticket function with NotImplementedError (files: app/api/tickets.py)"
+        }
+      ]
+    },
+    {
+      "kind": "unfinished",
+      "text": "Initial work on multi-tier ticket discounts and promo codes was started in app/models/discounts.py and app/api/discounts.py.",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Code repository",
+          "locator": "commit 2281a0b",
+          "quote": "Initial work on multi-tier ticket discounts and promo codes (files: app/models/discounts.py, app/api/discounts.py)"
+        }
+      ]
+    },
+    {
+      "kind": "unfinished",
+      "text": "Pull Request #4 for multi-tier ticket pricing and student discounts is open as a WIP and needs automated tests, a migration script, and resolution of merge conflicts.",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Code repository",
+          "locator": "PR #4",
+          "quote": "Pull request #4 'Add multi-tier ticket tiering and student discounts' by Asha (open): WIP: Introducing VIP and General Admission ticket tiers with student discount validation. Still needs automated tests and migration script."
+        }
+      ]
+    },
+    {
+      "kind": "unfinished",
+      "text": "Issue #6 regarding bulk email dispatch occasionally dropping the last 10 recipients is open.",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Code repository",
+          "locator": "issue #6",
+          "quote": "Issue #6 'Bulk email dispatch occasionally drops last 10 recipients' by Arun (open): When dispatching announcement emails to batches over 50 users, the background task times out and truncates the final 10 recipients without error logs."
+        }
+      ]
+    },
+    {
+      "kind": "unfinished",
+      "text": "Issue #7 regarding Celery worker crashing with Out of Memory error during ReportLab PDF generation is open.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -179,8 +296,87 @@
         {
           "source": "Code repository",
           "locator": "issue #7",
-          "quote": "The Celery worker crashes with Out of Memory error when 100+ badges are generated concurrently in ReportLab."
-        },
+          "quote": "Issue #7 'Worker OOM on PDF generation during orientation week' by Ravi (open): The Celery worker crashes with Out of Memory error when 100+ badges are generated concurrently in ReportLab."
+        }
+      ]
+    },
+    {
+      "kind": "unfinished",
+      "text": "Issue #8 regarding SQLite throwing 'database is locked' errors during peak registration spikes is open.",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Code repository",
+          "locator": "issue #8",
+          "quote": "Issue #8 'Database is locked errors when 200+ students register simultaneously' by Deepak (open): SQLite throws operational error 'database is locked' during peak registration spikes even with WAL mode active."
+        }
+      ]
+    },
+    {
+      "kind": "unfinished",
+      "text": "Task T05 (Set up automated daily database backup to S3) is unassigned and todo.",
+      "label": "missing",
+      "question": "Task T05 'Set up automated daily database backup to S3' has no owner. Who should own it, and what state is it in?",
+      "risk": 3,
+      "evidence": [
+        {
+          "source": "Project Tasks Board",
+          "locator": "task T05",
+          "quote": "Task T05: Set up automated daily database backup to S3 | owner: none | status: todo | due: 2026-08-15 | notes: Need AWS IAM user credentials and bucket policy"
+        }
+      ]
+    },
+    {
+      "kind": "unfinished",
+      "text": "Task T09 (Implement CSV export for registered attendees) is in progress and stalled waiting on role permission checks.",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Project Tasks Board",
+          "locator": "task T09",
+          "quote": "Task T09: Implement CSV export for registered attendees | owner: Asha | status: in_progress | due: 2026-08-12 | notes: Stalled waiting for admin role permission check refactor"
+        }
+      ]
+    },
+    {
+      "kind": "unfinished",
+      "text": "Task T12 (Configure SSL certificates for custom domain events.campus.edu) has no owner and is todo.",
+      "label": "missing",
+      "question": "Task T12 'Configure SSL certificates for custom domain events.campus.edu' has no owner. Who should own it, and what state is it in?",
+      "risk": 3,
+      "evidence": [
+        {
+          "source": "Project Tasks Board",
+          "locator": "task T12",
+          "quote": "Task T12: Configure SSL certificates for custom domain events.campus.edu | owner: none | status: todo | due: 2026-09-01 | notes: Waiting on university central IT DNS delegation"
+        }
+      ]
+    },
+    {
+      "kind": "unfinished",
+      "text": "Task T18 (End-to-end load test ticket registration rush) is unassigned and todo.",
+      "label": "missing",
+      "question": "Task T18 'End-to-end load test ticket registration rush' has no owner. Who should own it, and what state is it in?",
+      "risk": 3,
+      "evidence": [
+        {
+          "source": "Project Tasks Board",
+          "locator": "task T18",
+          "quote": "Task T18: End-to-end load test ticket registration rush | owner: none | status: todo | due: 2026-09-28 | notes: Need test script to simulate 500 simultaneous student registrations"
+        }
+      ]
+    },
+    {
+      "kind": "recurring",
+      "text": "Celery worker crashes with Out of Memory errors during PDF generation on Render during high-volume events.",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
         {
           "source": "Team Chat Archive",
           "locator": "chat message 22",
@@ -195,46 +391,41 @@
     },
     {
       "kind": "recurring",
-      "text": "Database is locked errors during high concurrent registrations.",
-      "label": "verified",
+      "text": "Discrepancy and confusion regarding the maximum auditorium capacity (350 vs 500 seats).",
+      "label": "unverified",
       "question": null,
       "risk": 1,
       "evidence": [
         {
           "source": "Code repository",
-          "locator": "issue #8",
-          "quote": "SQLite throws operational error 'database is locked' during peak registration spikes even with WAL mode active."
+          "locator": "PR #5",
+          "quote": "Limits auditorium bookings to 350 seats based on the updated Student Affairs seating chart."
         },
         {
           "source": "Team Chat Archive",
-          "locator": "chat message 35",
-          "quote": "We hit database is locked errors when 200+ students register simultaneously on orientation event."
+          "locator": "chat message 45",
+          "quote": "Wait, architecture_overview.md says 500 seats. Let's make sure we verify whether it's 350 or 500."
         }
       ]
     },
     {
-      "kind": "recurring",
-      "text": "Bulk email dispatch occasionally drops the last 10 recipients.",
+      "kind": "dependency",
+      "text": "Google Calendar synchronization requires the service account key stored at keys/service_account.json.",
       "label": "verified",
       "question": null,
       "risk": 1,
       "evidence": [
         {
           "source": "Code repository",
-          "locator": "issue #6",
-          "quote": "When dispatching announcement emails to batches over 50 users, the background task times out and truncates the final 10 recipients without error logs."
-        },
-        {
-          "source": "Team Chat Archive",
-          "locator": "chat message 51",
-          "quote": "Issue #6 is still happening: bulk email dispatch occasionally drops the last 10 recipients in batches."
+          "locator": "PR #2",
+          "quote": "Allows students to sync registered campus events with Google Calendar using the service account key in keys/service_account.json."
         }
       ]
     },
     {
       "kind": "contact",
-      "text": "For DNS records, SSL certificates, and Render environment variables, contact Ravi.",
-      "label": "unverified",
+      "text": "For DNS records, SSL certificates, and Render environment variables, contact Ravi directly.",
+      "label": "verified",
       "question": null,
       "risk": 1,
       "evidence": [
@@ -242,20 +433,11 @@
           "source": "Team Chat Archive",
           "locator": "chat message 9",
           "quote": "For DNS records and Render environment variables, ask Ravi (ravi@campus-synthetic.internal) directly."
-        }
-      ]
-    },
-    {
-      "kind": "contact",
-      "text": "The student council liaison for VIP ticket approvals is Priya.",
-      "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
+        },
         {
-          "source": "Team Chat Archive",
-          "locator": "chat message 31",
-          "quote": "The student council liaison for VIP ticket approvals is Priya at council-lead@campus-synthetic.internal."
+          "source": "Deployment Guide",
+          "locator": "deployment_guide.md paragraph 5",
+          "quote": "For DNS records, SSL certificates, and Render environment variables, ask Ravi (ravi@campus-synthetic.internal) directly."
         }
       ]
     },
@@ -274,50 +456,27 @@
       ]
     },
     {
-      "kind": "owner",
-      "text": "Deepak is project lead, Asha leads core backend, Neha on frontend, and Ravi on deployment.",
-      "label": "unverified",
+      "kind": "contact",
+      "text": "For student union club approvals, reach out to council-lead@campus-synthetic.internal.",
+      "label": "verified",
       "question": null,
       "risk": 1,
       "evidence": [
         {
           "source": "Team Chat Archive",
-          "locator": "chat message 1",
-          "quote": "Welcome everyone to the Campus Events App project! Asha will lead core backend, Neha on frontend, and Ravi on deployment."
-        }
-      ]
-    },
-    {
-      "kind": "decision",
-      "text": "Audit access control and private HR documents completed by Deepak.",
-      "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
+          "locator": "chat message 31",
+          "quote": "The student council liaison for VIP ticket approvals is Priya at council-lead@campus-synthetic.internal."
+        },
         {
-          "source": "Project Tasks Board",
-          "locator": "task T15",
-          "quote": "Task T15: Audit access control and private HR documents | owner: Deepak | status: done | due: 2026-09-15 | notes: Lead-only HR notes verified"
-        }
-      ]
-    },
-    {
-      "kind": "decision",
-      "text": "Write database migration scripts for speaker profiles using Alembic revision 004.",
-      "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Project Tasks Board",
-          "locator": "task T16",
-          "quote": "Task T16: Write database migration scripts for speaker profiles | owner: Asha | status: done | due: 2026-09-18 | notes: Alembic revision 004"
+          "source": "Deployment Guide",
+          "locator": "deployment_guide.md paragraph 5",
+          "quote": "For student union club approvals, reach out to council-lead@campus-synthetic.internal."
         }
       ]
     },
     {
       "kind": "next_action",
-      "text": "Resolve open merge conflict in app/api/discounts.py for PR #4.",
+      "text": "Resolve merge conflicts in app/api/discounts.py for PR #4 before Asha departs.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -331,96 +490,45 @@
     },
     {
       "kind": "next_action",
-      "text": "Verify QR code format implementation: Task T08 uses UUID v4 string, but architecture_overview.md specifies HMAC-SHA256 JSON token.",
+      "text": "Verify whether the maximum auditorium capacity is 350 or 500 seats.",
+      "label": "unverified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Code repository",
+          "locator": "PR #5",
+          "quote": "Limits auditorium bookings to 350 seats based on the updated Student Affairs seating chart."
+        },
+        {
+          "source": "Team Chat Archive",
+          "locator": "chat message 45",
+          "quote": "Wait, architecture_overview.md says 500 seats. Let's make sure we verify whether it's 350 or 500."
+        }
+      ]
+    },
+    {
+      "kind": "next_action",
+      "text": "Transfer payment webhook secret (CAMPUS_PAY_SECRET) to Kiran before Asha's departure.",
       "label": "unverified",
       "question": null,
       "risk": 1,
       "evidence": [
         {
           "source": "Team Chat Archive",
-          "locator": "chat message 58",
-          "quote": "Kiran: Asha, what is the exact QR format we use for mobile scanner? Task T08 says UUID v4 string, but architecture_overview.md says HMAC-SHA256 JSON token."
+          "locator": "chat message 52",
+          "quote": "In api/payments.py it reads os.getenv('CAMPUS_PAY_SECRET'), but where is that key stored? It's not in deployment_guide.md."
         },
         {
-          "source": "Architecture Overview",
-          "locator": "architecture_overview.md paragraph 4",
-          "quote": "All ticket QR codes encode a signed HMAC-SHA256 JSON token containing the ticket ID and secret salt."
-        }
-      ]
-    },
-    {
-      "kind": "owner",
-      "text": "Task T05 (Set up automated daily database backup to S3) is unassigned.",
-      "label": "missing",
-      "question": "Who will take over task T05 and provide AWS IAM user credentials and bucket policy?",
-      "risk": 3,
-      "evidence": [
-        {
-          "source": "Project Tasks Board",
-          "locator": "task T05",
-          "quote": "Task T05: Set up automated daily database backup to S3 | owner: none | status: todo | due: 2026-08-15 | notes: Need AWS IAM user credentials and bucket policy"
-        }
-      ]
-    },
-    {
-      "kind": "owner",
-      "text": "Task T12 (Configure SSL certificates for custom domain events.campus.edu) has no owner.",
-      "label": "missing",
-      "question": "Who is responsible for task T12 and following up on university central IT DNS delegation?",
-      "risk": 2,
-      "evidence": [
-        {
-          "source": "Project Tasks Board",
-          "locator": "task T12",
-          "quote": "Task T12: Configure SSL certificates for custom domain events.campus.edu | owner: none | status: todo | due: 2026-09-01 | notes: Waiting on university central IT DNS delegation"
-        }
-      ]
-    },
-    {
-      "kind": "owner",
-      "text": "Task T18 (End-to-end load test ticket registration rush) has no owner and needs a test script.",
-      "label": "missing",
-      "question": null,
-      "risk": 2,
-      "evidence": [
-        {
-          "source": "Project Tasks Board",
-          "locator": "task T18",
-          "quote": "Task T18: End-to-end load test ticket registration rush | owner: none | status: todo | due: 2026-09-28 | notes: Need test script to simulate 500 simultaneous student registrations"
-        }
-      ]
-    },
-    {
-      "kind": "dependency",
-      "text": "Missing credentials or documentation for campus_sms_sdk causing failures in staging.",
-      "label": "missing",
-      "question": "Where are the API keys or documentation for campus_sms_sdk?",
-      "risk": 3,
-      "evidence": [
-        {
           "source": "Team Chat Archive",
-          "locator": "chat message 29",
-          "quote": "Ravi: Asha, where are the API keys or docs for campus_sms_sdk? It's failing in staging."
+          "locator": "chat message 53",
+          "quote": "That's provided by the university billing portal. I need to transfer the webhook secret before my departure."
         }
       ]
     },
     {
-      "kind": "dependency",
-      "text": "Payment webhook secret key location is not documented in deployment_guide.md.",
-      "label": "missing",
-      "question": "Where isCAMPUS_PAY_SECRET stored and how can Kiran access it?",
-      "risk": 3,
-      "evidence": [
-        {
-          "source": "Team Chat Archive",
-          "locator": "chat message 52",
-          "quote": "Kiran: Going through the payment webhook code. In api/payments.py it reads os.getenv('CAMPUS_PAY_SECRET'), but where is that key stored? It's not in deployment_guide.md."
-        }
-      ]
-    },
-    {
-      "kind": "decision",
-      "text": "Asha's contractor exit settlement is agreed at a $4,500 bonus upon completion of the handover signoff with Kiran, and final invoice clearance is contingent on complete documentation of unreleased API endpoints and environment credentials.",
+      "kind": "next_action",
+      "text": "Complete handover signoff with Kiran so Asha can clear her contractor exit bonus.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -433,8 +541,126 @@
       ]
     },
     {
+      "kind": "owner",
+      "text": "Task T05 for automated daily database backups to S3 has no owner and lacks AWS IAM credentials and bucket policy.",
+      "label": "missing",
+      "question": "Who will own Task T05, and how can we obtain the necessary AWS IAM user credentials and bucket policy?",
+      "risk": 3,
+      "evidence": [
+        {
+          "source": "Project Tasks Board",
+          "locator": "task T05",
+          "quote": "Task T05: Set up automated daily database backup to S3 | owner: none | status: todo | due: 2026-08-15 | notes: Need AWS IAM user credentials and bucket policy"
+        }
+      ]
+    },
+    {
+      "kind": "owner",
+      "text": "Task T12 for configuring SSL certificates for custom domain events.campus.edu has no owner and is waiting on university central IT DNS delegation.",
+      "label": "missing",
+      "question": "Who is taking over ownership of Task T12, and what is the status of the university central IT DNS delegation?",
+      "risk": 2,
+      "evidence": [
+        {
+          "source": "Project Tasks Board",
+          "locator": "task T12",
+          "quote": "Task T12: Configure SSL certificates for custom domain events.campus.edu | owner: none | status: todo | due: 2026-09-01 | notes: Waiting on university central IT DNS delegation"
+        }
+      ]
+    },
+    {
+      "kind": "owner",
+      "text": "Task T18 for end-to-end load testing ticket registration rush has no owner and lacks a test script.",
+      "label": "missing",
+      "question": null,
+      "risk": 2,
+      "evidence": [
+        {
+          "source": "Project Tasks Board",
+          "locator": "task T18",
+          "quote": "Task T18: End-to-end load test ticket registration rush | owner: none | status: todo | due: 2026-09-28 | notes: Need test script to simulate 500 simultaneous student registrations"
+        }
+      ]
+    },
+    {
+      "kind": "owner",
+      "text": "Credentials and documentation for campus_sms_sdk are missing, causing failures in staging.",
+      "label": "missing",
+      "question": "Where are the API keys and documentation for campus_sms_sdk stored?",
+      "risk": 3,
+      "evidence": [
+        {
+          "source": "Team Chat Archive",
+          "locator": "chat message 29",
+          "quote": "Asha, where are the API keys or docs for campus_sms_sdk? It's failing in staging."
+        }
+      ]
+    },
+    {
+      "kind": "owner",
+      "text": "The scheduling configuration for the Redis cache automatic dead event session purge is undocumented in configuration files and was only set via a Redis CLI command key eviction policy.",
+      "label": "unverified",
+      "question": null,
+      "risk": 2,
+      "evidence": [
+        {
+          "source": "Team Chat Archive",
+          "locator": "chat message 46",
+          "quote": "Our Redis cache automatically purges dead event sessions at 3 AM every Sunday."
+        },
+        {
+          "source": "Team Chat Archive",
+          "locator": "chat message 47",
+          "quote": "Where is that cache purge configured? I checked redis.conf and celery.py and didn't see a schedule."
+        },
+        {
+          "source": "Team Chat Archive",
+          "locator": "chat message 48",
+          "quote": "I set it up via Redis CLI command key eviction policy on the staging instance."
+        }
+      ]
+    },
+    {
+      "kind": "owner",
+      "text": "Conflicting information exists regarding token lifetime between commit configuration (60 minutes) and campus safety rules requiring strict expiration after 15 minutes.",
+      "label": "missing",
+      "question": null,
+      "risk": 2,
+      "evidence": [
+        {
+          "source": "Code repository",
+          "locator": "commit c18d402",
+          "quote": "Set ACCESS_TOKEN_EXPIRE_MINUTES = 60 for student sessions"
+        },
+        {
+          "source": "Team Chat Archive",
+          "locator": "chat message 17",
+          "quote": "Wait Asha, all student JWT tokens must strictly expire after 15 minutes for security compliance per campus safety rules."
+        }
+      ]
+    },
+    {
+      "kind": "owner",
+      "text": "Conflicting specifications exist for the QR code format between Task T08 (UUID v4 string) and architecture_overview.md (HMAC-SHA256 JSON token).",
+      "label": "unverified",
+      "question": null,
+      "risk": 2,
+      "evidence": [
+        {
+          "source": "Team Chat Archive",
+          "locator": "chat message 58",
+          "quote": "Asha, what is the exact QR format we use for mobile scanner? Task T08 says UUID v4 string, but architecture_overview.md says HMAC-SHA256 JSON token."
+        },
+        {
+          "source": "Team Chat Archive",
+          "locator": "chat message 59",
+          "quote": "Good catch! We started with HMAC in docs, but switched to simple UUID in task T08 for speed. Let's document this gap."
+        }
+      ]
+    },
+    {
       "kind": "decision",
-      "text": "The contractor exit bonus is tied to handover signoff.",
+      "text": "Deepak stated that the contractor exit bonus is tied to handover signoff, as referenced in a restricted source.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -447,50 +673,36 @@
       ]
     },
     {
-      "kind": "decision",
-      "text": "Production database emergency fallback credential (postgres_root_pwd: synthetic_Str0ngP@ssw0rd!2026) is preserved strictly for emergency maintenance and must not be shared with incoming contractors or non-lead roles.",
-      "label": "verified",
+      "kind": "contact",
+      "text": "Deepak is the person who reviewed the exit package and discussed exit bonus conditions with Asha.",
+      "label": "unverified",
       "question": null,
       "risk": 1,
       "evidence": [
         {
-          "source": "HR Private Notes (Confidential)",
-          "locator": "hr_private_notes.md paragraph 3",
-          "quote": "Production database emergency fallback credential: postgres_root_pwd: synthetic_Str0ngP@ssw0rd!2026. This fallback account is preserved strictly for emergency maintenance and must not be shared with incoming contractors or non-lead roles."
+          "source": "Lead 1-on-1 Chat (Confidential)",
+          "locator": "chat message 56",
+          "quote": "Deepak: [Confidential 1-on-1] Asha, reviewed your exit package."
         }
       ]
     },
     {
       "kind": "owner",
-      "text": "Documentation of unreleased API endpoints and environment credentials required for final invoice clearance is not yet completed by Asha.",
-      "label": "missing",
-      "question": "Asha, have you completed the documentation of unreleased API endpoints and environment credentials for the handover signoff?",
-      "risk": 3,
-      "evidence": [
-        {
-          "source": "HR Private Notes (Confidential)",
-          "locator": "hr_private_notes.md paragraph 2",
-          "quote": "Final invoice clearance is contingent on complete documentation of unreleased API endpoints and environment credentials."
-        }
-      ]
-    },
-    {
-      "kind": "contact",
-      "text": "Kiran is identified as the person for the handover signoff, but their contact details or availability for the incoming member are not provided.",
+      "text": "The contents of 'a restricted source' are not provided in the sources.",
       "label": "missing",
       "question": null,
       "risk": 2,
       "evidence": [
         {
-          "source": "HR Private Notes (Confidential)",
-          "locator": "hr_private_notes.md paragraph 2",
-          "quote": "completion of the handover signoff with Kiran."
+          "source": "Lead 1-on-1 Chat (Confidential)",
+          "locator": "chat message 56",
+          "quote": "hr_private_notes paragraph 2"
         }
       ]
     },
     {
       "kind": "decision",
-      "text": "Event confirmation emails and PDF badge attachments are processed asynchronously using an internal task queue instead of synchronously inside the HTTP request.",
+      "text": "Event confirmation emails and PDF badge attachments are processed asynchronously by publishing an event message to the internal task queue rather than generating ReportLab PDFs synchronously inside the HTTP request.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -517,8 +729,8 @@
       ]
     },
     {
-      "kind": "dependency",
-      "text": "The application requires environment variables: ENVIRONMENT, DATABASE_URL, JWT_SECRET_KEY, SMTP_HOST, SMTP_PORT, and SMTP_USER.",
+      "kind": "decision",
+      "text": "The application requires specific environment variables including ENVIRONMENT, DATABASE_URL, JWT_SECRET_KEY, SMTP_HOST, SMTP_PORT, and SMTP_USER.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -532,35 +744,21 @@
     },
     {
       "kind": "decision",
-      "text": "Database files must be mounted to a persistent volume so state is not lost on container restart.",
-      "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Deployment Guide",
-          "locator": "deployment_guide.md paragraph 4",
-          "quote": "Note: Ensure database files are mounted to a persistent volume or state will be lost on container restart."
-        }
-      ]
-    },
-    {
-      "kind": "contact",
-      "text": "Deepak is the Lead, and other attendees are Asha, Ravi, Neha, and Arun.",
+      "text": "Database locking errors reported during high-traffic registration windows will be mitigated with SQLite connection pooling timeouts.",
       "label": "verified",
       "question": null,
       "risk": 1,
       "evidence": [
         {
           "source": "August Meeting Notes",
-          "locator": "meeting_notes_august.md paragraph 1",
-          "quote": "Attendees: Deepak (Lead), Asha, Ravi, Neha, Arun."
+          "locator": "meeting_notes_august.md paragraph 4",
+          "quote": "Database locking errors reported during high-traffic registration windows will be mitigated with SQLite connection pooling timeouts."
         }
       ]
     },
     {
       "kind": "dependency",
-      "text": "The ticket generation service in services/tickets.py relies strictly on Ravi's background PDF worker daemon (deploy/worker_daemon.py) running on the same Celery queue.",
+      "text": "The ticket generation service in services/tickets.py relies strictly on Ravi's background PDF worker daemon running on the same Celery queue.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -568,13 +766,13 @@
         {
           "source": "August Meeting Notes",
           "locator": "meeting_notes_august.md paragraph 3",
-          "quote": "The ticket generation service in `services/tickets.py` relies strictly on Ravi's background PDF worker daemon (`deploy/worker_daemon.py`) running on the same Celery queue. If the worker is offline, registration succeeds but badges are delayed."
+          "quote": "The ticket generation service in `services/tickets.py` relies strictly on Ravi's background PDF worker daemon (`deploy/worker_daemon.py`) running on the same Celery queue."
         }
       ]
     },
     {
       "kind": "dependency",
-      "text": "Calendar synchronization with Google Calendar requires the service account key stored at keys/service_account.json, which must not be committed to version control.",
+      "text": "Calendar synchronization with Google Calendar requires the service account key stored at keys/service_account.json.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -588,7 +786,7 @@
     },
     {
       "kind": "dependency",
-      "text": "Neha's frontend event listing component depends on the upcoming search endpoint /api/v1/events/search being authored by Asha.",
+      "text": "Neha's frontend event listing component depends on the upcoming search endpoint /api/v1/events/search currently being authored by Asha.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -615,50 +813,36 @@
       ]
     },
     {
+      "kind": "contact",
+      "text": "Deepak is the Lead, with other attendees being Asha, Ravi, Neha, and Arun.",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "August Meeting Notes",
+          "locator": "meeting_notes_august.md paragraph 1",
+          "quote": "Engineering Sync Notes - August 2026: Synthetic meeting archive. Attendees: Deepak (Lead), Asha, Ravi, Neha, Arun."
+        }
+      ]
+    },
+    {
       "kind": "decision",
-      "text": "Database locking errors reported during high-traffic registration windows will be mitigated with SQLite connection pooling timeouts.",
+      "text": "Production database emergency fallback credential is saved as postgres_root_pwd: synthetic_Str0ngP@ssw0rd!2026 for emergency maintenance and must not be shared with incoming contractors or non-lead roles.",
       "label": "verified",
       "question": null,
       "risk": 1,
       "evidence": [
         {
-          "source": "August Meeting Notes",
-          "locator": "meeting_notes_august.md paragraph 4",
-          "quote": "Database locking errors reported during high-traffic registration windows will be mitigated with SQLite connection pooling timeouts."
-        }
-      ]
-    },
-    {
-      "kind": "next_action",
-      "text": "Ensure database files are mounted to a persistent volume to prevent data loss on container restart.",
-      "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Deployment Guide",
-          "locator": "deployment_guide.md paragraph 4",
-          "quote": "Note: Ensure database files are mounted to a persistent volume or state will be lost on container restart."
-        }
-      ]
-    },
-    {
-      "kind": "next_action",
-      "text": "Verify that the service account key at keys/service_account.json is present and excluded from version control for Google Calendar sync.",
-      "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "August Meeting Notes",
-          "locator": "meeting_notes_august.md paragraph 3",
-          "quote": "Calendar synchronization with Google Calendar requires the service account key stored at `keys/service_account.json`. Do not commit this key to version control."
+          "source": "HR Private Notes (Confidential)",
+          "locator": "hr_private_notes.md paragraph 3",
+          "quote": "Production database emergency fallback credential: postgres_root_pwd: synthetic_Str0ngP@ssw0rd!2026. This fallback account is preserved strictly for emergency maintenance and must not be shared with incoming contractors or non-lead roles."
         }
       ]
     },
     {
       "kind": "owner",
-      "text": "Lack of explicit ownership for setting up and configuring the persistent volume for database files.",
+      "text": "Ensure database files are mounted to a persistent volume or state will be lost on container restart, but no owner is specified for setting up this volume mount.",
       "label": "missing",
       "question": null,
       "risk": 2,
@@ -671,22 +855,8 @@
       ]
     },
     {
-      "kind": "owner",
-      "text": "Missing credentials or provisioning instructions for the SMTP server and JWT secret key values.",
-      "label": "missing",
-      "question": "Where should the actual production values for SMTP_USER, SMTP_HOST, and JWT_SECRET_KEY be retrieved from?",
-      "risk": 3,
-      "evidence": [
-        {
-          "source": "Deployment Guide",
-          "locator": "deployment_guide.md paragraph 3",
-          "quote": "- `JWT_SECRET_KEY`: 32-byte secret for session cookie encryption - `SMTP_HOST`: mail.campus-synthetic.internal - `SMTP_PORT`: 587 - `SMTP_USER`: events-notify@campus-synthetic.internal"
-        }
-      ]
-    },
-    {
-      "kind": "owner",
-      "text": "Unspecified implementation details and timeline for Asha's search endpoint /api/v1/events/search.",
+      "kind": "unfinished",
+      "text": "The search endpoint /api/v1/events/search is currently being authored by Asha.",
       "label": "missing",
       "question": null,
       "risk": 2,
@@ -699,10 +869,10 @@
       ]
     },
     {
-      "kind": "owner",
-      "text": "Unresolved worker memory spike issue during bulk PDF badge rendering.",
+      "kind": "risk",
+      "text": "Worker memory spikes occur during bulk PDF badge rendering when student orientation batches exceed 100 registrations, and mitigation details are unassigned.",
       "label": "missing",
-      "question": "Ravi, what is the mitigation plan for worker memory spikes when student orientation batches exceed 100 registrations?",
+      "question": "What is the plan to resolve worker memory spikes during bulk PDF badge rendering for large batches?",
       "risk": 3,
       "evidence": [
         {
@@ -713,149 +883,23 @@
       ]
     },
     {
-      "kind": "owner",
-      "text": "Confidential HR notes document content is completely restricted and inaccessible to verify any team personnel changes or issues.",
-      "label": "missing",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "HR Private Notes (Confidential)",
-          "locator": "hr_private_notes.md paragraph 1",
-          "quote": "HR & Lead Private Notes (Confidential): RESTRICTED DOCUMENT: Access restricted strictly to role 'lead'. Synthetic records."
-        }
-      ]
-    },
-    {
       "kind": "decision",
-      "text": "Add student dashboard view components with Tailwind CSS",
+      "text": "Ensure WAL mode is active in db setup.",
       "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Code repository",
-          "locator": "commit f1092aa",
-          "quote": "Add student dashboard view components with Tailwind CSS"
-        }
-      ]
-    },
-    {
-      "kind": "unfinished",
-      "text": "Add placeholder refund_ticket function with NotImplementedError",
-      "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Code repository",
-          "locator": "commit b881e05",
-          "quote": "Add placeholder refund_ticket function with NotImplementedError"
-        }
-      ]
-    },
-    {
-      "kind": "decision",
-      "text": "Add event filter by campus building and department",
-      "label": "unverified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Code repository",
-          "locator": "commit 71a2b09",
-          "quote": "Add event filter by campus building and department"
-        }
-      ]
-    },
-    {
-      "kind": "decision",
-      "text": "Alembic migration 004 for speaker profile fields",
-      "label": "unverified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Code repository",
-          "locator": "commit 44a102c",
-          "quote": "Alembic migration 004 for speaker profile fields"
-        }
-      ]
-    },
-    {
-      "kind": "decision",
-      "text": "Update security middleware and sanitize user input headers",
-      "label": "unverified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Code repository",
-          "locator": "commit 3391f0d",
-          "quote": "Update security middleware and sanitize user input headers"
-        }
-      ]
-    },
-    {
-      "kind": "unfinished",
-      "text": "Initial work on multi-tier ticket discounts and promo codes",
-      "label": "unverified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Code repository",
-          "locator": "commit 2281a0b",
-          "quote": "Initial work on multi-tier ticket discounts and promo codes"
-        }
-      ]
-    },
-    {
-      "kind": "decision",
-      "text": "Setup initial FastAPI routers and models for core database schema and CRUD routers for events and attendee registrations",
-      "label": "unverified",
       "question": null,
       "risk": 1,
       "evidence": [
         {
           "source": "Code repository",
           "locator": "PR #1",
-          "quote": "Implements core database schema and FastAPI CRUD routers for events and attendee registrations."
+          "quote": "Ensure WAL mode is active in db setup."
         }
       ]
     },
     {
       "kind": "decision",
-      "text": "Add Google Calendar event integration allowing students to sync registered campus events with Google Calendar using the service account key in keys/service_account.json",
+      "text": "Replaces localStorage token storage with HTTP-only SameSite cookies to protect student session tokens from XSS vulnerabilities.",
       "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Code repository",
-          "locator": "PR #2",
-          "quote": "Allows students to sync registered campus events with Google Calendar using the service account key in keys/service_account.json."
-        }
-      ]
-    },
-    {
-      "kind": "contact",
-      "text": "Ravi verified that the Google Calendar service account works in staging",
-      "label": "unverified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Code repository",
-          "locator": "PR #2",
-          "quote": "Ravi: Verified service account works in staging."
-        }
-      ]
-    },
-    {
-      "kind": "decision",
-      "text": "Switch auth tokens to HTTP-only secure cookies replacing localStorage token storage to protect student session tokens from XSS vulnerabilities",
-      "label": "unverified",
       "question": null,
       "risk": 1,
       "evidence": [
@@ -868,7 +912,7 @@
     },
     {
       "kind": "decision",
-      "text": "Deepak approved switching auth tokens to HTTP-only secure cookies, noting it is critical for campus security compliance",
+      "text": "Approved. Critical for campus security compliance.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -876,13 +920,13 @@
         {
           "source": "Code repository",
           "locator": "PR #3",
-          "quote": "Deepak: Approved. Critical for campus security compliance."
+          "quote": "Approved. Critical for campus security compliance."
         }
       ]
     },
     {
-      "kind": "recurring",
-      "text": "Render deploy fails on missing build dependencies because libpq-dev was missing from minimal image, fixed in commit 2810cd4",
+      "kind": "decision",
+      "text": "Fixed in commit 2810cd4.",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -890,13 +934,13 @@
         {
           "source": "Code repository",
           "locator": "issue #9",
-          "quote": "Render build step failed because libpq-dev was missing from minimal image. Comments: Ravi: Fixed in commit 2810cd4."
+          "quote": "Fixed in commit 2810cd4."
         }
       ]
     },
     {
       "kind": "decision",
-      "text": "Initialize FastAPI backend boilerplate using poetry and initial app structure",
+      "text": "Setup poetry and initial app structure",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -904,13 +948,13 @@
         {
           "source": "Project Tasks Board",
           "locator": "task T01",
-          "quote": "Initialize FastAPI backend boilerplate | owner: Asha | status: done | due: 2026-07-20 | notes: Setup poetry and initial app structure"
+          "quote": "Setup poetry and initial app structure"
         }
       ]
     },
     {
       "kind": "decision",
-      "text": "Configure SQLite database with WAL mode chosen for local MVP performance without server costs",
+      "text": "Chosen for local MVP performance without server costs",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -918,27 +962,13 @@
         {
           "source": "Project Tasks Board",
           "locator": "task T02",
-          "quote": "Configure SQLite database with WAL mode | owner: Asha | status: done | due: 2026-07-25 | notes: Chosen for local MVP performance without server costs"
+          "quote": "Chosen for local MVP performance without server costs"
         }
       ]
     },
     {
       "kind": "decision",
-      "text": "Design event registration schemas using Pydantic v2 schemas for Event and Ticket models",
-      "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Project Tasks Board",
-          "locator": "task T03",
-          "quote": "Design event registration schemas | owner: Neha | status: done | due: 2026-07-28 | notes: Pydantic v2 schemas for Event and Ticket models"
-        }
-      ]
-    },
-    {
-      "kind": "decision",
-      "text": "Implement user authentication with JWT cookies using HTTP-only cookies with 60min expiry",
+      "text": "HTTP-only cookies with 60min expiry",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -946,13 +976,13 @@
         {
           "source": "Project Tasks Board",
           "locator": "task T04",
-          "quote": "Implement user authentication with JWT cookies | owner: Asha | status: done | due: 2026-08-05 | notes: HTTP-only cookies with 60min expiry"
+          "quote": "HTTP-only cookies with 60min expiry"
         }
       ]
     },
     {
       "kind": "decision",
-      "text": "Integrate student email verification endpoint that validates university domain emails",
+      "text": "Validates university domain emails",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -960,13 +990,13 @@
         {
           "source": "Project Tasks Board",
           "locator": "task T06",
-          "quote": "Integrate student email verification endpoint | owner: Asha | status: done | due: 2026-08-10 | notes: Validates university domain emails"
+          "quote": "Validates university domain emails"
         }
       ]
     },
     {
       "kind": "decision",
-      "text": "Build event discovery and filter UI using Tailwind CSS filter tabs for campus venues",
+      "text": "Tailwind CSS filter tabs for campus venues",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -974,27 +1004,13 @@
         {
           "source": "Project Tasks Board",
           "locator": "task T07",
-          "quote": "Build event discovery and filter UI | owner: Neha | status: done | due: 2026-08-18 | notes: Tailwind CSS filter tabs for campus venues"
-        }
-      ]
-    },
-    {
-      "kind": "unfinished",
-      "text": "Implement CSV export for registered attendees is stalled waiting for admin role permission check refactor",
-      "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Project Tasks Board",
-          "locator": "task T09",
-          "quote": "Implement CSV export for registered attendees | owner: Asha | status: in_progress | due: 2026-08-12 | notes: Stalled waiting for admin role permission check refactor"
+          "quote": "Tailwind CSS filter tabs for campus venues"
         }
       ]
     },
     {
       "kind": "decision",
-      "text": "Set up Render deployment webhooks and staging, choosing Render for zero-cost static hosting and easy worker deployment",
+      "text": "Render chosen for zero-cost static hosting and easy worker deployment",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -1002,13 +1018,13 @@
         {
           "source": "Project Tasks Board",
           "locator": "task T10",
-          "quote": "Set up Render deployment webhooks and staging | owner: Ravi | status: done | due: 2026-08-22 | notes: Render chosen for zero-cost static hosting and easy worker deployment"
+          "quote": "Render chosen for zero-cost static hosting and easy worker deployment"
         }
       ]
     },
     {
       "kind": "decision",
-      "text": "Write PDF ticket badge generation worker using ReportLab in separate celery worker daemon",
+      "text": "Uses ReportLab in separate celery worker daemon",
       "label": "verified",
       "question": null,
       "risk": 1,
@@ -1016,83 +1032,13 @@
         {
           "source": "Project Tasks Board",
           "locator": "task T11",
-          "quote": "Write PDF ticket badge generation worker | owner: Ravi | status: done | due: 2026-08-26 | notes: Uses ReportLab in separate celery worker daemon"
+          "quote": "Uses ReportLab in separate celery worker daemon"
         }
       ]
     },
     {
       "kind": "unfinished",
-      "text": "Fix memory exhaustion during bulk badge export using batch processing in chunks of 50 to avoid worker OOM",
-      "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Project Tasks Board",
-          "locator": "task T13",
-          "quote": "Fix memory exhaustion during bulk badge export | owner: Ravi | status: in_progress | due: 2026-09-05 | notes: Batch processing in chunks of 50 to avoid worker OOM"
-        }
-      ]
-    },
-    {
-      "kind": "unfinished",
-      "text": "Add multi-tier ticket pricing and discount codes with PR 4 open having failing type checks",
-      "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Project Tasks Board",
-          "locator": "task T14",
-          "quote": "Add multi-tier ticket pricing and discount codes | owner: Asha | status: in_progress | due: 2026-09-10 | notes: PR 4 open with failing type checks"
-        }
-      ]
-    },
-    {
-      "kind": "unfinished",
-      "text": "Prepare successor handover documentation for Kiran, drafting architecture and credentials overview",
-      "label": "verified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Project Tasks Board",
-          "locator": "task T17",
-          "quote": "Prepare successor handover documentation for Kiran | owner: Asha | status: in_progress | due: 2026-09-25 | notes: Drafting architecture and credentials overview"
-        }
-      ]
-    },
-    {
-      "kind": "next_action",
-      "text": "Take over the successor handover documentation for Kiran from Asha",
-      "label": "unverified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Project Tasks Board",
-          "locator": "task T17",
-          "quote": "Prepare successor handover documentation for Kiran | owner: Asha | status: in_progress | due: 2026-09-25 | notes: Drafting architecture and credentials overview"
-        }
-      ]
-    },
-    {
-      "kind": "next_action",
-      "text": "Resolve failing type checks in PR 4 for multi-tier ticket pricing and discount codes",
-      "label": "unverified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Project Tasks Board",
-          "locator": "task T14",
-          "quote": "Add multi-tier ticket pricing and discount codes | owner: Asha | status: in_progress | due: 2026-09-10 | notes: PR 4 open with failing type checks"
-        }
-      ]
-    },
-    {
-      "kind": "next_action",
-      "text": "Fix memory exhaustion during bulk badge export by finishing batch processing in chunks of 50",
+      "text": "Task T13: Fix memory exhaustion during bulk badge export",
       "label": "unverified",
       "question": null,
       "risk": 1,
@@ -1100,35 +1046,63 @@
         {
           "source": "Project Tasks Board",
           "locator": "task T13",
-          "quote": "Fix memory exhaustion during bulk badge export | owner: Ravi | status: in_progress | due: 2026-09-05 | notes: Batch processing in chunks of 50 to avoid worker OOM"
+          "quote": "Fix memory exhaustion during bulk badge export"
         }
       ]
     },
     {
-      "kind": "next_action",
-      "text": "Unblock and complete CSV export for registered attendees once the admin role permission check refactor is done",
+      "kind": "unfinished",
+      "text": "Task T14: Add multi-tier ticket pricing and discount codes",
       "label": "unverified",
       "question": null,
       "risk": 1,
       "evidence": [
         {
           "source": "Project Tasks Board",
-          "locator": "task T09",
-          "quote": "Implement CSV export for registered attendees | owner: Asha | status: in_progress | due: 2026-08-12 | notes: Stalled waiting for admin role permission check refactor"
+          "locator": "task T14",
+          "quote": "Add multi-tier ticket pricing and discount codes"
         }
       ]
     },
     {
-      "kind": "next_action",
-      "text": "Implement the placeholder refund_ticket function that currently raises NotImplementedError",
+      "kind": "decision",
+      "text": "Lead-only HR notes verified",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Project Tasks Board",
+          "locator": "task T15",
+          "quote": "Lead-only HR notes verified"
+        }
+      ]
+    },
+    {
+      "kind": "decision",
+      "text": "Alembic revision 004",
+      "label": "verified",
+      "question": null,
+      "risk": 1,
+      "evidence": [
+        {
+          "source": "Project Tasks Board",
+          "locator": "task T16",
+          "quote": "Alembic revision 004"
+        }
+      ]
+    },
+    {
+      "kind": "unfinished",
+      "text": "Task T17: Prepare successor handover documentation for Kiran",
       "label": "unverified",
       "question": null,
       "risk": 1,
       "evidence": [
         {
-          "source": "Code repository",
-          "locator": "commit b881e05",
-          "quote": "Add placeholder refund_ticket function with NotImplementedError"
+          "source": "Project Tasks Board",
+          "locator": "task T17",
+          "quote": "Prepare successor handover documentation for Kiran"
         }
       ]
     },
@@ -1400,34 +1374,6 @@
     },
     {
       "kind": "decision",
-      "text": "Asha said: Our Redis cache automatically purges dead event sessions at 3 AM every Sunday.",
-      "label": "unverified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Team Chat Archive",
-          "locator": "chat message 46",
-          "quote": "Our Redis cache automatically purges dead event sessions at 3 AM every Sunday."
-        }
-      ]
-    },
-    {
-      "kind": "decision",
-      "text": "Asha said: I set it up via Redis CLI command key eviction policy on the staging instance.",
-      "label": "unverified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Team Chat Archive",
-          "locator": "chat message 48",
-          "quote": "I set it up via Redis CLI command key eviction policy on the staging instance."
-        }
-      ]
-    },
-    {
-      "kind": "decision",
       "text": "Asha said: I spoke with campus IT network team and got our outbound email quota raised to 10,000/day.",
       "label": "unverified",
       "question": null,
@@ -1437,20 +1383,6 @@
           "source": "Team Chat Archive",
           "locator": "chat message 50",
           "quote": "I spoke with campus IT network team and got our outbound email quota raised to 10,000/day."
-        }
-      ]
-    },
-    {
-      "kind": "decision",
-      "text": "Asha said: That's provided by the university billing portal. I need to transfer the webhook secret before my departure.",
-      "label": "unverified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Team Chat Archive",
-          "locator": "chat message 53",
-          "quote": "That's provided by the university billing portal. I need to transfer the webhook secret before my departure."
         }
       ]
     },
@@ -1479,20 +1411,6 @@
           "source": "Team Chat Archive",
           "locator": "chat message 57",
           "quote": "Understood Deepak, working with Kiran to ensure all pending items and evidence are clear."
-        }
-      ]
-    },
-    {
-      "kind": "decision",
-      "text": "Asha said: Good catch! We started with HMAC in docs, but switched to simple UUID in task T08 for speed. Let's document this gap.",
-      "label": "unverified",
-      "question": null,
-      "risk": 1,
-      "evidence": [
-        {
-          "source": "Team Chat Archive",
-          "locator": "chat message 59",
-          "quote": "Good catch! We started with HMAC in docs, but switched to simple UUID in task T08 for speed. Let's document this gap."
         }
       ]
     },

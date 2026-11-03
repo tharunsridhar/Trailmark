@@ -14,7 +14,7 @@ WCC Forge 48, Round 2 (The Build). Team Trailmark: Kishan S and Tharun Sridhar.
 
 ## Features done
 
-Against the seven core features in the Round 1 plan. "Backend" means built and covered by the 180 automated tests. The frontend screens call the backend. One journey through all three roles was clicked through by hand in a browser against a local backend (not a deployed one, no automated frontend tests).
+Against the seven core features in the Round 1 plan. "Backend" means built and covered by the 187 automated tests. The frontend screens call the backend. One journey through all three roles was clicked through by hand in a browser against a local backend (not a deployed one, no automated frontend tests).
 
 | Core feature | Status |
 | --- | --- |
@@ -30,7 +30,7 @@ Also built: Gemini, Groq and Anthropic clients, retries and an optional second m
 
 ## Saved run on the synthetic project
 
-`backend/saved_results/campus-events-app.json`, one real run: 114 statements (51 verified, 42 unverified, 18 missing, 3 conflicting) and 9 questions. Scored against the answer key: 32 of 32 planted cases cited, 31 with the expected label, 3 of 3 conflicts, 4 of 4 leaver-only claims unverified. The one wrong label is C02 (chat message 5), `unverified` because only the leaver's own message backs it; task T09 (C18) is now `verified` in this run, but not in every run. Details are in [`TESTING.md`](TESTING.md).
+`backend/saved_results/campus-events-app.json`, one real run: 106 statements (54 verified, 31 unverified, 18 missing, 3 conflicting) and 9 questions. Scored against the answer key: 32 of 32 planted cases cited, 31 with the expected label, 3 of 3 conflicts, 4 of 4 leaver-only claims unverified. The one wrong label is C28 (deployment guide, the persistent volume), which the model called a gap. No statement or question names a restricted source's file name, path, paragraph number or title. The earlier wrong label, C02 (chat message 5, "Render over Heroku"), is `verified` in this run only because Deepak's message 6 agrees; when only the leaver's own message is cited it stays `unverified`, which is the leaver-only rule working as designed. Details are in [`TESTING.md`](TESTING.md).
 
 ## Changes from the Round 1 plan
 
@@ -51,8 +51,8 @@ Not built yet.
 
 ## Known limitations
 
-- The score varies from run to run. In the last round the three runs got the expected label on 31, 30 and 27 of 32 cases. Earlier rounds were weaker, down to 15. The saved run is the best of its round, so it is not typical.
-- Not tested yet: a deployed instance, the frontend in AI mode, and the current suite on PostgreSQL (149 tests passed there earlier, 31 have been added since).
+- The score varies from run to run, because the model is not deterministic. In the last round the three runs got the expected label on 29, 30 and 31 of 32 cases (30, 32 and 32 cited). Earlier rounds were weaker, down to 15. The saved run is the best of its round, so it is not typical, which is why the saved fallback exists.
+- Not tested yet: a deployed instance, the frontend in AI mode, and the current suite on PostgreSQL (149 tests passed there earlier, 38 have been added since).
 - The AI runs on the free tier of Gemini, which limits requests. If the service is unavailable the app shows the saved results.
 - Redaction is pattern based and will miss some sensitive text.
 - All pieces go to the model in one request, so a large repository would need chunking.

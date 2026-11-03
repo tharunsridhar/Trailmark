@@ -18,7 +18,7 @@ The AI is never called in tests. A scripted fake model plays back fixed replies,
 
 ## Latest result
 
-180 tests, all passing on SQLite (97 seconds, run on 3 Nov 2026 from the `backend` folder). An earlier 149 tests also passed on PostgreSQL 16 (about 4 minutes). The suite has 31 more tests since then, and it was not run on PostgreSQL again. Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the time is password hashing.
+187 tests, all passing on SQLite (about 2 minutes, run on 3 Nov 2026 from the `backend` folder). An earlier 149 tests also passed on PostgreSQL 16 (about 4 minutes). The suite has 38 more tests since then, and it was not run on PostgreSQL again. Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the time is password hashing.
 
 Also checked by hand, on an earlier build: the Docker image builds, and with `docker compose up` the backend container ran against Postgres, answered `/health`, registered a user, created a handover, and returned `401` without a login. This was not repeated for the current build.
 
@@ -29,17 +29,17 @@ Also checked by hand, on an earlier build: the Docker image builds, and with `do
 | `test_access.py` | 10 | A statement is hidden unless every source behind it is visible, drafts and rejected claims never shown |
 | `test_importers.py` | 11 | Each source type, empty and unreadable files, bad JSON, binary files |
 | `test_sources_api.py` | 10 | Upload, listing, source access levels passed to pieces, size and type checks, no uploads after approval |
-| `test_pipeline.py` | 66 | Quote check, fabricated and unknown citations dropped, verifier verdicts, conflicts, claims nobody backs up, claims only the leaver makes, gaps, bad model output, retries, rate limits, the second model, the Gemini and Groq clients, sources and document paragraphs the first request skipped, and the rules in code (below) |
+| `test_pipeline.py` | 73 | Quote check, fabricated and unknown citations dropped, verifier verdicts, conflicts, claims nobody backs up, claims only the leaver makes, gaps, bad model output, retries, rate limits, the second model, the Gemini and Groq clients, sources and document paragraphs the first request skipped, the rules in code (below), and restricted names removed from statements and questions |
 | `test_analysis_api.py` | 15 | Labels and dropped claims, questions ordered by risk, restricted evidence hidden, saved and basic fallbacks, re-runs, lost runs |
 | `test_review_flow.py` | 37 | Answering, review actions and versions, approval rules, the incoming view, redaction, receipt, who may do what |
 | `test_redact.py` | 6 | Emails, phone numbers, secrets, and things that must not be masked such as dates |
 | `test_config.py` | 5 | Database URL handling, refusing to start in deployment with a weak secret |
 | `test_health.py` | 1 | Health check |
-| **Total** | **180** | |
+| **Total** | **187** | |
 
 ## Rules in code
 
-These run after the model's statements are built (`apply_rules` in `backend/app/pipeline/analyze.py`). None of them calls the model. Rules 1 to 8 are in `backend/app/pipeline/rules.py`. Rule 9 is `mark_leaver_only_claims` in `analyze.py`.
+These run after the model's statements are built (`apply_rules` in `backend/app/pipeline/analyze.py`). None of them calls the model. Rules 1 to 8 and 10 are in `backend/app/pipeline/rules.py`. Rule 9 is `mark_leaver_only_claims` in `analyze.py`.
 
 1. **Routine commits.** A `decision` whose evidence is only commits that look routine (typo, version pin, formatting, fixtures, clean-up, modal, button, spacing in the message) is dropped.
 2. **Conflicting values.** Sentences about the token lifetime, the auditorium capacity and the ticket QR format are read in every piece. If two pieces give different values (60 against 15 minutes, 350 against 500, UUID against HMAC), a `conflicting` statement is added with a quote from each side (up to two pieces per side), unless the model already reported a conflict that covers both sides. A piece that names both values is not treated as a side. The three topics are written into the code, so any other conflict is found only by the model.
@@ -50,58 +50,73 @@ These run after the model's statements are built (`apply_rules` in `backend/app/
 7. **Unexplained commits.** A commit that is not routine or tiny, and that no pull request, issue, document, task or *other person's* chat message talks about, becomes a `missing` gap with a question. "Talks about" means it names the sha, a file or a distinctive name from the commit, or shares three content words. A question is not an explanation, and the author describing their own commit in chat does not count. Commits already in a gap or conflict are skipped. The risk is 3 when the commit brings in a service, secret or package, 2 when it touches auth, payments, deployment or security, otherwise 1.
 8. **Question cap.** The departing member is asked at most nine questions in total, riskiest first (`MAX_QUESTIONS = 9`). The other gaps stay as gaps without a question.
 9. **Leaver and tasks.** A task owned by the departing member does not count as independent backing for a different claim they make in chat. It does back a statement about the task itself (the statement names the task id, or repeats most of the task title, and quotes the task row), because the task row is the record of its own status, owner and due date. The leaver-only chat rule is unchanged: the four planted claims stay `unverified`.
+10. **Restricted places.** After all other rules, the name of any source that the departing or the incoming member may not read is removed from every statement and question: its display name (with and without the bracket), its file name, and the file name with a paragraph or message number. The text becomes "a restricted source". A `missing` gap that rests only on restricted pieces (or on none) and either had such a name removed or only says a source is confidential, restricted or inaccessible is dropped. Quotes are not touched, they stay behind the statement's own access check. This closes the leak found in the hand run, where a gap without a source read "The contents of 'hr_private_notes paragraph 2' are not provided in the sources".
 
 ## Real AI run on the synthetic project
 
-Run by hand on all sources of the synthetic Campus Events App (9 sources, 128 pieces) and scored against `data/synthetic/answer_key.json`, which plants 32 cases. The scoring is a script that matches a case to a statement by the source location it cites. It counts a case as labelled correctly if any statement citing that location has the expected label. It is a generous, rough measure, not a judgement of the wording. The script was re-written during the work and is not in the repository, so the scores below cannot be recomputed from it. Only the counts of statements, labels and questions in the saved file can be checked.
+Run by hand on all sources of the synthetic Campus Events App (9 sources, 128 pieces) and scored against `data/synthetic/answer_key.json`, which plants 32 cases. The scoring is a script that matches a case to a statement by the source location it cites. It counts a case as labelled correctly if any statement citing that location has the expected label. It is a generous, rough measure, not a judgement of the wording. The script is now in the repository: `python tests/score_run.py <file>` from the `backend` folder scores a saved or fresh result, and `python tests/run_real_pipeline.py <outdir>` makes one real run into a folder without touching the saved file. Scores in the rounds before 3 Nov were made with older scripts that were not kept, so those rows cannot be recomputed.
 
 ### The saved run
 
-`backend/saved_results/campus-events-app.json`, saved 3 Nov 2026 (the third run after the rule 9 change, table below), one real run on `gemini-3.6-flash`, copied unedited.
+`backend/saved_results/campus-events-app.json`, saved 3 Nov 2026, run 3 of the three runs below (the runs after the restricted-location rule, rule 10), one real run on `gemini-3.6-flash`, copied unedited.
 
 From the file itself:
 
-- 114 statements: 51 `verified`, 42 `unverified`, 18 `missing`, 3 `conflicting`.
+- 106 statements: 54 `verified`, 31 `unverified`, 18 `missing`, 3 `conflicting`. Every statement cites at least one source.
 - 9 questions for the departing member.
+- No statement or question names a restricted source's file name, path, paragraph number or title (`hr_private_notes`, `lead_private_chat`, "HR Private Notes", "Lead 1-on-1 Chat"). Two statements say "a restricted source" where rule 10 removed a name. Both cite only the lead-only chat, so the incoming member does not see them.
 
-From the scoring script (not kept in the repository), run on this file:
+From the scoring script, now in the repository (`backend/tests/score_run.py`), run on this file:
 
 - 32 of 32 planted cases cited, 31 with the expected label.
 - All three planted conflicts reported (auditorium capacity, token lifetime, QR format), as 3 `conflicting` statements and no duplicates.
-- All four planted claims only the leaver makes (C06 to C09) are `unverified`.
-- C18 (task T09, CSV export) has a `verified` statement and C07 (the Google OAuth claim) is `unverified`.
-- The one case with a wrong label is C02 (chat message 5, "Team chose Render over Heroku"). The only statement that cites it is `unverified`, because the departing member wrote that message and nothing else backs it. That is the leaver-only rule working as designed, so the key's `verified` is probably too generous for this case.
+- All four planted claims only the leaver makes (C06 to C09) are `unverified`. C07 (the Google OAuth claim) is `unverified`.
+- C18 (task T09, CSV export) has a `verified` statement.
+- The one case with a wrong label is C28 (deployment guide, the persistent volume for the database files). The only statement that cites it is a `missing` gap ("no owner is specified for setting up..."), where the key expects `verified`. This is the model's choice of label and varies from run to run.
 
-**C18 and the rule change, honestly.** The `verified` statement for T09 in the saved file cites only the task row, so it would have been `verified` before the change too. The change itself is shown by the unit tests (a statement about T09's own status that cites chat message 25 and the task row stays `verified`; the OAuth claim stays `unverified`). In run 2 below the model again wrote a T09 statement citing chat message 25 and the task row and it was still `unverified`. The cause was not found, it could be the separate verifier or the leaver-claims request, which marks its statements `unverified` directly. So the fix is covered by tests, but a real run does not always give C18 `verified`.
+**C02 (chat message 5, "Team chose Render over Heroku").** In the previous saved file this was the one wrong label, and it was correct by design: only the departing member's message backed the statement, so the leaver-only rule kept it `unverified`. In this file C02 is `verified` because the statement also cites chat message 6, where Deepak (not the leaver) agrees ("Agreed, Render also links directly with our GitHub preview branches"). That is the rule working as intended, not weakened: a decision the leaver alone states stays `unverified`, and one a second person confirms can be `verified`. Whether the model cites message 6 together with message 5 changes from run to run. When it does not, C02 is `unverified`, which is the right label under the rule. The answer key says `verified` for C02, which is probably too generous for the case where only the leaver's message backs it. The key was not edited.
 
-A run takes about 1 to 3 minutes in AI mode. Checked again with a wrong API key on the new file: the app shows the saved result in `saved` mode with the notice "AI unavailable: showing saved results from an earlier run." and the same 114 statements and 9 questions.
+A run takes about 1 to 3 minutes in AI mode. Checked again with a wrong API key on the new file: the app shows the saved result in `saved` mode with the notice "AI unavailable: showing saved results from an earlier run." and the same 106 statements (54, 31, 18, 3).
 
-### Runs after the rule 9 change (3 Nov 2026)
+### Runs after the restricted-location rule (3 Nov 2026)
 
-Scored with a new script, because the old one was not kept. It reproduces the previous saved file as 32 cited, 31 expected labels, 3 conflicts, 4 of 4, 9 questions, so the figures are comparable with the table below. Run 3 is the saved file.
+Rule 10 (`hide_restricted_locations` in `rules.py`) removes restricted names from statement and question text. The previous saved file contained "Confidential HR notes document content is completely restricted and inaccessible...", a `missing` statement that cited only the HR notes, so the pipeline output had changed and three real runs were made (the limit). They were scored with `backend/tests/score_run.py`, which reproduces the previous saved file as 32 cited, 31 expected labels, 3 conflicts, 4 of 4, 9 questions, so the figures are comparable with the tables below.
+
+| Run | Statements | Questions | Cited (of 32) | Expected label (of 32) | Conflicts (of 3) | Leaver-only `unverified` (of 4) | `missing` | Conflict duplicates | Restricted names in text | Wrong labels |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 88 | 9 | 30 | 29 | 3 | 3 | 15 | none | 0 | C02, C08 and C27 (the last two not cited) |
+| 2 | 93 | 9 | 32 | 30 | 3 | 4 | 14 | none | one sourceless gap saying "a restricted source", one statement saying "HR and Lead Private Notes" | C29, C31 |
+| 3 (saved) | 106 | 9 | 32 | 31 | 3 | 4 | 18 | none | none (no file name, path, paragraph number or title) | C28 |
+| Previous saved file, for comparison | 114 | 9 | 32 | 31 | 3 | 4 | 18 | none | 1 ("Confidential HR notes document...") | C02 |
+
+Only run 3 met the bar for replacing the saved file on every measure (32 cited, at least 31 expected labels, 3 conflicts, 4 of 4, 9 questions or fewer, no restricted names). Run 1 lost two cases and a leaver-only claim. Run 2 had 30 labels and kept a sourceless gap and a loose title in the text. Run 3 also has fewer `unverified` statements than before (31, against 42).
+
+**A tweak made after the runs.** Run 2 had a sourceless gap reading "The contents of 'a restricted source' are not provided in the sources.", and run 3 has the same sentence citing the lead-only chat. Rule 10 now drops a `missing` gap that rests only on restricted pieces (or none) and had a restricted name removed, because such a gap tells nobody anything. That tweak is covered by unit tests but was not run against the real model, so the saved file still contains that one sentence. It cites only the lead-only chat, so the incoming member cannot see it.
+
+### Still limited
+
+- **The score varies from run to run.** The model is not deterministic, which is why the saved fallback exists. In this round the expected label was 29, 30 and 31 of 32, and the wrong cases were different each time. Earlier rounds were weaker (table below), so a run can be clearly worse than the saved one. The saved file is the best of three runs, picked because it met the bar for saving. It is a real run but not typical.
+- **C02 depends on the run.** It is `verified` here because a second person confirms it, and `unverified` when only the leaver's message is cited. Both are correct under the leaver-only rule, and the answer key was not changed.
+- **C28 is wrong in the saved file** (labelled `missing`, expected `verified`), and C18 is not reliably `verified` in other runs (run 2 of the earlier round had it `unverified`).
+- **The `missing` count is high** (18, against 13 in the earlier best run). Nine have a question, the others are gaps without one.
+- **Rule 10 removes names it knows.** It knows the restricted sources' display names, file names and locators. A looser phrase that the model invents ("HR and Lead Private Notes", "Confidential HR notes document") is caught only if it contains one of those names, or is a gap that cites only restricted pieces and says the source is restricted or confidential. A statement that cites an open source and uses a loose phrase is not changed. The saved file has one: the open task row T15 is titled "Lead-only HR notes verified", and the statement that quotes it says so.
+- **Three conflict patterns are written into the code.** Any other kind of conflict is found only if the model finds it.
+- **The routine-commit word list is a guess** and was not tuned on other projects. A real choice could be dropped if its message contains one of the words.
+- **Only three real runs per round.** The figures are not averages.
+- **"Verified" means the quoted words support the statement, not that the statement is the whole truth.** A true statement can be one side of a conflict that was reported separately.
+- **A statement built from the restricted HR notes can be `verified`.** It is shown only to the lead, because it inherits the restriction of its source.
+- The free tier of the AI service sometimes answers "high demand" (503). That is why a second model and saved results exist.
+
+### Earlier round: runs after the rule 9 change (3 Nov 2026)
+
+Run 3 of that round was the saved file until the round above.
 
 | Run | Statements | Questions | Cited (of 32) | Expected label (of 32) | Conflicts (of 3) | Leaver-only `unverified` (of 4) | `missing` | Conflict duplicates | C18 | C07 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 108 | 9 | 31 | 27 | 3 | 4 | 16 | none | a `verified` and a `missing` statement | `unverified` |
 | 2 | 108 | 9 | 32 | 30 | 3 | 4 | 16 | none | `unverified` | `unverified` |
-| 3 (saved) | 114 | 9 | 32 | 31 | 3 | 4 | 18 | none | `verified` (and an `unverified` one) | `unverified` |
-| Previous saved file, for comparison | 104 | 9 | 32 | 31 | 3 | 4 | 18 | none | `unverified` | `unverified` |
-
-Wrong labels: run 1 C02, C29, C31 (`unverified`), C32 (`missing`) and C27 not cited. Run 2 C02 and C18. Run 3 C02. The new saved file has 42 `unverified` statements, against 28 before, so it is not better on that count.
-
-### Still wrong
-
-- **The score varies from run to run.** The model cannot be made deterministic. In the last round the expected label was 27, 30 and 31. Earlier rounds were weaker (table below), so a run can be clearly worse than the saved one. The saved file is the best of three runs, picked because it met the bar for saving (at least 31 expected labels, C18 `verified`, C07 `unverified`). It is a real run but not typical.
-- **The `missing` count is higher than in earlier saved runs** (18, against 13 before). Nine of them have a question, the others are gaps without one.
-- **C02 stays `unverified`.** Only the leaver's chat message backs it, so the leaver-only rule keeps it `unverified`.
-- **C18 is not reliably `verified`.** See the note under the saved run. The new saved file has it `verified`, run 2 did not.
-- **More `unverified` statements** in the saved file (42, against 28).
-- **Three conflict patterns are written into the code.** Any other kind of conflict is found only if the model finds it.
-- **The routine-commit word list is a guess** and was not tuned on other projects. A real choice could be dropped if its message contains one of the words.
-- **Only three real runs per round.** The figures are not averages.
-- **"Verified" means the quoted words support the statement, not that the statement is the whole truth.** A true statement can be one side of a conflict that was reported separately.
-- **A statement built from the restricted HR notes can be verified.** It is shown only to the lead, because it inherits the restriction of its source.
-- The free tier of the AI service sometimes answers "high demand" (503). That is why a second model and saved results exist.
+| 3 (the saved file until the next round) | 114 | 9 | 32 | 31 | 3 | 4 | 18 | none | `verified` (and an `unverified` one) | `unverified` |
+| The saved file before that, for comparison | 104 | 9 | 32 | 31 | 3 | 4 | 18 | none | `unverified` | `unverified` |
 
 ### All rounds
 
@@ -119,8 +134,14 @@ Each row is one real run on the same 9 sources. Rounds used different versions o
 | | 2 | 98 | 9 | 32 | 29 | 3 | 4 of 4 |
 | | 3 | 102 | 9 | 32 | 24 | 3 | 4 of 4 |
 | Label fixes (rules 4, 5, 6) | 1 | 115 | 9 | 32 | 27 | 2 | 4 of 4 |
-| | **2 (saved)** | **104** | **9** | **32** | **31** | **3** | **4 of 4** |
+| | | 2 | 104 | 9 | 32 | 31 | 3 | 4 of 4 |
 | | 3 | 108 | 9 | 32 | 30 | 3 | 4 of 4 |
+| Rule 9 (leaver and tasks) | 1 | 108 | 9 | 31 | 27 | 3 | 4 of 4 |
+| | 2 | 108 | 9 | 32 | 30 | 3 | 4 of 4 |
+| | 3 | 114 | 9 | 32 | 31 | 3 | 4 of 4 |
+| Restricted-location rule (rule 10) | 1 | 88 | 9 | 30 | 29 | 3 | 3 of 4 |
+| | 2 | 93 | 9 | 32 | 30 | 3 | 4 of 4 |
+| | **3 (saved)** | **106** | **9** | **32** | **31** | **3** | **4 of 4** |
 
 Notes on the table:
 
@@ -210,14 +231,14 @@ Backend on port 8000 with an empty AI key and a fresh SQLite file, so the analys
 
 Bugs found and fixed in the frontend during this run: the review page said "No answer recorded" for questions that were answered; the lead dashboard showed no sources after switching from another persona (stale cookie, the sources and members requests were not repeated after the new sign-in); the empty file was counted as an uploaded source; the departing member's answers called a lead-only endpoint and got a `403` each time; the answer box could still be typed in after approval. Fixed but only partly re-tested in the browser: the review page now shows the text typed in the same session, which was not clicked through again because the handover was already approved.
 
-One backend finding, not fixed: for a handover that includes a lead-only document, a `missing` gap with no source of its own is shown to the incoming member. In the earlier saved file one such statement read "The contents of 'hr_private_notes paragraph 2' are not provided in the sources" (`GET /handovers/1/handover-view` as the incoming member, status `200`, statement 37). It leaks the name of a restricted location, not its content. The current saved file has no statement without a source. A fix needs a decision (hide such gaps from the incoming member, or drop them in the pipeline), so it is left for Round 3 with the access-control work.
+One backend finding, not fixed: for a handover that includes a lead-only document, a `missing` gap with no source of its own is shown to the incoming member. In the earlier saved file one such statement read "The contents of 'hr_private_notes paragraph 2' are not provided in the sources" (`GET /handovers/1/handover-view` as the incoming member, status `200`, statement 37). It leaks the name of a restricted location, not its content. Addressed in the pipeline afterwards by rule 10: restricted names are removed from every statement and question, and a gap that only points at a closed source is dropped (unit tests in `test_pipeline.py`). The new saved file has no statement without a source and no restricted file name, path, paragraph number or title in any statement or question. The access layer's own handling of statements without a source is separate work and is not part of this change.
 
 ## Not tested yet
 
 - **The AI in the automated tests.** The test suite never calls a real model. The real AI was run by hand on the synthetic project (above).
 - **A deployed instance.** `render.yaml` is written but nothing is deployed to Render yet.
 - **The frontend, beyond one local run.** The by-hand browser run is described above. The frontend has no automated tests, was not run in AI mode, only in one browser (the Claude desktop app's built-in one) and one window size, and not with voice answers.
-- **PostgreSQL with the current suite.** The 31 newest tests have not been run on PostgreSQL.
+- **PostgreSQL with the current suite.** The 38 newest tests have not been run on PostgreSQL.
 - **Docker with the current build.** The last check by hand was on an earlier build.
 - **Load and long inputs.** A very large repository would need chunking, which is not built.
 - **Outside users.** No structured feedback has been collected yet. The script and a table to fill in are in [`FEEDBACK.md`](FEEDBACK.md).
