@@ -132,9 +132,7 @@ export function TopNav() {
               {/* Brand Header */}
               <div className="flex items-center justify-between pb-4 border-b border-[#E6E6DE] mb-5">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-[#5A5B4C] flex items-center justify-center text-white shadow-2xs">
-                    <Compass size={15} />
-                  </div>
+                  <img src="/Logo_trailmark.png" alt="Trailmark Logo" className="w-7 h-7 rounded-full object-cover shadow-2xs" />
                   <div>
                     <span className="text-base font-bold text-[#1F201B]">Trailmark</span>
                     <span className="block text-[9px] font-semibold text-[#62635A] tracking-[0.15em] uppercase -mt-0.5">

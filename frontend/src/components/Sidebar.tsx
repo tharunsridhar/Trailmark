@@ -56,9 +56,7 @@ export function Sidebar() {
     <aside className="hidden md:flex w-[260px] bg-[#F4F4F0] flex-col border-r border-[#E6E6DE] h-screen shrink-0 select-none">
       {/* Brand Header */}
       <div className="h-20 flex items-center gap-3 px-6">
-        <div className="w-8 h-8 rounded-full bg-[#5A5B4C] flex items-center justify-center text-white shadow-2xs">
-          <Compass size={17} />
-        </div>
+        <img src="/Logo_trailmark.png" alt="Trailmark Logo" className="w-8 h-8 rounded-full object-cover shadow-2xs" />
         <div className="flex flex-col">
           <span className="text-lg font-bold tracking-tight text-[#1F201B]">Trailmark</span>
           <span className="text-[10px] font-semibold text-[#62635A] tracking-[0.15em] uppercase -mt-0.5">

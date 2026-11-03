@@ -5,6 +5,11 @@ import { AppShell } from '@/components/AppShell';
 export const metadata = {
   title: 'Trailmark | Handover OS',
   description: 'Evidence-backed project knowledge handover platform for engineering teams.',
+  icons: {
+    icon: '/Logo_trailmark.png',
+    shortcut: '/Logo_trailmark.png',
+    apple: '/Logo_trailmark.png',
+  },
 };
 
 export default function RootLayout({

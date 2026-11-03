@@ -357,9 +357,7 @@ export function Screen2DepartingQuestions() {
         <header className="h-16 bg-white border-b border-[#E6E6DE] px-3 sm:px-10 flex items-center justify-between sticky top-0 z-30 shrink-0">
           {/* Left: Brand */}
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-[#5A5B4C] flex items-center justify-center text-white shrink-0 shadow-2xs">
-              <Compass size={16} />
-            </div>
+            <img src="/Logo_trailmark.png" alt="Trailmark Logo" className="w-8 h-8 rounded-full object-cover shrink-0 shadow-2xs" />
             <div className="hidden sm:block leading-none min-w-0">
               <div className="text-[11px] font-bold text-[#1F201B] tracking-widest uppercase">TRAILMARK</div>
               <div className="text-[11px] text-[#62635A] truncate max-w-[200px] mt-0.5">{project.name}</div>

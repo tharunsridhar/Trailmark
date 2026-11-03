@@ -102,9 +102,7 @@ export function Screen0RoleSelection() {
     <div className="min-h-screen bg-[#F4F4F0] flex flex-col items-center justify-center px-4 py-12 select-none">
       {/* Brand Header */}
       <div className="flex items-center gap-3 mb-8">
-        <div className="w-10 h-10 rounded-full bg-[#5A5B4C] flex items-center justify-center text-white shadow-soft">
-          <Compass size={20} />
-        </div>
+        <img src="/Logo_trailmark.png" alt="Trailmark Logo" className="w-10 h-10 rounded-full object-cover shadow-soft" />
         <div className="flex flex-col">
           <span className="text-xl font-bold tracking-tight text-[#1F201B]">Trailmark</span>
           <span className="text-[10px] font-semibold text-[#62635A] tracking-[0.18em] uppercase -mt-0.5">
