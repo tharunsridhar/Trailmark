@@ -163,8 +163,8 @@ This starts PostgreSQL and the backend at `http://localhost:8000` (if that port 
 
 - The AI result varies from run to run. The saved result is the best of its round, not a typical one.
 - Not tested yet: a deployed instance, the frontend in AI mode and in browsers other than the one used.
-- The server never sends a departing member's answer text back, so after a reload the screen says the question was answered but cannot show the text.
-- A gap statement that has no source of its own is shown to the incoming member. In an earlier saved run one of them named a restricted document's location (no content from it). The current saved run has none, but an AI re-run could produce one.
+- A departing member can change an answer until the lead approves. After approval the server refuses changes (`409`).
+- A gap statement or question with no source of its own is hidden or neutral for the incoming member (and for the departing member's questions), so it cannot name a restricted place. This is enforced in `backend/app/access.py` and tested, and the pipeline also removes restricted names from statement and question text. Pattern-based, so it can miss unusual wording.
 - The AI runs on a free tier with request limits. When it is unavailable, the app shows saved results from a real run, then a basic listing.
 - All pieces go to the model in one request, so a large repository would need chunking.
 - Only three kinds of conflict (token lifetime, capacity, QR format) are checked by rules in code, others depend on the model.

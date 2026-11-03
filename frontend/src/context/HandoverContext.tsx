@@ -189,6 +189,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
   // Questions
   const [backendQuestions, setBackendQuestions] = useState<ApiQuestion[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [localAnswers, setLocalAnswers] = useState<Record<string | number, string>>({});
 
   // Statements
   const [backendStatements, setBackendStatements] = useState<ApiStatement[]>([]);
@@ -284,11 +285,13 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
 
   const switchDemoRole = useCallback(async (role: Role) => {
     clearMessages();
+    setQuestionsLoading(true);
     const cred = DEMO_CREDENTIALS[role];
     if (cred) {
       const authRes = await HandoverApiService.ensureDemoAuth(cred.email, cred.name, 'password123');
       if (!authRes.data) {
         setErrorMessage(authRes.error || 'Could not sign in.');
+        setQuestionsLoading(false);
         return false;
       }
       setAuthUser(authRes.data);
@@ -308,12 +311,10 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
         setActiveHandover(match);
 
         if (role === 'departing' || role === 'lead') {
-          setQuestionsLoading(true);
           const qRes = await HandoverApiService.listQuestions(targetId);
           if (qRes.data) {
             setBackendQuestions(qRes.data);
           }
-          setQuestionsLoading(false);
         }
         if (role === 'incoming') {
           setHandoverViewLoading(true);
@@ -344,6 +345,8 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (e) {
       console.warn('Post-login refetch notice:', e);
+    } finally {
+      setQuestionsLoading(false);
     }
     return true;
   }, [activeHandoverId, clearMessages]);
@@ -530,17 +533,18 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
   }, [activeHandoverId]);
 
   useEffect(() => {
-    if (activeHandoverId && (activeRole === 'departing' || activeRole === 'lead')) {
+    if (activeHandoverId && authUser && (activeRole === 'departing' || activeRole === 'lead')) {
       loadQuestions();
     }
-  }, [activeHandoverId, activeRole, loadQuestions]);
-
-  // The server never sends answer text back, so keep what was typed in this session.
-  const [localAnswers, setLocalAnswers] = useState<Record<number, string>>({});
+  }, [activeHandoverId, activeRole, authUser, loadQuestions]);
 
   const answerQuestionApi = useCallback(
     async (questionId: number, action: 'answer' | 'skip' | 'unknown', text?: string): Promise<boolean> => {
       clearMessages();
+      if (action === 'answer' && !text?.trim()) {
+        setErrorMessage('Answer text is required when submitting an answer.');
+        return false;
+      }
       const res = await HandoverApiService.answerQuestion(questionId, action, text);
       if (res.data) {
         if (action === 'answer' && text) setLocalAnswers((prev) => ({ ...prev, [questionId]: text }));
@@ -714,6 +718,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     if (backendQuestions.length > 0) {
       return backendQuestions.map((bq) => {
         const primaryEvidence = bq.evidence[0];
+        const ans = bq.answer || localAnswers[bq.id] || localAnswers[String(bq.id)] || '';
         return {
           id: String(bq.id),
           category: 'Backend Architecture' as QuestionCategory,
@@ -722,8 +727,8 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
           reason: primaryEvidence ? `${primaryEvidence.locator}: "${primaryEvidence.quote}"` : 'Identified during source analysis',
           roleTarget: 'Backend Developer',
           status: bq.status as QuestionStatus,
-          answer: bq.status === 'answered' ? localAnswers[bq.id] : undefined,
           evidenceStatus: (bq.risk >= 3 ? 'missing_conflicting' : bq.risk === 2 ? 'unverified' : 'verified') as EvidenceStatus,
+          answer: ans,
         };
       });
     }
@@ -806,6 +811,7 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     async (questionId: string | number, answer: string): Promise<boolean> => {
       const numId = typeof questionId === 'number' ? questionId : parseInt(questionId, 10);
       if (!isNaN(numId)) {
+        setLocalAnswers((prev) => ({ ...prev, [numId]: answer, [String(numId)]: answer }));
         return await answerQuestionApi(numId, 'answer', answer);
       }
       return false;

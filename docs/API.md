@@ -226,12 +226,13 @@ Highest risk first, at most nine in total per handover (gaps beyond that stay as
     "text": "Commit a3f9c21 rewrote the payment retry logic but no reason is recorded. Why was it changed?",
     "risk": 3,
     "status": "open",
-    "evidence": [{ "piece_id": 12, "locator": "commit a3f9c21", "quote": "rewrite payment retry" }]
+    "evidence": [{ "piece_id": 12, "locator": "commit a3f9c21", "quote": "rewrite payment retry" }],
+    "answer": null
   }
 ]
 ```
 
-`status` is `open`, `answered`, `skipped` or `unknown`.
+`status` is `open`, `answered`, `skipped` or `unknown`. `answer` holds the departing member's saved answer text, or `null` when there is none (only the lead and the departing member can list questions).
 
 ### POST /questions/{id}/answer (departing)
 
@@ -243,7 +244,8 @@ Highest risk first, at most nine in total per handover (gaps beyond that stay as
 
 - An answer becomes a statement of kind `answer`, label `unverified`, linked to the same evidence that raised the question. The gap statement it covers changes to status `answered`.
 - `skip` and `unknown` leave the gap open, it stays visible in the handover.
-- `403` for anyone but the departing member, and for a question built from evidence the departing member may not see. `409` if already answered or the handover is approved.
+- `403` for anyone but the departing member, and for a question built from evidence the departing member may not see. `409` if the handover is approved.
+- Answering the same question again before approval replaces the answer: the statement keeps its sources, gets a new version (`edited`, "Updated response by departing member"), and stays `unverified`.
 
 `200` returns the updated question.
 

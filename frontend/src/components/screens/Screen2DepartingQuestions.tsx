@@ -28,6 +28,21 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
+function safeErrorMessage(err: any): string {
+  if (!err) return '';
+  if (typeof err === 'string') return err;
+  if (Array.isArray(err)) {
+    return err
+      .map((item) => (typeof item === 'object' ? item.msg || item.message || JSON.stringify(item) : String(item)))
+      .filter(Boolean)
+      .join(', ');
+  }
+  if (typeof err === 'object') {
+    return err.msg || err.message || JSON.stringify(err);
+  }
+  return String(err);
+}
+
 // ─── Risk dot colour per evidence status ────────────────────────────────────
 function RiskDot({ status }: { status: Question['evidenceStatus'] }) {
   const colour =
@@ -121,10 +136,12 @@ export function Screen2DepartingQuestions() {
     setSaveStatus('unsaved');
   };
 
-  const handleSaveCurrent = async (opts?: { hasVoice?: boolean; durationSeconds?: number }): Promise<boolean> => {
+  const handleSaveCurrent = async (customText?: string, opts?: { hasVoice?: boolean; durationSeconds?: number }): Promise<boolean> => {
     if (!currentQuestion) return false;
+    const textToSave = customText !== undefined ? customText : answerText;
+    if (!textToSave.trim()) return false;
     setSaveStatus('saving');
-    const ok = await saveAnswer(currentQuestion.id, answerText, opts);
+    const ok = await saveAnswer(currentQuestion.id, textToSave, opts);
     if (ok) {
       setSaveStatus('saved');
       return true;
@@ -137,10 +154,28 @@ export function Screen2DepartingQuestions() {
   const navigate = useCallback(
     async (dir: 'next' | 'prev') => {
       if (dir === 'next') {
-        if (saveStatus === 'unsaved' && answerText.trim()) {
+        // If handover is already approved, allow browsing without trying to save
+        if (activeHandover?.status === 'approved') {
+          if (currentIndex < totalQuestions - 1) {
+            setSlideDir('left');
+            setSlideKey((k) => k + 1);
+            setTimeout(() => setCurrentIndex((p) => p + 1), 10);
+          } else {
+            setIsCompletedMode(true);
+          }
+          return;
+        }
+
+        // If previous save attempt resulted in error, block advancing until resolved or skipped
+        if (saveStatus === 'error') {
+          return;
+        }
+
+        // Save if unsaved changes exist (either new answer or editing previous answer)
+        if (saveStatus === 'unsaved' && answerText.trim() && answerText.trim() !== (currentQuestion?.answer || '')) {
           const ok = await handleSaveCurrent();
           if (!ok) {
-            // Stop navigation if backend rejected answer (e.g. 409 already approved)!
+            // Stop navigation if backend rejected answer
             return;
           }
         }
@@ -159,7 +194,7 @@ export function Screen2DepartingQuestions() {
         }
       }
     },
-    [saveStatus, answerText, currentIndex, totalQuestions, currentQuestion] // eslint-disable-line react-hooks/exhaustive-deps
+    [saveStatus, answerText, currentIndex, totalQuestions, currentQuestion, activeHandover?.status] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const handleNext = async () => {
@@ -206,10 +241,13 @@ export function Screen2DepartingQuestions() {
     }
   };
 
-  const handleVoiceTranscription = async (text: string, durationSeconds: number) => {
-    setAnswerText(text);
+  const handleVoiceTranscription = (text: string) => {
+    const trimmed = (text || '').trim();
+    if (!trimmed) return;
+    setAnswerText(trimmed);
+    setSaveStatus('unsaved');
     setIsRecording(false);
-    await handleSaveCurrent({ hasVoice: true, durationSeconds });
+    clearMessages();
   };
 
   if (activeScreen === 'departing-intro') return <InterviewIntroduction />;
@@ -369,7 +407,7 @@ export function Screen2DepartingQuestions() {
             <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs font-semibold text-red-800 flex items-center justify-between shadow-2xs">
               <div className="flex items-center gap-2">
                 <AlertCircle size={16} className="text-red-600 shrink-0" />
-                <span>{errorMessage}</span>
+                <span>{safeErrorMessage(errorMessage)}</span>
               </div>
               <button
                 type="button"
@@ -530,29 +568,39 @@ export function Screen2DepartingQuestions() {
               {/* Big Answer Textarea */}
               {currentQuestion.status === 'answered' && !answerText.trim() && (
                 <p role="status" className="text-xs font-semibold text-[#3F7D4E]">
-                  Answered and saved. The server does not send the saved text back, so this box is empty. Ask the Team Lead to edit it if it needs to change.
+                  Answered and saved. You can change the answer until the Team Lead approves the handover.
                 </p>
               )}
               <div className="relative">
                 <textarea
                   value={answerText}
                   onChange={(e) => handleAnswerChange(e.target.value)}
+                  disabled={activeHandover?.status === 'approved'}
                   readOnly={activeHandover?.status === 'approved'}
                   rows={8}
-                  placeholder="Detail your architecture decisions, edge cases, deployment keys, or unfinished code branches..."
-                  className="w-full px-5 py-4 pr-14 rounded-3xl border border-[#E6E6DE] bg-white text-sm text-[#1F201B] placeholder-[#A2A399] focus:outline-none focus:ring-2 focus:ring-[#5A5B4C]/25 focus:border-[#5A5B4C] leading-relaxed resize-none transition-all shadow-soft font-[inherit]"
+                  placeholder={
+                    activeHandover?.status === 'approved'
+                      ? 'Handover has been approved. Responses are locked.'
+                      : 'Detail your architecture decisions, edge cases, deployment keys, or unfinished code branches...'
+                  }
+                  className={`w-full px-5 py-4 pr-14 rounded-3xl border border-[#E6E6DE] bg-white text-sm text-[#1F201B] placeholder-[#A2A399] focus:outline-none focus:ring-2 focus:ring-[#5A5B4C]/25 focus:border-[#5A5B4C] leading-relaxed resize-none transition-all shadow-soft font-[inherit] ${
+                    activeHandover?.status === 'approved' ? 'opacity-80 bg-[#FAFAFA] cursor-not-allowed' : ''
+                  }`}
                 />
 
                 {/* Mic Button in Textarea Corner */}
                 <button
                   type="button"
+                  disabled={activeHandover?.status === 'approved'}
                   onClick={() => {
                     setShowVoice((v) => !v);
                     setIsRecording(false);
                   }}
                   title={showVoice ? 'Hide voice recorder' : 'Record voice answer'}
                   className={`absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full transition-all shadow-2xs ${
-                    isRecording
+                    activeHandover?.status === 'approved'
+                      ? 'opacity-30 cursor-not-allowed bg-[#EAEAE2] text-[#7A7B72]'
+                      : isRecording
                       ? 'bg-red-500 text-white recording-pulse'
                       : showVoice
                       ? 'bg-[#5A5B4C] text-white'
@@ -583,29 +631,48 @@ export function Screen2DepartingQuestions() {
                 <span className="text-[11px] text-[#7A7B72]">
                   {saveStatus === 'error' ? (
                     <span className="text-red-600 font-semibold flex items-center gap-1">
-                      <AlertCircle size={12} /> Response not saved to backend.
+                      <AlertCircle size={12} /> {safeErrorMessage(errorMessage) || 'Response not saved to backend.'}
                     </span>
                   ) : saveStatus === 'unsaved' ? (
-                    <span>Unsaved response</span>
-                  ) : answerText.trim() ? (
-                    <span className="text-emerald-700 flex items-center gap-1">
+                    <span className="text-amber-700 font-medium">
+                      {currentQuestion.status === 'answered'
+                        ? 'Unsaved changes — click Update Answer to replace old response'
+                        : 'Unsaved response — click Save Answer when ready'}
+                    </span>
+                  ) : currentQuestion.status === 'answered' || (answerText.trim() && saveStatus === 'saved') ? (
+                    <span className="text-emerald-700 font-semibold flex items-center gap-1">
                       <Check size={12} /> Saved in backend
                     </span>
                   ) : (
-                    <span>Type your answer above</span>
+                    <span>Type your answer above or use voice</span>
                   )}
                 </span>
 
                 <button
                   type="button"
                   onClick={() => handleSaveCurrent()}
-                  disabled={saveStatus === 'saving' || !answerText.trim() || activeHandover?.status === 'approved'}
+                  disabled={
+                    saveStatus === 'saving' ||
+                    !answerText.trim() ||
+                    activeHandover?.status === 'approved' ||
+                    (saveStatus === 'saved' && answerText.trim() === (currentQuestion.answer || ''))
+                  }
                   className="px-4 py-1.5 rounded-full bg-[#5A5B4C] hover:bg-[#4A4B3E] disabled:opacity-40 text-white text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5"
                 >
                   {saveStatus === 'saving' ? (
                     <>
                       <Loader2 size={12} className="animate-spin" />
                       <span>Saving...</span>
+                    </>
+                  ) : currentQuestion.status === 'answered' && saveStatus === 'unsaved' ? (
+                    <>
+                      <Check size={12} />
+                      <span>Update Answer</span>
+                    </>
+                  ) : saveStatus === 'saved' && answerText.trim() ? (
+                    <>
+                      <Check size={12} />
+                      <span>Saved</span>
                     </>
                   ) : (
                     <>
@@ -635,30 +702,7 @@ export function Screen2DepartingQuestions() {
                 </div>
               )}
 
-              {/* Follow-up Clarification */}
-              {currentQuestion.followUp && answerText.trim().length > 15 && (
-                <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E6E6DE] shadow-soft space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-[#5A5B4C] uppercase tracking-wider">
-                      Follow-up Clarification
-                    </span>
-                    <span className="text-[10px] text-[#7A7B72]">For {project.incomingMember}</span>
-                  </div>
-                  <p className="text-xs font-bold text-[#1F201B] leading-snug">
-                    {currentQuestion.followUp.question}
-                  </p>
-                  <textarea
-                    value=""
-                    disabled
-                    readOnly
-                    rows={2}
-                    aria-label="Follow-up clarification, not available yet"
-                    placeholder="Follow-up questions are coming in Round 3. Nothing typed here would be saved."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E6E6DE] bg-[#EAEAE2] text-xs text-[#7A7B72] font-[inherit] resize-none cursor-not-allowed"
-                  />
-                  <p className="text-[11px] text-[#7A7B72]">Coming in Round 3. Follow-up answers are not saved yet.</p>
-                </div>
-              )}
+
             </div>
           </div>
         </main>

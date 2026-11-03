@@ -93,6 +93,7 @@ class QuestionOut(BaseModel):
     risk: int
     status: str
     evidence: list[EvidenceOut]
+    answer: str | None = None
 
 
 class AnswerIn(BaseModel):

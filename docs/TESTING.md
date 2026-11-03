@@ -215,7 +215,7 @@ Backend on port 8000 with an empty AI key and a fresh SQLite file, so the analys
 | --- | --- |
 | Lead: sign in, create a handover, upload the 9 synthetic files | Pass. 8 imported, the empty test file was reported and shown as "Empty, not imported" (after a fix, see below) |
 | Lead: run the analysis | Pass. The notice said `saved`; 55 verified, 28 unverified, 18 missing, 3 conflicting; statements show labels and quotes |
-| Departing member: answer, Next, reload | Pass. The question shows as answered after a reload. The answer text is not shown again, because the server does not send it back (said on screen) |
+| Departing member: answer, Next, reload | Pass at the time. The question showed as answered after a reload. Since merging the departing-member work, the server returns the saved `answer` text, so the screen shows it again; this was not hand-run again after the merge |
 | Departing member: Skip and "I don't know" | Pass. Both are stored (`skipped`, `unknown`) and shown on the review page |
 | Departing member: save after approval | Pass. The screen says the handover is approved and the response is "Not saved". The server answered `409` |
 | Lead: edit a statement | Pass. Version 2 appears and the version history names the editor (Deepak) |
