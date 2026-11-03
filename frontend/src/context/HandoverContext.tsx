@@ -153,7 +153,6 @@ interface HandoverContextType {
     completedHandovers: number;
   };
   saveAnswer: (questionId: string | number, answer: string, options?: { hasVoice?: boolean; durationSeconds?: number }) => Promise<boolean>;
-  saveFollowUpAnswer: (questionId: string | number, answer: string) => void;
   markDontKnow: (questionId: string | number) => Promise<boolean>;
   skipQuestion: (questionId: string | number) => Promise<boolean>;
   submitDepartingAnswers: () => void;
@@ -771,7 +770,6 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
     [answerQuestionApi]
   );
 
-  const saveFollowUpAnswer = useCallback((_qId: string | number, _ans: string) => {}, []);
 
   const markDontKnow = useCallback(
     async (questionId: string | number): Promise<boolean> => {
@@ -930,7 +928,6 @@ export function HandoverProvider({ children }: { children: React.ReactNode }) {
         project: currentProjectHandover,
         dashboardMetrics,
         saveAnswer,
-        saveFollowUpAnswer,
         markDontKnow,
         skipQuestion,
         submitDepartingAnswers,
