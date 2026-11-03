@@ -57,8 +57,10 @@ DOC_FOCUS = (
 # commits, pull requests, issues and tasks nothing cites are often skipped too, so they get one request of their own
 RECORD_FOCUS = (
     "Every piece below is a commit, pull request, issue or task that the first pass did not cover. Report each "
-    "decision (with its reason), unfinished item, dependency, blocker, risk or owner it states, and any gap it "
-    "raises. Report nothing that is not in the piece."
+    "decision (with its reason), unfinished item, dependency, blocker, risk or owner it states, as a statement "
+    "that quotes the piece. Report a gap only when nothing in the piece or in the sources explains it, for example "
+    "a task with no owner. A record that has an owner, a status or a description is not a gap. "
+    "Report nothing that is not in the piece."
 )
 
 

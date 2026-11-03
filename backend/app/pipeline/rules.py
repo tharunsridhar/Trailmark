@@ -271,3 +271,92 @@ def limit_questions(drafts: list[Draft]) -> list[Draft]:
     for draft in sorted(asked, key=lambda d: -d.risk)[MAX_QUESTIONS:]:
         draft.question = None
     return drafts
+
+
+# ---- tasks nobody owns, gaps that are really the leaver's claim, facts about explained records ----
+
+NO_OWNER_WORDS = re.compile(r"no owner|unowned|without an? owner|nobody|not assigned|unassigned|lacks an? owner", re.I)
+
+
+def task_meta(piece) -> dict:
+    return (getattr(piece, "meta", None) or {}) if getattr(piece.source, "type", None) == "tasks" else {}
+
+
+def unowned_tasks(pieces, drafts: list[Draft]) -> list[Draft]:
+    """An unfinished task with an empty owner column is a gap, whatever label the model gave the
+    statement about it. A statement that says the task has no owner is relabelled `missing` and keeps its
+    evidence; when the model said nothing about it, a gap is added."""
+    from app.pipeline.fallback import DONE_STATUSES
+
+    added = []
+    for piece in pieces:
+        meta = task_meta(piece)
+        if not meta or meta.get("owner") or (meta.get("status") or "").lower() in DONE_STATUSES:
+            continue
+        title, task_id = meta.get("title", ""), meta.get("id") or piece.locator
+        question = f"Task {task_id} '{title}' has no owner. Who should own it, and what state is it in?"
+        about = [d for d in drafts if d.label != "conflicting" and any(e.piece_id == piece.id for e in d.evidence)]
+        statements = [d for d in about if d.label != "missing" and NO_OWNER_WORDS.search(d.text)]
+        for draft in statements:
+            draft.label, draft.question, draft.risk = "missing", question, 3
+        if statements or any(d.label == "missing" for d in about):
+            continue
+        quote = "owner: none"
+        if quote_in_piece(quote, piece):
+            added.append(Draft("owner", f"Task {task_id} '{title}' has no owner and is {meta.get('status') or 'not finished'}",
+                               "missing", [Evidence(piece.id, quote)], question=question, risk=3))
+    return added
+
+
+def settle_leaver_gaps(drafts: list[Draft], pieces_by_id: dict, leavers: list[str]) -> None:
+    """A gap that rests on something the departing member claimed in chat (the other pieces being
+    questions) is their claim, not a hole in the sources, so it is `unverified` and keeps no question."""
+    from app.pipeline.analyze import author_of, is_one_of
+
+    for draft in drafts:
+        if draft.label != "missing" or not draft.evidence:
+            continue
+        pieces = [pieces_by_id[e.piece_id] for e in draft.evidence]
+        statements = [p for p in pieces if "?" not in p.content]
+        if statements and all((a := author_of(p)) and is_one_of(a, leavers) for p in statements) \
+                and any(chat_sender(p) for p in statements):
+            draft.label, draft.question = "unverified", None
+
+
+def explained_record(piece) -> bool:
+    """A task with an owner and a status, or a pull request or issue with a description: the record
+    explains itself."""
+    meta = task_meta(piece)
+    if meta:
+        return bool(meta.get("owner") and meta.get("status"))
+    if (getattr(piece, "meta", None) or {}).get("kind") in ("PR", "issue"):
+        return len(piece.content.split("): ", 1)[-1]) > 20
+    return False
+
+
+def facts_for_records(pieces, drafts: list[Draft]) -> list[Draft]:
+    """For an explained record that only gaps mention, a plain statement of its own fields is added,
+    quoted from the record itself (the way the basic listing does). The gaps stay: a gap is not
+    relabelled `verified`, because the quote does not say anything is missing."""
+    added = []
+    for piece in pieces:
+        if not explained_record(piece):
+            continue
+        about = [d for d in drafts if any(e.piece_id == piece.id for e in d.evidence)]
+        if not about or any(d.label != "missing" for d in about):
+            continue
+        meta = task_meta(piece)
+        if meta:
+            quote = f"owner: {meta['owner']} | status: {meta['status']}"
+            text = f"Task {meta.get('id') or piece.locator} '{meta.get('title', '')}' is owned by {meta['owner']} (status: {meta['status']})"
+            kind = "owner"
+        else:
+            match = re.search(r"by (\S+) \(([^)]+)\)", piece.content)
+            if not match:
+                continue
+            quote = match.group(0)
+            text = f"{piece.locator.replace('issue', 'Issue')} was opened by {match.group(1)} and is {match.group(2)}"
+            kind = "unfinished" if match.group(2).lower() not in ("merged", "closed") else "decision"
+        if quote_in_piece(quote, piece):
+            added.append(Draft(kind, text, "verified", [Evidence(piece.id, squash(quote))]))
+    return added

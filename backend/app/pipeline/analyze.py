@@ -255,7 +255,13 @@ def analyze(llm, pieces, leavers: list[str] | None = None) -> AnalysisResult:
 
     records = [p for p in pieces if is_record(p) and p.id not in cited_pieces and not is_routine_commit(p)]
     more, more_dropped = top_up(llm, records, pieces_by_id, RECORD_FOCUS)
-    drafts += more
+    from app.pipeline.rules import explained_record
+
+    # a gap about a record that explains itself (owner and status, or a description) is not a gap
+    drafts += [
+        d for d in more
+        if d.label != "missing" or not d.evidence or not all(explained_record(pieces_by_id[e.piece_id]) for e in d.evidence)
+    ]
     dropped += more_dropped
 
     mark_leaver_only_claims(drafts, pieces_by_id, leavers or [])
@@ -263,16 +269,19 @@ def analyze(llm, pieces, leavers: list[str] | None = None) -> AnalysisResult:
         claims, claims_dropped = leaver_claims(llm, pieces, pieces_by_id, drafts, leavers)
         drafts += claims
         dropped += claims_dropped
-    return AnalysisResult(apply_rules(pieces, pieces_by_id, merge_repeats(drafts)), dropped)
+    return AnalysisResult(apply_rules(pieces, pieces_by_id, merge_repeats(drafts), leavers), dropped)
 
 
-def apply_rules(pieces, pieces_by_id: dict, drafts: list[Draft]) -> list[Draft]:
+def apply_rules(pieces, pieces_by_id: dict, drafts: list[Draft], leavers: list[str] | None = None) -> list[Draft]:
     """The checks that the sources alone can decide, so they do not depend on what the model said."""
     from app.pipeline import rules  # rules builds on this module, so it is imported late
 
     drafts = rules.drop_routine_commits(drafts, pieces_by_id)
     drafts += rules.find_conflicts(pieces, drafts)
     drafts = rules.settle_conflicted_statements(drafts)
+    drafts += rules.unowned_tasks(pieces, drafts)
+    rules.settle_leaver_gaps(drafts, pieces_by_id, leavers or [])
+    drafts += rules.facts_for_records(pieces, drafts)
     return rules.limit_questions(drafts + rules.unexplained_commits(pieces, drafts))
 
 

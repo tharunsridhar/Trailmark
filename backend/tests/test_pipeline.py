@@ -657,3 +657,95 @@ def test_the_riskiest_gaps_keep_their_question_and_the_rest_stay_as_gaps_without
     asked = [d for d in out if d.question]
     assert len(out) == 15 and len(asked) == 9
     assert min(d.risk for d in asked) >= max(d.risk for d in out if not d.question)
+
+
+# ---- unowned tasks, leaver gaps, records that explain themselves ----
+
+
+def board_task(piece_id, task_id, title, owner, status, notes="none", name="Tasks"):
+    return SimpleNamespace(
+        id=piece_id, locator=f"task {task_id}", source=SimpleNamespace(name=name, type="tasks"),
+        content=f"Task {task_id}: {title} | owner: {owner or 'none'} | status: {status} | due: none | notes: {notes}",
+        meta={"id": task_id, "title": title, "owner": owner, "status": status},
+    )
+
+
+def test_unowned_unfinished_task_stated_as_verified_becomes_a_gap_with_a_question():
+    task = board_task(1, "T05", "Set up database backup", "", "todo")
+    said = Draft("owner", "Task T05 (Set up database backup) has no owner and is todo.", "verified", [Evidence(1, "owner: none")])
+    out = run_rules([task], [said])
+    assert [(d.label, d.risk) for d in out] == [("missing", 3)]
+    assert out[0].question and "T05" in out[0].question and out[0].evidence[0].quote == "owner: none"
+
+
+def test_unowned_task_the_model_never_mentioned_gets_a_gap_and_owned_or_finished_ones_do_not():
+    tasks = [
+        board_task(1, "T05", "Set up database backup", "", "todo"),
+        board_task(2, "T06", "Old cleanup", "", "done"),
+        board_task(3, "T07", "Write docs", "Ravi", "todo"),
+    ]
+    out = run_rules(tasks)
+    gaps = [d for d in out if d.label == "missing"]
+    assert [g.evidence[0].piece_id for g in gaps] == [1] and gaps[0].question
+    # a gap the model already raised for the task is not repeated
+    already = Draft("owner", "Who owns T05?", "missing", [Evidence(1, "owner: none")], question="Who?")
+    assert len([d for d in run_rules(tasks, [already]) if d.label == "missing"]) == 1
+
+
+def test_unowned_task_rule_does_not_relabel_statements_that_say_something_else():
+    task = board_task(1, "T05", "Set up database backup", "", "todo", notes="Need AWS credentials")
+    other = Draft("dependency", "The backup needs AWS credentials", "verified", [Evidence(1, "Need AWS credentials")])
+    out = run_rules([task], [other])
+    assert other.label == "verified" and len([d for d in out if d.label == "missing"]) == 1
+
+
+def test_gap_resting_on_the_leavers_claim_is_unverified_and_a_gap_from_a_task_or_other_person_stays():
+    pieces = [
+        chat_piece(1, "Asha", "Our Redis cache purges dead sessions at 3 AM every Sunday."),
+        chat_piece(2, "Kiran", "Where is that cache purge configured? I did not see a schedule."),
+        chat_piece(3, "Deepak", "The deploy key was never handed over to anyone."),
+    ]
+    claim_gap = Draft("owner", "Redis purge schedule is unclear", "missing",
+                      [Evidence(1, "purges dead sessions"), Evidence(2, "Where is that cache purge configured")], question="Where?")
+    other_gap = Draft("owner", "Deploy key", "missing", [Evidence(3, "never handed over")], question="Who has it?")
+    only_question = Draft("owner", "Purge config", "missing", [Evidence(2, "Where is that cache purge configured")], question="Where?")
+    out = analyze_rules(pieces, [claim_gap, other_gap, only_question], leavers=["Asha"])
+    assert [(d.label, d.question is None) for d in out] == [("unverified", True), ("missing", False), ("missing", False)]
+
+
+def analyze_rules(pieces, drafts, leavers):
+    from app.pipeline.analyze import apply_rules
+
+    return apply_rules(pieces, {p.id: p for p in pieces}, list(drafts), leavers)
+
+
+def test_record_request_asks_for_statements_and_a_gap_only_when_nothing_explains_the_record():
+    pieces = [
+        board_task(1, "T1", "Write the deploy guide", "Ravi", "open"),
+        board_task(2, "T2", "Renew the domain", "Ravi", "open"),
+    ]
+    first = {"statements": [statement(text="Deploy guide is open", relation="claim_only",
+                                       evidence=[{"piece_id": 1, "quote": "Write the deploy guide"}])], "gaps": []}
+    second = {"statements": [], "gaps": [{"kind": "owner", "text": "Domain renewal unclear", "question": "Who renews it?", "risk": 2,
+                                          "evidence": [{"piece_id": 2, "quote": "Renew the domain"}]}]}
+    llm = FakeLLM(first, {"statements": [], "gaps": []}, second)
+    result = analyze(llm, pieces)
+    system = [s for s, u in llm.prompts if "[id=2]" in u and "[id=1]" not in u][0]
+    assert "Report a gap only when nothing" in system and "has an owner, a status or a description is not a gap" in system
+    # task 2 has an owner and a status, so the model's gap about it is dropped
+    assert not [d for d in result.drafts if d.text == "Domain renewal unclear"]
+
+
+def test_explained_record_that_only_gaps_mention_gets_a_verified_fact_quoted_from_the_record():
+    task = board_task(1, "T09", "Implement CSV export", "Asha", "in_progress")
+    pr = SimpleNamespace(id=2, locator="PR #4", meta={"kind": "PR"}, source=SimpleNamespace(name="Repo", type="repo"),
+                         content="Pull request #4 'Tiers' by Neha (open): WIP: VIP and general admission ticket tiers with discounts.")
+    gaps = [Draft("unfinished", "T09 is stalled", "missing", [Evidence(1, "in_progress")], question="Why?"),
+            Draft("unfinished", "PR 4 unclear", "missing", [Evidence(2, "ticket tiers")], question="What?")]
+    out = run_rules([task, pr], gaps)
+    verified = [d for d in out if d.label == "verified"]
+    assert len(verified) == 2 and len([d for d in out if d.label == "missing"]) == 2
+    assert all(quote_in_piece(d.evidence[0].quote, p) for d, p in zip(verified, (task, pr)))
+    # a record that already has a non-gap statement is left alone
+    done = Draft("unfinished", "T09 owned by Asha", "unverified", [Evidence(1, "owner: Asha")])
+    assert not [d for d in run_rules([task], gaps[:1] + [done]) if d.label == "verified"]
