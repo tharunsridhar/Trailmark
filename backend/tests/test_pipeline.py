@@ -803,3 +803,67 @@ def test_explained_record_that_only_gaps_mention_gets_a_verified_fact_quoted_fro
     # a record that already has a non-gap statement is left alone
     done = Draft("unfinished", "T09 owned by Asha", "unverified", [Evidence(1, "owner: Asha")])
     assert not [d for d in run_rules([task], gaps[:1] + [done]) if d.label == "verified"]
+
+
+# ---- restricted places are never named in text ----
+
+def restricted_pieces():
+    hr = SimpleNamespace(name="HR Private Notes (Confidential)", type="doc")
+    chat = SimpleNamespace(name="Lead 1-on-1 Chat (Confidential)", type="chat")
+    team = SimpleNamespace(name="Team Chat Archive", type="chat")
+    return [
+        SimpleNamespace(id=1, content="Bonus is tied to signoff", locator="hr_private_notes.md paragraph 2",
+                        source=hr, allowed_roles=["lead"]),
+        SimpleNamespace(id=2, content="[t] Deepak: salary is fixed", locator="chat message 56",
+                        source=chat, allowed_roles=["lead"]),
+        SimpleNamespace(id=3, content="[t] Asha: we use Render", locator="chat message 5",
+                        source=team, allowed_roles=["lead", "departing", "incoming"]),
+    ]
+
+
+def hide(drafts):
+    from app.pipeline.rules import hide_restricted_names
+    return hide_restricted_names(restricted_pieces(), drafts)
+
+
+def test_gap_resting_only_on_a_restricted_piece_loses_the_location_name():
+    drafts = hide([
+        Draft("owner", "The contents of 'hr_private_notes paragraph 2' are not provided", "missing",
+              [Evidence(1, "Bonus is tied")], question="What does paragraph 2 of hr_private_notes.md say?"),
+        Draft("owner", "Confidential HR notes document content is restricted", "missing", [Evidence(1, "Bonus")]),
+        Draft("owner", "See chat message 56 for the salary", "missing", [Evidence(2, "salary")]),
+    ])
+    from app.pipeline.rules import NEUTRAL_QUESTION, NEUTRAL_TEXT
+    assert [d.text for d in drafts] == [NEUTRAL_TEXT] * 3
+    assert drafts[0].question == NEUTRAL_QUESTION
+    assert drafts[0].evidence[0].piece_id == 1  # the lead still sees the real source
+
+
+def test_name_is_replaced_when_an_open_piece_also_backs_the_statement():
+    drafts = hide([Draft("decision", "We chose Render, see HR Private Notes", "unverified",
+                         [Evidence(3, "we use Render"), Evidence(1, "Bonus")])])
+    assert drafts[0].text == "We chose Render, see a restricted source"
+
+
+def test_open_text_and_open_locators_are_left_alone():
+    # "chat message 5" is a prefix of the restricted "chat message 56" but is an open locator
+    drafts = hide([Draft("decision", "Team chose Render in chat message 5 of the Team Chat Archive", "verified",
+                         [Evidence(3, "we use Render")], question="Why Render?")])
+    assert drafts[0].text == "Team chose Render in chat message 5 of the Team Chat Archive"
+    assert drafts[0].question == "Why Render?"
+
+
+def test_pieces_without_role_lists_are_open_and_nothing_changes():
+    from app.pipeline.rules import hide_restricted_names
+    drafts = [Draft("decision", "hr_private_notes mentioned", "verified", [Evidence(1, "go with Render")])]
+    assert hide_restricted_names(PIECES, drafts)[0].text == "hr_private_notes mentioned"
+
+
+def test_apply_rules_hides_restricted_names_in_a_gap_the_model_wrote():
+    from app.pipeline.analyze import apply_rules
+    pieces = restricted_pieces()
+    gap = Draft("owner", "The contents of hr_private_notes paragraph 2 are not provided", "missing",
+                [Evidence(1, "Bonus")], question="Where is hr_private_notes.md?", risk=2)
+    result = apply_rules(pieces, {p.id: p for p in pieces}, [gap])
+    for draft in result:
+        assert "hr_private" not in (draft.text + (draft.question or "")).lower()

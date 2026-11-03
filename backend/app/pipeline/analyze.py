@@ -298,7 +298,8 @@ def apply_rules(pieces, pieces_by_id: dict, drafts: list[Draft], leavers: list[s
     drafts += rules.unowned_tasks(pieces, drafts)
     rules.settle_leaver_gaps(drafts, pieces_by_id, leavers or [])
     drafts += rules.facts_for_records(pieces, drafts)
-    return rules.limit_questions(drafts + rules.unexplained_commits(pieces, drafts))
+    drafts = rules.limit_questions(drafts + rules.unexplained_commits(pieces, drafts))
+    return rules.hide_restricted_names(pieces, drafts)
 
 
 def build_drafts(llm, raw: dict, pieces_by_id: dict) -> tuple[list[Draft], int]:
