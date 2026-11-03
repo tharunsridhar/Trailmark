@@ -14,7 +14,7 @@ WCC Forge 48, Round 2 (The Build). Team Trailmark: Kishan S and Tharun Sridhar.
 
 ## Features done
 
-Against the seven core features in the Round 1 plan. "Backend" means built and covered by the 197 automated tests. The frontend screens call the backend. One journey through all three roles was clicked through on the merged code in the built-in browser and again in Chrome against a local backend (not a deployed backend, no automated frontend tests). Voice recording was not run. The frontend has 12 automated tests that cover a small part of the screens. `tsc --noEmit` and `next build` pass.
+Against the seven core features in the Round 1 plan. "Backend" means built and covered by the 197 automated tests. The frontend screens call the backend. One journey through all three roles was clicked through on the merged code in the built-in browser and again in Chrome against a local backend (not a deployed backend, no automated frontend tests). Voice recording was run once in Chrome (one spoken sentence transcribed and saved). The frontend has 12 automated tests that cover a small part of the screens. `tsc --noEmit` and `next build` pass.
 
 | Core feature | Status |
 | --- | --- |
@@ -60,7 +60,7 @@ Not built yet.
 - The score varies from run to run, because the model is not deterministic. In the last round the three runs got the expected label on 29, 30 and 31 of 32 cases with the old key (30, 32 and 32 cited). The saved run, the one that got 31, is 32 with the corrected key; the other two were not re-scored. Earlier rounds were weaker, down to 15. The saved run is the best of its round, so it is not typical, which is why the saved fallback exists.
 - Other limits: the code looks for three fixed conflict topics (any other conflict is found only if the model finds it), the routine-commit word list is a guess that was not tuned on other projects, and a score of 32 of 32 is one run scored by a generous script, not an average.
 - All 197 tests pass on SQLite and on PostgreSQL 16 (3 Nov 2026, two separate runs).
-- Not tested yet: voice recording and transcription (the refused-microphone message was tested with a stubbed rejection only), Firefox and Safari, a real phone, a deployed instance, `docker compose --profile frontend up`, and Docker upload and analysis on the current build. Each item is in [`TESTING.md`](TESTING.md).
+- Not tested yet: voice beyond one run in Chrome (the refused-microphone message was tested with a stubbed rejection only), Firefox and Safari, a real phone, a deployed instance, `docker compose --profile frontend up`, and Docker upload and analysis on the current build. Each item is in [`TESTING.md`](TESTING.md).
 - The AI runs on the free tier of Gemini, which limits requests. If the service is unavailable the app shows the saved results.
 - Redaction is pattern based and will miss some sensitive text.
 - All pieces go to the model in one request, so a large repository would need chunking.

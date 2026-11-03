@@ -265,7 +265,7 @@ Run on the merged frontend (`frontend-final-check` merged on top of the departin
 | Lead: sign in, create a handover, upload the 9 synthetic files | Pass. 8 imported (128 pieces), the empty test file was reported as "Empty, not imported" |
 | Lead: run the analysis | Pass. Notice `saved`; 54 verified, 31 unverified, 18 missing, 3 conflicting, 9 questions; statements show labels and quotes |
 | Departing member: answer, Next, Back, change the answer, Update Answer, reload | Pass. After the reload the changed text shows (the server returns the saved `answer`) |
-| Departing member: voice answer | **Not tested.** The built-in browser blocks the microphone. The recorder opened and showed "Permission denied" instead of failing silently; recording and transcription were not run |
+| Departing member: voice answer | **Not run in the built-in browser**, which blocks the microphone. The recorder opened and showed "Permission denied" instead of failing silently. Run in Chrome instead, see "Voice answer (Chrome)" |
 | Departing member: Skip and "I don't know" | Pass. Review page showed 1 answered, 7 skipped, 1 unknown |
 | Lead: edit a statement | Pass. Version 2; the version history names the editor (Deepak) |
 | Lead: reject with a reason | Pass. The button stays disabled until a reason is typed; the statement shows Rejected |
@@ -318,7 +318,8 @@ Run by me through the Claude in Chrome extension on `e98ee51`. Backend on port 8
 | Voice answer (Chrome, 3 Nov 2026) | Result |
 | --- | --- |
 | Open the recorder | Pass. The answer box kept the typed text, and the panel showed "Start Recording" |
-| Press "Start Recording" and allow the microphone | **Not run.** I pressed it several times in two passes. Each time `getUserMedia` stayed pending and the permission state stayed "prompt". The project owner said they clicked Allow, but the prompt was not answered in the tab I drove. No recording started, no transcription was run, and no speech was produced. Transcription itself uses the browser's Web Speech API, with no backend call, so saved mode does not affect it |
+| Press the microphone, allow it, speak, stop | **Pass, one run (3 Nov 2026, later pass).** On a fresh handover (new backend and database, analysis in `saved` mode) the project owner pressed the microphone icon in the Chrome tab themselves, clicked Allow and spoke one sentence. The permission state changed from "prompt" to "granted" and the answer box held the transcript: "hello can you hear me this is the testing that I am doing for voice test  this is a voice test" (94 characters). Earlier passes had not worked: the prompt stayed unanswered when the page was driven through the extension, and the first handover used was already approved, so its recorder was disabled |
+| Save the transcribed answer | **Pass.** "Save Answer" showed "Saved in backend", and a request to `GET /handovers/1/questions` returned the same text on question 1. The page was not reloaded afterwards. Transcription uses the browser's Web Speech API, with no backend call, so saved mode does not affect it |
 | Message when permission is denied, typed text kept | Passed with a **stubbed** denial, not a real one: `navigator.mediaDevices.getUserMedia` was replaced in the page with a call that rejects with `NotAllowedError`, then `NotFoundError`. After the fix below the page showed "Microphone access was denied. Allow the microphone for this site in the browser, or type your answer. Your text has not been changed." and "No microphone was found. Connect one, or type your answer. Your text has not been changed." The typed text stayed in both boxes, the recorder did not enter the recording state, "Save Answer" still worked and the backend held the saved answer |
 
 Two problems were found by this test and fixed in `frontend/src/components/interview/VoiceRecorder.tsx`: the message was only the browser's raw text ("Permission denied"), and pressing Start Recording emptied the recorder's own text box before the microphone was granted. The main answer box was never emptied. The text is now cleared only after the microphone is granted, and the message depends on the error. A real denial (blocking the site in Chrome's settings) was not tried.
@@ -335,7 +336,7 @@ A second defence was added in the pipeline (rule 10, `rules.py`): restricted sou
 
 "Not tested yet" means no result has been recorded for it. The checks that were run, with their dates, are in "Latest result" and "Frontend run by hand".
 
-- **Voice answers: recording and transcription.** Not run. In Chrome the microphone prompt was never answered, so recording did not start (see "Second pass in real Chrome"). The built-in browser blocks the microphone. The denied-permission message was tested with a stubbed rejection only, not a real denial.
+- **Voice answers beyond one run.** One spoken English sentence in Chrome was transcribed and saved (see "Voice answer (Chrome)"). Not tested: other browsers, accents, long answers, a reload after saving. The built-in browser blocks the microphone. The denied-permission message was tested with a stubbed rejection only, not a real denial.
 - **Firefox and Safari.** Not run (not available here). A real phone and touch devices were not used.
 - **Vercel, and a deployed instance.** Nothing is deployed to Render or Vercel. Forwarding through Vercel to Render is untested. Same-origin mode was run locally only.
 - **The frontend image under `docker compose --profile frontend up`.** Ports were busy, so the image was started with `docker run`.
