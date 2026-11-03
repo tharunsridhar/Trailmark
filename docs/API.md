@@ -217,7 +217,7 @@ Poll this until `status` is `done` (`running`, `done`, `failed`, or `not_started
 
 ### GET /handovers/{id}/questions (lead, departing)
 
-Highest risk first, at most nine in total per handover (gaps beyond that stay as gaps without a question). `evidence` lists the source pieces that raised the question, with the quoted words. A question is left out completely for a viewer who may not see all of its evidence, so the departing member never gets restricted text through a question.
+Highest risk first, at most nine in total per handover (gaps beyond that stay as gaps without a question). `evidence` lists the source pieces that raised the question, with the quoted words. A question is left out completely for a viewer who may not see all of its evidence, or when it has no evidence at all (its wording cannot be proven safe), so the departing member never gets restricted text through a question. The lead sees every question.
 
 ```json
 [
@@ -332,7 +332,7 @@ Marks the handover `approved` and every statement still in `draft` as `approved`
 
 ### GET /handovers/{id}/handover-view
 
-Only available once the handover is approved (`409` before that). Always filtered as the incoming member: a statement is left out completely unless the incoming role may see every source behind it. The lead can call it to preview exactly what the incoming member will get. The departing member gets `403`.
+Only available once the handover is approved (`409` before that). Always filtered as the incoming member: a statement is left out completely unless the incoming role may see every source behind it. A `missing` gap that has no source of its own is returned with the text `Something is not documented here` and an empty `sources` list, because its real text could name a restricted place. Any other statement with no source is left out. The lead can call it to preview exactly what the incoming member will get. The departing member gets `403`.
 
 Text and quotes are **redacted** for this view: emails become `[redacted email]`, phone numbers `[redacted phone]`, API keys `[redacted secret]` and passwords `password is [redacted]`. This is pattern based, treat it as a safety net. In a resolved conflict only the chosen source is listed.
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.access import can_user_see
+from app.access import can_see_question
 from app.db import get_db
 from app.deps import current_user, member_of
 from app.models import Answer, Handover, Question, Statement, StatementSource, StatementVersion, User
@@ -24,8 +24,7 @@ def answer_question(
     if membership is None or membership.role != "departing":
         raise HTTPException(status_code=403, detail="Only the departing member can answer questions")
 
-    pieces = [link.piece for link in question.evidence]
-    if not can_user_see("departing", pieces):
+    if not can_see_question("departing", question):
         raise HTTPException(status_code=403, detail="Only the departing member can answer questions")
 
     if db.get(Handover, question.handover_id).status != "draft":

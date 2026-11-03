@@ -18,15 +18,16 @@ The AI is never called in tests. A scripted fake model plays back fixed replies,
 
 ## Latest result
 
-180 tests, all passing on SQLite (97 seconds, run on 3 Nov 2026 from the `backend` folder). An earlier 149 tests also passed on PostgreSQL 16 (about 4 minutes). The suite has 31 more tests since then, and it was not run on PostgreSQL again. Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the time is password hashing.
+192 tests, all passing on SQLite (about 10.5 minutes on 3 Nov 2026 with Docker and the PostgreSQL run going at the same time, run from the `backend` folder). The same 192 also passed on PostgreSQL 16 from `docker compose` (`TEST_DATABASE_URL`, about 10.8 minutes), with no PostgreSQL-only failure. Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the time is password hashing.
 
-Also checked by hand, on an earlier build: the Docker image builds, and with `docker compose up` the backend container ran against Postgres, answered `/health`, registered a user, created a handover, and returned `401` without a login. This was not repeated for the current build.
+Also checked by hand on the current backend code (3 Nov 2026): `docker compose build backend` and `up` ran the backend against Postgres. `GET /health` returned `{"status": "ok"}`, a user registered (`201`), a handover was created (`201`), and `GET /handovers` without a login returned `401`. With a wrong `LLM_API_KEY` and the nine synthetic files uploaded, the analysis finished in `saved` mode with the notice "AI unavailable: showing saved results from an earlier run." and 114 statements (51 verified, 42 unverified, 18 missing, 3 conflicting), none without a source, and 9 questions for the lead. The frontend image was not built in this check.
 
 | File | Tests | What it covers |
 | --- | --- | --- |
 | `test_auth.py` | 8 | Register, login, logout, wrong password, duplicate email, short password, bad or missing token |
 | `test_handovers.py` | 11 | Creator becomes lead, roles, outsiders and non-leads blocked, adding members |
-| `test_access.py` | 10 | A statement is hidden unless every source behind it is visible, drafts and rejected claims never shown |
+| `test_access.py` | 13 | A statement is hidden unless every source behind it is visible, drafts and rejected claims never shown, a statement or question with no source of its own is neutral or hidden |
+| `test_privacy.py` | 9 | Restricted names never reach the incoming member (see below), for every role |
 | `test_importers.py` | 11 | Each source type, empty and unreadable files, bad JSON, binary files |
 | `test_sources_api.py` | 10 | Upload, listing, source access levels passed to pieces, size and type checks, no uploads after approval |
 | `test_pipeline.py` | 66 | Quote check, fabricated and unknown citations dropped, verifier verdicts, conflicts, claims nobody backs up, claims only the leaver makes, gaps, bad model output, retries, rate limits, the second model, the Gemini and Groq clients, sources and document paragraphs the first request skipped, and the rules in code (below) |
@@ -35,7 +36,7 @@ Also checked by hand, on an earlier build: the Docker image builds, and with `do
 | `test_redact.py` | 6 | Emails, phone numbers, secrets, and things that must not be masked such as dates |
 | `test_config.py` | 5 | Database URL handling, refusing to start in deployment with a weak secret |
 | `test_health.py` | 1 | Health check |
-| **Total** | **180** | |
+| **Total** | **192** | |
 
 ## Rules in code
 
@@ -210,14 +211,15 @@ Backend on port 8000 with an empty AI key and a fresh SQLite file, so the analys
 
 Bugs found and fixed in the frontend during this run: the review page said "No answer recorded" for questions that were answered; the lead dashboard showed no sources after switching from another persona (stale cookie, the sources and members requests were not repeated after the new sign-in); the empty file was counted as an uploaded source; the departing member's answers called a lead-only endpoint and got a `403` each time; the answer box could still be typed in after approval. Fixed but only partly re-tested in the browser: the review page now shows the text typed in the same session, which was not clicked through again because the handover was already approved.
 
-One backend finding, not fixed: for a handover that includes a lead-only document, a `missing` gap with no source of its own is shown to the incoming member. In the earlier saved file one such statement read "The contents of 'hr_private_notes paragraph 2' are not provided in the sources" (`GET /handovers/1/handover-view` as the incoming member, status `200`, statement 37). It leaks the name of a restricted location, not its content. The current saved file has no statement without a source. A fix needs a decision (hide such gaps from the incoming member, or drop them in the pipeline), so it is left for Round 3 with the access-control work.
+One backend finding, now fixed: for a handover that includes a lead-only document, a `missing` gap with no source of its own was shown to the incoming member. In an earlier saved file one such statement read "The contents of 'hr_private_notes paragraph 2' are not provided in the sources" (`GET /handovers/1/handover-view` as the incoming member, statement 37). It leaked the name of a restricted location, not its content.
+
+The fix is in the access layer (`backend/app/access.py`), not in the prompt. A statement with no source of its own cannot be proven safe, so for the incoming member a `missing` gap with no source is shown as "Something is not documented here" with no sources, any other statement with no source is left out, and the real text stays with the lead. A question with no evidence is shown only to the lead, so the departing member does not get it in the list and cannot answer it. `tests/test_privacy.py` builds the leak (gaps and a claim that name `hr_private_notes`, `lead_private_chat` and a salary) and checks that none of those words appear in the incoming member's view or receipt, that the lead's preview equals the incoming view, that the lead still sees the original text, questions and version history, that the departing member gets no restricted question and `403` on the draft and the view, and that an outsider gets `403`. Five of these tests failed before the fix. The saved file needed no change: it has 114 statements and none without a source. One saved gap is titled "Confidential HR notes document..."; its source is the lead-only HR document, so the incoming member never receives it. Limit: a statement that cites an open source is judged by its sources, so text a model wrote about a restricted place while citing an open source is not caught by this rule.
 
 ## Not tested yet
 
 - **The AI in the automated tests.** The test suite never calls a real model. The real AI was run by hand on the synthetic project (above).
 - **A deployed instance.** `render.yaml` is written but nothing is deployed to Render yet.
 - **The frontend, beyond one local run.** The by-hand browser run is described above. The frontend has no automated tests, was not run in AI mode, only in one browser (the Claude desktop app's built-in one) and one window size, and not with voice answers.
-- **PostgreSQL with the current suite.** The 31 newest tests have not been run on PostgreSQL.
-- **Docker with the current build.** The last check by hand was on an earlier build.
+- **The frontend Docker image.** Only the backend and Postgres were built and run in Docker.
 - **Load and long inputs.** A very large repository would need chunking, which is not built.
 - **Outside users.** No structured feedback has been collected yet. The script and a table to fill in are in [`FEEDBACK.md`](FEEDBACK.md).
