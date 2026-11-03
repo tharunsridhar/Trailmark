@@ -200,16 +200,46 @@ def explains(commit, other) -> bool:
     return len(words(commit_message(commit)) & words(other.content)) >= 3
 
 
+SENSITIVE = re.compile(r"auth|payment|secret|deploy|docker|render|login|token|session|\.env|middleware|security", re.I)
+
+# the questions the departing member is asked in total, gaps from the model included
+MAX_QUESTIONS = 9
+MIN_COMMIT_QUESTIONS = 2
+
+
+def commit_files(piece) -> list[str]:
+    match = re.search(r"\(files: ([^)]*)\)", piece.content)
+    return [f.strip() for f in match.group(1).split(",")] if match else []
+
+
+def commit_risk(commit) -> int:
+    """3 when the commit brings in a service, secret or package, 2 when it touches auth, payments,
+    deployment or security, otherwise 1."""
+    if NEEDS_SETUP.search(commit.content):
+        return 3
+    return 2 if SENSITIVE.search(commit.content) else 1
+
+
+def is_tiny_commit(commit) -> bool:
+    """A one-file change with a few words of message and nothing risky in it."""
+    return (
+        len(commit_files(commit)) <= 1 and len(commit_message(commit).split("(files:")[0].split()) <= 5
+        and commit_risk(commit) == 1
+    )
+
+
 def unexplained_commits(pieces, drafts: list[Draft]) -> list[Draft]:
-    """A commit that no issue, pull request, document, task or other person's chat message explains
-    becomes a gap with a question for the person leaving, whatever the model said about it."""
+    """A commit that matters and that no issue, pull request, document, task or other person's chat
+    message explains becomes a gap. Routine and tiny commits are left out. Gaps are ranked by risk and
+    only the highest ones become questions, so that the whole list stays short; the rest stay as gaps
+    without a question."""
     others = [p for p in pieces if not is_commit(p)]
     # a commit already in a gap or a conflict has been dealt with there
     asked = {e.piece_id for d in drafts if d.label in ("missing", "conflicting") for e in d.evidence}
 
     gaps = []
     for commit in pieces:
-        if not is_commit(commit) or is_routine_commit(commit) or commit.id in asked:
+        if not is_commit(commit) or is_routine_commit(commit) or is_tiny_commit(commit) or commit.id in asked:
             continue
         if any(explains(commit, other) for other in others):
             continue
@@ -223,6 +253,12 @@ def unexplained_commits(pieces, drafts: list[Draft]) -> list[Draft]:
                 f"Why was {commit.locator} made ('{message}'), and is anything needed to run it, "
                 "such as credentials, settings or instructions that are not written down?"
             ),
-            risk=3 if NEEDS_SETUP.search(commit.content) else 1,
+            risk=commit_risk(commit),
         ))
+
+    existing = sum(1 for d in drafts if d.label == "missing" and d.question)
+    budget = max(MIN_COMMIT_QUESTIONS, MAX_QUESTIONS - existing)
+    # highest risk first, the earlier commit first among equals
+    for draft in sorted(gaps, key=lambda g: -g.risk)[budget:]:
+        draft.question = None
     return gaps

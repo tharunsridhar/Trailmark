@@ -526,3 +526,43 @@ def test_conflict_shows_up_to_two_pieces_on_each_side():
     ]
     conflict = [d for d in run_rules(pieces) if d.label == "conflicting"][0]
     assert [e.piece_id for e in conflict.evidence] == [1, 2, 3]
+
+
+def commit_with_files(piece_id, sha, message, files):
+    p = repo_piece(piece_id, sha, f"{message} (files: {', '.join(files)})")
+    return p
+
+
+def test_tiny_and_routine_commits_never_become_gaps():
+    pieces = [
+        commit_with_files(1, "aaaaaa1", "Add event filter", ["ui/Filter.tsx"]),
+        commit_with_files(2, "aaaaaa2", "Fix typo in email template", ["mail.html"]),
+        commit_with_files(3, "aaaaaa3", "Add event filter by campus building and department", ["ui/Filter.tsx", "ui/api.ts"]),
+    ]
+    gaps = [d for d in run_rules(pieces) if d.label == "missing"]
+    assert [g.evidence[0].piece_id for g in gaps] == [3]
+
+
+def test_commit_gaps_are_ranked_by_risk_and_only_the_top_ones_keep_a_question():
+    pieces = [commit_with_files(i, f"bbbbbb{i}", f"Rework layout number {i} of screens", ["a.py", "b.py"]) for i in range(1, 9)]
+    pieces.append(commit_with_files(9, "cccccc9", "Add token check to login middleware", ["app/auth.py", "app/mw.py"]))
+    pieces.append(commit_with_files(10, "dddddd0", "Import campus_sms_sdk for SMS", ["app/sms.py", "pyproject.toml"]))
+    gaps = [d for d in run_rules(pieces) if d.label == "missing"]
+    assert len(gaps) == 10
+    asked = [g for g in gaps if g.question]
+    # nine questions in all, the two risky commits first, the rest stay as gaps without a question
+    assert len(asked) == 9
+    assert {g.evidence[0].piece_id for g in asked} >= {9, 10}
+    assert all(g.risk >= 1 for g in gaps) and [g.risk for g in gaps if g.evidence[0].piece_id == 9] == [2]
+
+
+def test_questions_from_the_model_count_against_the_cap_but_two_commit_questions_are_kept():
+    model_gaps = [Draft("owner", f"Gap {i}", "missing", [], question=f"Who owns {i}?") for i in range(12)]
+    pieces = [
+        commit_with_files(1, "eeeeee1", "Import campus_sms_sdk for SMS", ["app/sms.py", "pyproject.toml"]),
+        commit_with_files(2, "eeeeee2", "Add webhook secret handling", ["app/hooks.py", "app/cfg.py"]),
+        commit_with_files(3, "eeeeee3", "Rework layout of screens", ["a.py", "b.py"]),
+    ]
+    out = run_rules(pieces, model_gaps)
+    new = [d for d in out if d.text.startswith("Nothing in the sources")]
+    assert [bool(d.question) for d in sorted(new, key=lambda d: d.evidence[0].piece_id)] == [True, True, False]
