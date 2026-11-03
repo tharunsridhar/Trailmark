@@ -18,7 +18,7 @@ The AI is never called in tests. A scripted fake model plays back fixed replies,
 
 ## Latest result
 
-151 tests, all passing on SQLite (about 2 minutes). The earlier 149 also passed on PostgreSQL 16 (about 4 minutes). The two newest tests only exercise the analysis pipeline with a scripted model and do not touch the database, and the suite was not run on PostgreSQL again after adding them. Most of the time is password hashing.
+161 tests, all passing on SQLite (about 2.5 minutes). The earlier 149 also passed on PostgreSQL 16 (about 4 minutes) earlier. The 10 newest tests only exercise the analysis pipeline with a scripted model and do not touch the database, and the suite was not run on PostgreSQL again after adding them. Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the time is password hashing.
 
 Also checked by hand: the Docker image builds, and with `docker compose up` the backend container ran against Postgres, answered `/health`, registered a user, created a handover, and returned `401` without a login.
 
@@ -29,7 +29,7 @@ Also checked by hand: the Docker image builds, and with `docker compose up` the 
 | `test_access.py` | 10 | A statement is hidden unless every source behind it is visible, drafts and rejected claims never shown |
 | `test_importers.py` | 11 | Each source type, empty and unreadable files, bad JSON, binary files |
 | `test_sources_api.py` | 10 | Upload, listing, source access levels passed to pieces, size and type checks, no uploads after approval |
-| `test_pipeline.py` | 37 | Quote check, fabricated and unknown citations dropped, verifier verdicts, conflicts, claims nobody backs up, claims only the leaver makes, gaps, bad model output, retries, rate limits, the second model, the Gemini and Groq clients, sources and document paragraphs the first request skipped |
+| `test_pipeline.py` | 47 | Quote check, fabricated and unknown citations dropped, verifier verdicts, conflicts, claims nobody backs up, claims only the leaver makes, gaps, bad model output, retries, rate limits, the second model, the Gemini and Groq clients, sources and document paragraphs the first request skipped, and the rules in code (conflicting values, unexplained commits, routine commits, statements on a conflicted source, tasks owned by the leaver) |
 | `test_analysis_api.py` | 14 | Labels and dropped claims, questions ordered by risk, restricted evidence hidden, saved and basic fallbacks, re-runs, lost runs |
 | `test_review_flow.py` | 37 | Answering, review actions and versions, approval rules, the incoming view, redaction, receipt, who may do what |
 | `test_redact.py` | 6 | Emails, phone numbers, secrets, and things that must not be masked such as dates |
@@ -67,13 +67,52 @@ What we learned and changed:
 - Splitting the work into two requests (facts, then checks) and a longer checking prompt did not help, so they were not kept.
 - The answer key counts document paragraphs after the title block, the importer counts the title block too, so the key's "paragraph 1" is the importer's "paragraph 2". The scoring allows for that.
 
-Still wrong or missing in the saved run:
+Still wrong or missing in the saved run (the 3 Nov run, unchanged, see the next section for what the code now does about each):
 
 - The third planted conflict (token lifetime of 60 or 15 minutes, commit c18d402 against chat message 17) is not cited at all in this run.
 - Two planted gaps (commits f710a34 and a3f9c21) are cited but not labelled `missing`.
 - The auditorium capacity conflict appears twice, once labelled `conflicting` and once as a `verified` statement that mentions the conflict.
 - Many plain commits are labelled `decision` although they only record work done, so the lead has a long list to review.
 - The free tier of the AI service sometimes answers "high demand" (503), and some runs took several minutes because of retries. That is why a second model and saved results exist.
+
+### Rules in code added on 3 Nov (evening)
+
+New file `backend/app/pipeline/rules.py`, run after the model's statements are built (`apply_rules` in `analyze.py`). None of it calls the model.
+
+1. **Conflicting values.** Sentences about the token lifetime, the auditorium capacity and the ticket QR format are read in every piece. If two pieces give different values (60 against 15 minutes, 350 against 500, UUID against HMAC), a `conflicting` statement is added with a quote from each side (up to two pieces per side), unless the model already reported a conflict that covers both sides. A piece that names both values (someone pointing out the disagreement) is not treated as a side. The three topics are written into the code, so a new kind of conflict is only found by the model.
+2. **Unexplained commits.** A commit that is not routine and that no pull request, issue, document, task or *other person's* chat message talks about becomes a `missing` gap with a question. "Talks about" means it names the sha, a file or a distinctive name from the commit (`campus_sms_sdk`, `payments.py`), or shares three content words. A question is not an explanation, and the author describing their own commit in chat does not count (it is the same person's word). Commits already in a gap or a conflict are skipped. The risk is 3 when the commit brings in a service, secret or package, otherwise 1.
+3. **Conflicted sources.** After the conflicts are known, a `verified` statement that cites only pieces that are part of a conflict is dropped (it only restates it), and one that also cites other pieces becomes `unverified`.
+4. **Routine commits.** A `decision` whose evidence is only commits that look routine (typo, version pin, formatting, fixtures, clean-up, modal, button, spacing in the message) is dropped from the list.
+5. **Leaver and tasks.** A task owned by the departing member no longer counts as independent backing for their own chat message (run 1 had "Google OAuth locked to campus domains" verified because the model also cited task T06).
+
+Real runs after these rules, same 9 sources, same model (`gemini-3.6-flash`), scored with a script that I re-wrote for this (it scores the 3 Nov saved run at 31 cited and 29 expected labels, the same as the figures above). The runs are numbered in the order they were made. Run 1 was made before rule 5 and before rule 1 kept two pieces per side.
+
+| Run | Statements | Questions | Cited (of 32) | Expected label (of 32) | Conflicts found (of 3) | Leaver-only claims `unverified` |
+| --- | --- | --- | --- | --- | --- | --- |
+| 3 Nov saved run (before) | 86 | 7 | 31 | 29 | 2 | 4 of 4 |
+| Run 1 | 73 | 14 | 32 | 30 | 2 | 3 of 4 (C07 was `verified`, fixed by rule 5 afterwards) |
+| Run 2 | 74 | 15 | 31 | 29 | 3 | 3 cited and unverified, C08 not cited |
+| Run 3 | 88 | 18 | 30 | 28 | 3 | 4 of 4 |
+
+**The saved result was not replaced.** No run matched the saved run on every measure: run 1 broke a hard rule, run 2 did not cite one of the four leaver claims, run 3 cited and matched fewer cases. The three runs were the limit, so `saved_results/campus-events-app.json` is still the 3 Nov run.
+
+Fixed (seen in all three new runs, which is what the code is meant to guarantee):
+
+- The token lifetime conflict is reported with both sources (runs 2 and 3 count 3 of 3 with the strict scorer; run 1 had the pair but T08 was not on the QR conflict, which rule 1 now includes).
+- The auditorium conflict no longer appears a second time as `verified`.
+- Commits f710a34 and a3f9c21 are `missing` with a question in every run (6 commits per run get a gap from rule 2).
+- Decisions went from 55 in the saved run to 31, 35 and 47 in the new ones.
+- Statements without a quote that is in the source: none (checked in all three runs, 0 verified statements without evidence).
+
+Still wrong:
+
+- **Not a clean win on the score.** Cited and correct counts moved by one or two in each direction (32 and 30, 31 and 29, 30 and 28), so the variance is smaller in the conflicts and gaps but not gone. Which of C02, C17, C18, C20 or C08 is lost changes from run to run.
+- **More questions for the departing member.** Rule 2 adds six gaps per run (14 to 18 questions in total, against 7). Four of them are small commits that a person would probably call explained (a dashboard with Tailwind, an event filter, a CORS allowlist, a security middleware update): the rule only looks for a link in the sources, and the meeting notes say "Tailwind CSS" but do not name the commit. They have risk 1 so they sort last, but the lead sees them.
+- **C02 ("Team chose Render over Heroku") stays `unverified` when only the departing member's chat message backs it** (runs 2 and 3), as noted above.
+- **C18 lost its `verified` label in run 2** because the statement cites chat message 25 (by the leaver) and task T09 (owned by the leaver), and rule 5 treats that as the leaver's word. The task row does record the status, so this is a cost of rule 5.
+- The conflict topics are three fixed patterns, not a general detector.
+- The routine-commit word list is a guess and was not tuned on other projects. Some real choices could be dropped if their message contains one of the words.
+- Only three real runs were made, so these numbers are not an average.
 
 **Hand check of the verified labels.** From the saved run, 20 of the 51 verified statements were picked at random (fixed seed 7) and each quote was read against its statement. In 19 of the 20 the quotes support the statement. The twentieth, about pull request 5 and the auditorium capacity, is supported by its quotes but it describes a conflict and should have been labelled conflicting. This was done by the team's AI assistant and not by an outside reviewer, and it is a small sample, so it shows the check is working but is not a measured error rate. Two weaknesses were seen:
 
