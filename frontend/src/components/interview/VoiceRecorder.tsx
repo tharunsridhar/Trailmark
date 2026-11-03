@@ -8,6 +8,21 @@ interface VoiceRecorderProps {
   initialText?: string;
 }
 
+function microphoneErrorMessage(err: any): string {
+  switch (err?.name) {
+    case 'NotAllowedError':
+    case 'SecurityError':
+      return 'Microphone access was denied. Allow the microphone for this site in the browser, or type your answer. Your text has not been changed.';
+    case 'NotFoundError':
+    case 'OverconstrainedError':
+      return 'No microphone was found. Connect one, or type your answer. Your text has not been changed.';
+    case 'NotReadableError':
+      return 'The microphone is in use by another program. Close it and try again, or type your answer.';
+    default:
+      return err?.message || 'The microphone is not available. You can type your answer instead.';
+  }
+}
+
 export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: VoiceRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
@@ -44,8 +59,6 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
   const startRecording = async () => {
     setErrorMessage(null);
     audioChunksRef.current = [];
-    latestTranscriptRef.current = '';
-    setTranscribedText('');
 
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -53,6 +66,9 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // only clear the text once the microphone is really ours, so a refusal keeps what was typed
+      latestTranscriptRef.current = '';
+      setTranscribedText('');
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
 
@@ -111,9 +127,7 @@ export function VoiceRecorder({ onTranscriptionComplete, initialText = '' }: Voi
         } catch {}
       }
     } catch (err: any) {
-      setErrorMessage(
-        err.message || 'Microphone access denied or unavailable. You can provide a text answer.'
-      );
+      setErrorMessage(microphoneErrorMessage(err));
       setIsRecording(false);
     }
   };
