@@ -18,9 +18,23 @@ The AI is never called in tests. A scripted fake model plays back fixed replies,
 
 ## Latest result
 
-197 tests, all passing on SQLite (about 10.6 minutes with other sessions running tests at the same time, run on 3 Nov 2026 from the `backend` folder). The first 192 also passed on PostgreSQL 16 from `docker compose` (`TEST_DATABASE_URL`, about 10.8 minutes), with no PostgreSQL-only failure. The 5 tests added after that (the restricted-name rule, `test_pipeline.py`) use no database and were not run on PostgreSQL. Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the time is password hashing.
+Run on 3 Nov 2026 on the merged documents branch, which is `origin/main` at `b8fc04a` plus the key audit and the documents changes. All commands were run from this machine (Windows, Docker 29.9.2).
 
-Also checked by hand on the current backend code (3 Nov 2026): `docker compose build backend` and `up` ran the backend against Postgres. `GET /health` returned `{"status": "ok"}`, a user registered (`201`), a handover was created (`201`), and `GET /handovers` without a login returned `401`. With a wrong `LLM_API_KEY` and the nine synthetic files uploaded, the analysis finished in `saved` mode with the notice "AI unavailable: showing saved results from an earlier run." and 114 statements (51 verified, 42 unverified, 18 missing, 3 conflicting), none without a source, and 9 questions for the lead. The frontend image was not built in this check.
+| Check | Command, from | Result |
+| --- | --- | --- |
+| Backend tests, SQLite | `.venv\Scripts\python.exe -m pytest -q`, `backend` | 197 passed, 1 warning (an `httpx` deprecation notice from Starlette's test client), 2 min 23 s |
+| Backend tests, PostgreSQL 16 (current suite) | `TEST_DATABASE_URL=postgresql://trailmark:trailmark@127.0.0.1:55432/trailmark`, same command, against the `db` service of `docker compose` | 197 passed, 1 warning, 3 min 48 s. No PostgreSQL-only failure |
+| TypeScript | `node_modules\.bin\tsc --noEmit`, `frontend` | No errors |
+| Production build | `node_modules\.bin\next build`, `frontend` | Compiled, 6 static pages generated |
+| Saved run, scorer | `.venv\Scripts\python.exe tests/score_run.py saved_results/campus-events-app.json`, `backend` | 106 statements (54 `verified`, 31 `unverified`, 18 `missing`, 3 `conflicting`), 9 questions, 32/32 cited, 32/32 expected label, 3/3 conflicts, 4/4 leaver-only `unverified`, 0 restricted names, 0 sourceless |
+| Docker, backend and Postgres | `docker compose config -q`, `docker compose build backend`, `BACKEND_PORT=8010 docker compose up -d db backend` | Config valid, image built, both containers healthy. `GET /health` returned `{"status": "ok"}`, `POST /auth/register` returned `201`, `GET /handovers` without a login returned `401`. Port 8010 was used because port 8000 was taken on this machine |
+| Docker, frontend image | `docker compose --profile frontend build frontend`, then `docker run -p 3010:3000` | Image built. Started with `docker run` and the page answered `200`, running as user `node`. `docker compose up` for the frontend failed because port 3000 was already in use on this machine, so the compose start of the frontend was not run |
+
+What these checks do not show: the Docker checks did not upload files or run an analysis, and the frontend image was not opened in a browser or used against the backend container.
+
+An older Docker run (earlier on 3 Nov 2026, before the latest merges) also uploaded the nine synthetic files with a wrong `LLM_API_KEY`. The analysis finished in `saved` mode with the notice "AI unavailable: showing saved results from an earlier run." and the file of that time (114 statements). That part was not repeated.
+
+Two existing tests (`test_analysis_api.py`, `test_review_flow.py`) were changed on purpose: a statement that cites a source in a reported conflict is no longer `verified`. Most of the test time is password hashing.
 
 | File | Tests | What it covers |
 | --- | --- | --- |
@@ -117,9 +131,9 @@ Only run 3 met the bar for replacing the saved file on every measure (32 cited, 
 
 ### Still limited
 
-- **The score varies from run to run.** The model is not deterministic, which is why the saved fallback exists. In this round the expected label was 29, 30 and 31 of 32, and the wrong cases were different each time. Earlier rounds were weaker (table below), so a run can be clearly worse than the saved one. The saved file is the best of three runs, picked because it met the bar for saving. It is a real run but not typical.
+- **The score varies from run to run.** The model is not deterministic, which is why the saved fallback exists. In this round the expected label was 29, 30 and 31 of 32 with the old key, and the wrong cases were different each time. The saved run (the 31) is 32 with the corrected key. The other two runs were not kept and were not re-scored. Earlier rounds were weaker (table below), so a run can be clearly worse than the saved one. The saved file is the best of three runs, picked because it met the bar for saving. It is a real run but not typical.
 - **C02 depends on the run.** It is `verified` here because a second person confirms it, and `unverified` when only the leaver's message is cited. Both are correct under the leaver-only rule, and the answer key was not changed.
-- **C18 is not reliably `verified` in other runs (run 2 of the earlier round had it `unverified`).
+- **C18 is not reliably `verified` in other runs** (run 2 of the earlier round had it `unverified`).
 - **The `missing` count is high** (18, against 13 in the earlier best run). Nine have a question, the others are gaps without one.
 - **Rule 10 removes names it can match.** It matches display names, file names, locators and loose forms made of the words of a restricted title. A phrase that matches none of these ("HR and Lead Private Notes" matches only if it contains enough of the title words) can pass. A statement that cites an open source and uses its own wording is not changed. The saved file has one: the open task row T15 is titled "Lead-only HR notes verified", and the statement that quotes it says so.
 - **Three conflict patterns are written into the code.** Any other kind of conflict is found only if the model finds it.
@@ -129,9 +143,10 @@ Only run 3 met the bar for replacing the saved file on every measure (32 cited, 
 - **A statement built from the restricted HR notes can be `verified`.** It is shown only to the lead, because it inherits the restriction of its source.
 - The free tier of the AI service sometimes answers "high demand" (503). That is why a second model and saved results exist.
 
+
 ### Earlier round: runs after the rule 9 change (3 Nov 2026)
 
-Run 3 of that round was the saved file until the round above.
+Run 3 of that round was the saved file until the round above. All scores in this table are with the **old key**, and none were re-scored: the files were not kept.
 
 | Run | Statements | Questions | Cited (of 32) | Expected label (of 32) | Conflicts (of 3) | Leaver-only `unverified` (of 4) | `missing` | Conflict duplicates | C18 | C07 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -142,7 +157,7 @@ Run 3 of that round was the saved file until the round above.
 
 ### All rounds
 
-Each row is one real run on the same 9 sources. Rounds used different versions of the code and of the scoring script, so the rows are not a clean comparison.
+Each row is one real run on the same 9 sources. Rounds used different versions of the code and of the scoring script, so the rows are not a clean comparison. **Every expected-label figure here was scored with the old answer key (C26 and C28 at the wrong paragraph), except the saved run, which is shown with both.** Only the saved run could be re-scored, because it is the only file kept. The other rows are "not re-scored" and may be one lower than they would be with the corrected key.
 
 | Round | Run | Statements | Questions | Cited (of 32) | Expected label (of 32) | Conflicts found (of 3) | Leaver-only claims `unverified` |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -156,14 +171,14 @@ Each row is one real run on the same 9 sources. Rounds used different versions o
 | | 2 | 98 | 9 | 32 | 29 | 3 | 4 of 4 |
 | | 3 | 102 | 9 | 32 | 24 | 3 | 4 of 4 |
 | Label fixes (rules 4, 5, 6) | 1 | 115 | 9 | 32 | 27 | 2 | 4 of 4 |
-| | | 2 | 104 | 9 | 32 | 31 | 3 | 4 of 4 |
+| | 2 | 104 | 9 | 32 | 31 | 3 | 4 of 4 |
 | | 3 | 108 | 9 | 32 | 30 | 3 | 4 of 4 |
 | Rule 9 (leaver and tasks) | 1 | 108 | 9 | 31 | 27 | 3 | 4 of 4 |
 | | 2 | 108 | 9 | 32 | 30 | 3 | 4 of 4 |
 | | 3 | 114 | 9 | 32 | 31 | 3 | 4 of 4 |
 | Restricted-location rule (rule 10) | 1 | 88 | 9 | 30 | 29 | 3 | 3 of 4 |
 | | 2 | 93 | 9 | 32 | 30 | 3 | 4 of 4 |
-| | **3 (saved)** | **106** | **9** | **32** | **31** | **3** | **4 of 4** |
+| | **3 (saved)** | **106** | **9** | **32** | **31 with the old key, 32 with the corrected key** | **3** | **4 of 4** |
 
 Notes on the table:
 
@@ -228,7 +243,7 @@ Done on the 3 Nov saved run from before the label fixes (86 statements), not on 
 - Every endpoint is checked for `401` without sign-in and `403` for the wrong role, including outsiders.
 - Secrets, emails and phone numbers are masked for the incoming member and not for the lead.
 
-## Frontend run by hand (local, 3 Nov 2026)
+## Frontend run by hand (local, 3 Nov 2026, merged frontend)
 
 Run on the merged frontend (`frontend-final-check` merged on top of the departing-member work, then four small fixes). Backend on port 8001 (port 8000 was taken by another project on the machine, so the frontend was built with `NEXT_PUBLIC_API_URL=http://localhost:8001`), an empty AI key and a fresh SQLite file, so the analysis ran in `saved` mode. Frontend with `next start` of a production build. Driven in the Claude desktop app's built-in browser only. Nothing was run against Render or Vercel.
 
@@ -260,15 +275,20 @@ Bugs found and fixed in the frontend during this run: the lead dashboard showed 
 
 One backend finding, now fixed: for a handover that includes a lead-only document, a `missing` gap with no source of its own was shown to the incoming member. In an earlier saved file one such statement read "The contents of 'hr_private_notes paragraph 2' are not provided in the sources" (`GET /handovers/1/handover-view` as the incoming member, statement 37). It leaked the name of a restricted location, not its content.
 
-The fix is in the access layer (`backend/app/access.py`), not in the prompt. A statement with no source of its own cannot be proven safe, so for the incoming member a `missing` gap with no source is shown as "Something is not documented here" with no sources, any other statement with no source is left out, and the real text stays with the lead. A question with no evidence is shown only to the lead, so the departing member does not get it in the list and cannot answer it. `tests/test_privacy.py` builds the leak (gaps and a claim that name `hr_private_notes`, `lead_private_chat` and a salary) and checks that none of those words appear in the incoming member's view or receipt, that the lead's preview equals the incoming view, that the lead still sees the original text, questions and version history, that the departing member gets no restricted question and `403` on the draft and the view, and that an outsider gets `403`. Five of these tests failed before the fix. The saved file needed no change: it has 114 statements and none without a source. One saved gap is titled "Confidential HR notes document..."; its source is the lead-only HR document, so the incoming member never receives it. Limit: a statement that cites an open source is judged by its sources, so text a model wrote about a restricted place while citing an open source is not caught by this rule.
+The fix is in the access layer (`backend/app/access.py`), not in the prompt. A statement with no source of its own cannot be proven safe, so for the incoming member a `missing` gap with no source is shown as "Something is not documented here" with no sources, any other statement with no source is left out, and the real text stays with the lead. A question with no evidence is shown only to the lead, so the departing member does not get it in the list and cannot answer it. `tests/test_privacy.py` builds the leak (gaps and a claim that name `hr_private_notes`, `lead_private_chat` and a salary) and checks that none of those words appear in the incoming member's view or receipt, that the lead's preview equals the incoming view, that the lead still sees the original text, questions and version history, that the departing member gets no restricted question and `403` on the draft and the view, and that an outsider gets `403`. Five of these tests failed before the fix. The saved file of that time (114 statements) needed no change: none had no source. The current saved file has 106 statements and the scorer finds 0 without a source. One saved gap is titled "Confidential HR notes document..."; its source is the lead-only HR document, so the incoming member never receives it. Limit: a statement that cites an open source is judged by its sources, so text a model wrote about a restricted place while citing an open source is not caught by this rule.
 
 A second defence was added in the pipeline (rule 10, `rules.py`): restricted source names are removed or neutralised in every statement and question the pipeline writes, so the text does not name a restricted place even before the access layer looks at it. The new saved file has no statement without a source and no restricted file name, path, paragraph number or title in any statement or question.
 
 ## Not tested yet
 
+"Not tested yet" means no result has been recorded for it. The checks that were run, with their dates, are in "Latest result" and "Frontend run by hand".
+
+- **Voice answers.** Recording and transcription were not run. The built-in browser blocks the microphone.
+- **Browsers other than the Claude desktop app's built-in one.** Chrome, Firefox and Safari were not used. A real phone and touch devices were not used.
+- **Same-origin mode (`BACKEND_URL`).** Not re-run in the latest pass. It was run once earlier on a local build (see `DEPLOY.md`).
+- **A deployed instance, including Vercel.** Nothing is deployed to Render or Vercel.
+- **The frontend image under `docker compose --profile frontend up`.** Ports were busy, so the image was started with `docker run`.
+- **Automated frontend tests.** None exist (skipped for Round 2).
 - **The AI in the automated tests.** The test suite never calls a real model. The real AI was run by hand on the synthetic project (above).
-- **A deployed instance.** `render.yaml` is written but nothing is deployed to Render yet.
-- **The frontend, beyond the run above.** It has no automated tests. Not run: Vercel and the same-origin mode (not re-run in this pass), voice answers (the built-in browser blocks the microphone), any browser other than the Claude desktop app's built-in one (no Chrome, Safari or Firefox), a real phone, and `docker compose --profile frontend up` (ports 3000 and 8000 were busy on the test machine, so the image was started with `docker run`).
-- **The frontend Docker image on a real deployment.** It was built and started locally only; the backend image was built but not started in this run.
 - **Load and long inputs.** A very large repository would need chunking, which is not built.
 - **Outside users.** No structured feedback has been collected yet. The script and a table to fill in are in [`FEEDBACK.md`](FEEDBACK.md).

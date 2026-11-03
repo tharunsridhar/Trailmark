@@ -240,7 +240,7 @@ Highest risk first, at most nine in total per handover (gaps beyond that stay as
 { "action": "answer", "text": "Retries kept timing out on the free tier, so I added backoff." }
 ```
 
-`action` is `answer`, `skip` or `unknown`. `text` is required only for `answer` (`422` otherwise).
+`action` is `answer`, `skip` or `unknown`. `text` is required only for `answer` (`422` otherwise) and is at most 5000 characters.
 
 - An answer becomes a statement of kind `answer`, label `unverified`, linked to the same evidence that raised the question. The gap statement it covers changes to status `answered`.
 - `skip` and `unknown` leave the gap open, it stays visible in the handover.

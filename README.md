@@ -37,12 +37,12 @@ The full list of libraries, models and services is in [`docs/TOOLS.md`](docs/TOO
 
 ## Status
 
-Round 2 build. Nothing is deployed yet.
+Round 2 build. Nothing is deployed yet. The deployed link goes in one place, the first row of [`docs/ROUND2_SUBMISSION.md`](docs/ROUND2_SUBMISSION.md), and is still to be added.
 
-- **Backend:** covers the whole workflow and has 192 automated tests, all passing on both SQLite and PostgreSQL 16. Sign-in with roles, handovers and members, source import, the AI analysis with quote and verification checks, the saved-results and basic fallbacks, the departing member's answers, the lead's review and approval, the incoming member's redacted and permission-filtered handover, and the receipt.
-- **AI run:** the AI has been run on the synthetic project and the result is saved in `backend/saved_results/` (114 statements, 9 questions). It cites 32 of 32 planted cases, 31 with the expected label, finds all three planted conflicts and marks all four claims only the leaver makes as unverified. Other runs vary and some are weaker (31, 30 and 27 in the last round, 15 in an earlier one). Details in [`docs/TESTING.md`](docs/TESTING.md).
-- **Frontend:** the screens call the backend. One full journey (lead, departing member, lead review and approval, incoming member) was clicked through by hand in a browser against a local backend in saved-results mode, and the small bugs it showed were fixed ([`docs/TESTING.md`](docs/TESTING.md)). There are no automated frontend tests, and it has not been run on a deployed instance.
-- **Deployment:** the Docker and Render configuration is written but untested on Render. Steps are in [`docs/DEPLOY.md`](docs/DEPLOY.md).
+- **Backend:** covers the whole workflow and has 197 automated tests, all passing on SQLite and on PostgreSQL 16 (3 Nov 2026, two separate runs). Sign-in with roles, handovers and members, source import, the AI analysis with quote and verification checks, the saved-results and basic fallbacks, the departing member's answers, the lead's review and approval, the incoming member's redacted and permission-filtered handover, and the receipt.
+- **AI run:** the AI has been run on the synthetic project and the result is saved in `backend/saved_results/` (106 statements, 9 questions). It cites 32 of 32 planted cases, 32 with the expected label, finds all three planted conflicts and marks all four claims only the leaver makes as unverified. The 32 uses the corrected answer key: the key locations of two cases (C26, C28) were wrong, and the same file scored 31 with the old key. Earlier scores in the run tables use the old key and were not re-scored. Other runs vary and some are weaker (29 and 30 with the old key in the last round, 15 in an earlier one). Details in [`docs/TESTING.md`](docs/TESTING.md).
+- **Frontend:** the screens call the backend. The code passes `tsc --noEmit` and `next build` (3 Nov 2026). One full journey (lead, departing member, lead review and approval, incoming member) was clicked through by hand in a browser against a local backend in saved-results mode, and the small bugs it showed were fixed. That hand run is from before the merge of the departing-member work (editable answers, voice answers) and has not been repeated on the merged code. There are no automated frontend tests, and nothing was run in AI mode, on other browsers or widths, with voice answers, or on a deployed instance ([`docs/TESTING.md`](docs/TESTING.md)).
+- **Deployment:** the Docker and Render configuration is written but untested on Render. On 3 Nov 2026 the backend and Postgres built and ran in Docker on the current code (`/health`, register, `401` without login), and the frontend image built and answered `200` when started with `docker run`. The frontend was not opened in a browser against the containers, and `docker compose up` for the frontend was not run because port 3000 was in use. Steps are in [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ## Setup
 
@@ -115,11 +115,11 @@ The AI is never called in tests. How to run them on PostgreSQL, what each file c
 docker compose up --build
 ```
 
-This starts PostgreSQL and the backend at `http://localhost:8000` (if that port is taken, set `BACKEND_PORT=8010` first). Put your values in a `.env` file first (see `.env.example`), at least `JWT_SECRET` and `LLM_API_KEY`. Add the frontend with `docker compose --profile frontend up --build` (`frontend/Dockerfile`, a production build running as a non-root user, at `http://localhost:3000`). That Docker build has not been run yet because Docker was not running when it was written: the compose file was checked with `docker compose config` and the final image stage was reproduced without Docker (production dependencies plus the build, `next start`, page and synthetic files answered). The address the browser uses for the backend is a build argument (`NEXT_PUBLIC_API_URL`, default `http://localhost:8000`). `npm run dev` as above still works. Saved analysis results are written to `backend/saved_results/`.
+This starts PostgreSQL and the backend at `http://localhost:8000` (if that port is taken, set `BACKEND_PORT=8010` first). Put your values in a `.env` file first (see `.env.example`), at least `JWT_SECRET` and `LLM_API_KEY`. Add the frontend with `docker compose --profile frontend up --build` (`frontend/Dockerfile`, a production build running as a non-root user, at `http://localhost:3000`). The frontend image was built and started on 3 Nov 2026 (with `docker run`; the page answered `200`). It was not tried in a browser against the backend container. The address the browser uses for the backend is a build argument (`NEXT_PUBLIC_API_URL`, default `http://localhost:8000`). `npm run dev` as above still works. Saved analysis results are written to `backend/saved_results/`.
 
 ## Deploying
 
-`render.yaml` describes the backend and its database for Render, and the frontend goes on Vercel. Because they are on different domains, set `COOKIE_SECURE=true`, `COOKIE_SAMESITE=none` and `FRONTEND_ORIGIN` to the exact Vercel address. In a deployed setup the app refuses to start with a weak `JWT_SECRET`. The steps are in [`docs/DEPLOY.md`](docs/DEPLOY.md).
+`render.yaml` describes the backend and its database for Render, and the frontend goes on Vercel. Because they are on different domains, `COOKIE_SECURE=true` and `COOKIE_SAMESITE=none` are set in `render.yaml`, and `FRONTEND_ORIGIN` must be the exact Vercel address. If the browser blocks the cross-domain cookie, use same-origin mode (`BACKEND_URL`). In a deployed setup the app refuses to start with a weak `JWT_SECRET`. The steps are in [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ## Documents
 
@@ -162,7 +162,7 @@ This starts PostgreSQL and the backend at `http://localhost:8000` (if that port 
 ## Known limitations
 
 - The AI result varies from run to run. The saved result is the best of its round, not a typical one.
-- Not tested yet: a deployed instance, the frontend in AI mode and in browsers other than the one used.
+- Not tested yet: a deployed instance, the frontend journey after the latest merge (the edit-answer, voice, follow-up-box and 375 px rows are reported by Kishan, not re-run by me), the frontend in AI mode, the frontend image in a browser, Docker upload and analysis on the current build, and browsers or widths other than the one used. Each item is listed in [`docs/TESTING.md`](docs/TESTING.md).
 - A departing member can change an answer until the lead approves. After approval the server refuses changes (`409`).
 - A gap statement or question with no source of its own is hidden or neutral for the incoming member (and for the departing member's questions), so it cannot name a restricted place. This is enforced in `backend/app/access.py` and tested, and the pipeline also removes restricted names from statement and question text. Pattern-based, so it can miss unusual wording.
 - The AI runs on a free tier with request limits. When it is unavailable, the app shows saved results from a real run, then a basic listing.

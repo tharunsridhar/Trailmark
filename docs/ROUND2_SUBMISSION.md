@@ -14,7 +14,7 @@ WCC Forge 48, Round 2 (The Build). Team Trailmark: Kishan S and Tharun Sridhar.
 
 ## Features done
 
-Against the seven core features in the Round 1 plan. "Backend" means built and covered by the 197 automated tests. The frontend screens call the backend. One journey through all three roles was clicked through by hand in a browser against a local backend (not a deployed one, no automated frontend tests).
+Against the seven core features in the Round 1 plan. "Backend" means built and covered by the 197 automated tests. The frontend screens call the backend. One journey through all three roles was clicked through by hand in a browser against a local backend, before the merge of the departing-member work, and not repeated since (not a deployed backend, no automated frontend tests). `tsc --noEmit` and `next build` pass on the merged code.
 
 | Core feature | Status |
 | --- | --- |
@@ -30,7 +30,13 @@ Also built: Gemini, Groq and Anthropic clients, retries and an optional second m
 
 ## Saved run on the synthetic project
 
-`backend/saved_results/campus-events-app.json`, one real run: 106 statements (54 verified, 31 unverified, 18 missing, 3 conflicting) and 9 questions. Scored against the answer key: 32 of 32 planted cases cited, 32 with the expected label, 3 of 3 conflicts, 4 of 4 leaver-only claims unverified. The score was 31 until we audited the key: C28 (deployment guide, contact Deepak) had its location in the key pointing at the wrong paragraph, so a correct `verified` statement was counted wrong. We corrected the location of C28 (and C26, same paragraph) only, after checking all ten document cases; the saved run and the pipeline were not changed. No statement or question names a restricted source's file name, path, paragraph number or title. Two lead-only statements use the generic word "restricted" ("a restricted source"); the incoming member does not see them. The earlier wrong label, C02 (chat message 5, "Render over Heroku"), is `verified` in this run only because Deepak's message 6 agrees; when only the leaver's own message is cited it stays `unverified`, which is the leaver-only rule working as designed. Details are in [`TESTING.md`](TESTING.md).
+`backend/saved_results/campus-events-app.json`, one real run: 106 statements (54 verified, 31 unverified, 18 missing, 3 conflicting) and 9 questions. Scored against the answer key with `backend/tests/score_run.py` on 3 Nov 2026: 32 of 32 planted cases cited, 32 with the expected label, 3 of 3 conflicts, 4 of 4 leaver-only claims unverified, 0 restricted names, 0 statements without a source. No statement or question names a restricted source's file name, path, paragraph number or title. Two lead-only statements use the generic word "restricted" ("a restricted source"); the incoming member does not see them. The earlier wrong label, C02 (chat message 5, "Render over Heroku"), is `verified` in this run only because Deepak's message 6 agrees; when only the leaver's own message is cited it stays `unverified`, which is the leaver-only rule working as designed. Details are in [`TESTING.md`](TESTING.md).
+
+### Key correction
+
+The answer key locations of two cases were wrong and were corrected on 3 Nov 2026. C28 and C26 are both the contact lines in `deployment_guide.md` ("For production database restore access and escalated permissions, contact Deepak" and the matching line for Ravi). The key put them at paragraph 3, but the text is in the next paragraph (key paragraph 4, importer paragraph 5). We checked this by splitting the document the way `backend/app/importers.py` does and comparing each case's description with the paragraph the key names, for all ten cases whose source is a document. Eight matched; only C26 and C28 did not. Only the `location` field of those two cases changed, not the description or the expected label, and the AI output and pipeline were not touched. With the old key the saved run scored 31 of 32 expected labels, because the correct `verified` statement for C28 was counted wrong. With the corrected key it scores 32.
+
+Every earlier score in `TESTING.md` (the run tables, the model comparison, the 29, 30 and 31 of the last round) was computed with the old key. Only the saved run still exists as a file, so it is the only one re-scored (31 to 32). The other runs were not kept and are marked "not re-scored" in `TESTING.md`.
 
 ## Changes from the Round 1 plan
 
@@ -39,7 +45,7 @@ Also built: Gemini, Groq and Anthropic clients, retries and an optional second m
 | PostgreSQL with pgvector and similarity search | PostgreSQL in deployment, SQLite locally, no pgvector | The demo project is small enough to give the model every piece in one request. Similarity search would add work without a benefit at this size |
 | Postgres row-level security as a second layer | Not built | Access is enforced in the backend and covered by tests. We say so instead of claiming a layer we do not have |
 | GitHub REST API for repository data | Upload of a repository export (JSON) | No tokens or live access to manage, and it works offline |
-| Backend, frontend and database in Docker Compose | Compose runs the backend and Postgres (built and checked on 3 Nov 2026). The frontend has a Dockerfile and a `frontend` profile, but that image has not been built yet | The frontend runs with `npm run dev`, or build the image with `docker compose --profile frontend up --build` |
+| Backend, frontend and database in Docker Compose | Compose runs the backend and Postgres (built and checked on 3 Nov 2026 on the current code). The frontend has a Dockerfile and a `frontend` profile; that image was built and answered `200` with `docker run` on 3 Nov 2026, but was not tried in a browser against the backend | The frontend runs with `npm run dev`, or build the image with `docker compose --profile frontend up --build` |
 
 ## Three improvements committed for Round 3
 
@@ -51,9 +57,10 @@ Not built yet.
 
 ## Known limitations
 
-- The score varies from run to run, because the model is not deterministic. In the last round the three runs got the expected label on 29, 30 and 31 of 32 cases (30, 32 and 32 cited). Earlier rounds were weaker, down to 15. The saved run is the best of its round, so it is not typical, which is why the saved fallback exists.
+- The score varies from run to run, because the model is not deterministic. In the last round the three runs got the expected label on 29, 30 and 31 of 32 cases with the old key (30, 32 and 32 cited). The saved run, the one that got 31, is 32 with the corrected key; the other two were not re-scored. Earlier rounds were weaker, down to 15. The saved run is the best of its round, so it is not typical, which is why the saved fallback exists.
 - Other limits: the code looks for three fixed conflict topics (any other conflict is found only if the model finds it), the routine-commit word list is a guess that was not tuned on other projects, and a score of 32 of 32 is one run scored by a generous script, not an average.
-- Not tested yet: a deployed instance, and the frontend in AI mode. All 197 tests pass on SQLite. The first 192 also passed on PostgreSQL; the 5 added since are pipeline-only tests with no database.
+- All 197 tests pass on SQLite and on PostgreSQL 16 (3 Nov 2026, two separate runs).
+- Not tested yet: a deployed instance, the frontend journey after the latest merge (the edit-answer, voice, follow-up-box and 375 px rows are reported by Kishan, not re-run by me), the frontend in AI mode, the frontend image in a browser, Docker upload and analysis on the current build, and other browsers or widths. Each item is in [`TESTING.md`](TESTING.md).
 - The AI runs on the free tier of Gemini, which limits requests. If the service is unavailable the app shows the saved results.
 - Redaction is pattern based and will miss some sensitive text.
 - All pieces go to the model in one request, so a large repository would need chunking.
