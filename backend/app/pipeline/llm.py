@@ -64,6 +64,7 @@ class AnthropicClient(LLMClient):
                 json={
                     "model": model,
                     "max_tokens": 8000,
+                    "temperature": 0,
                     "system": system,
                     "messages": [{"role": "user", "content": user}],
                 },

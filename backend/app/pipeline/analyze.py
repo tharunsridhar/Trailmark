@@ -15,6 +15,7 @@ from app.pipeline.prompts import (
     CLAIMS_FOCUS,
     DOC_FOCUS,
     EXTRACT_SYSTEM,
+    RECORD_FOCUS,
     VERIFY_SYSTEM,
     build_extract_prompt,
     build_verify_prompt,
@@ -169,39 +170,100 @@ def leaver_claims(llm, pieces, pieces_by_id: dict, drafts: list[Draft], leavers:
     return fresh, dropped
 
 
+# a result with fewer statements than this (for a project big enough to have this many) is asked for again
+WEAK_BELOW = 15
+SAME_TEXT = 0.75
+
+
+def weak_threshold(pieces) -> int:
+    return min(WEAK_BELOW, len(pieces) // 4)
+
+
+def is_record(piece) -> bool:
+    """Commits, pull requests, issues and tasks: one piece is one fact, so a piece nothing cites was skipped."""
+    return getattr(piece.source, "type", None) in ("repo", "tasks")
+
+
+def top_up(llm, wanted, pieces_by_id: dict, focus: str | None = None) -> tuple[list[Draft], int]:
+    """A smaller second request for pieces the first one skipped. If it fails the first result is kept."""
+    if not wanted:
+        return [], 0
+    try:
+        return build_drafts(llm, ask_for_statements(llm, wanted, focus), pieces_by_id)
+    except LLMError:
+        return [], 0
+
+
+def word_set(text: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9]{3,}", text.lower()))
+
+
+def merge_repeats(drafts: list[Draft]) -> list[Draft]:
+    """Two statements of the same kind and label that say nearly the same thing about the same piece are
+    one statement: the first one is kept and takes the other's evidence. The model repeats itself more
+    when a piece is asked about twice, and the lead should not review the same thing twice."""
+    kept: list[Draft] = []
+    for draft in drafts:
+        words_now = word_set(draft.text)
+        twin = None
+        for other in kept:
+            if other.kind != draft.kind or other.label != draft.label or other.label == "conflicting":
+                continue
+            if not ({e.piece_id for e in other.evidence} & {e.piece_id for e in draft.evidence}):
+                continue
+            words_other = word_set(other.text)
+            union = words_now | words_other
+            if union and len(words_now & words_other) / len(union) >= SAME_TEXT:
+                twin = other
+                break
+        if twin is None:
+            kept.append(draft)
+            continue
+        have = {e.piece_id for e in twin.evidence}
+        twin.evidence += [e for e in draft.evidence if e.piece_id not in have]
+        twin.risk = max(twin.risk, draft.risk)
+    return kept
+
+
 def analyze(llm, pieces, leavers: list[str] | None = None) -> AnalysisResult:
+    # the same sources always reach the model in the same order
+    pieces = sorted(pieces, key=lambda p: p.id)
     pieces_by_id = {p.id: p for p in pieces}
     drafts, dropped = build_drafts(llm, ask_for_statements(llm, pieces), pieces_by_id)
+
+    # a thin result means the model gave up early, so the whole request is made once more and merged
+    if len(drafts) < weak_threshold(pieces):
+        again, again_dropped = top_up(llm, pieces, pieces_by_id)
+        drafts += again
+        dropped += again_dropped
 
     # a long input makes the model skip whole sources, so those get a second, smaller request
     cited = {pieces_by_id[e.piece_id].source.name for d in drafts for e in d.evidence}
     skipped = {p.source.name for p in pieces} - cited
-    if skipped:
-        try:
-            raw = ask_for_statements(llm, [p for p in pieces if p.source.name in skipped])
-            more, more_dropped = build_drafts(llm, raw, pieces_by_id)
-        except LLMError:
-            # the first pass already worked, a failed top-up should not throw it away
-            more, more_dropped = [], 0
-        drafts += more
-        dropped += more_dropped
+    more, more_dropped = top_up(llm, [p for p in pieces if p.source.name in skipped] if skipped else [], pieces_by_id)
+    drafts += more
+    dropped += more_dropped
     # a document paragraph nothing cites is usually a skipped decision or dependency, so those are asked again
     cited_pieces = {e.piece_id for d in drafts for e in d.evidence}
     loose = [p for p in pieces if "paragraph" in p.locator and p.id not in cited_pieces]
-    if loose:
-        try:
-            raw = ask_for_statements(llm, loose, DOC_FOCUS)
-            more, more_dropped = build_drafts(llm, raw, pieces_by_id)
-        except LLMError:
-            more, more_dropped = [], 0
-        drafts += more
-        dropped += more_dropped
+    more, more_dropped = top_up(llm, loose, pieces_by_id, DOC_FOCUS)
+    drafts += more
+    dropped += more_dropped
+    # the same for commits, pull requests, issues and tasks; routine commits are expected to be left out
+    cited_pieces = {e.piece_id for d in drafts for e in d.evidence}
+    from app.pipeline.rules import is_routine_commit  # rules builds on this module, so it is imported late
+
+    records = [p for p in pieces if is_record(p) and p.id not in cited_pieces and not is_routine_commit(p)]
+    more, more_dropped = top_up(llm, records, pieces_by_id, RECORD_FOCUS)
+    drafts += more
+    dropped += more_dropped
+
     mark_leaver_only_claims(drafts, pieces_by_id, leavers or [])
     if leavers:
         claims, claims_dropped = leaver_claims(llm, pieces, pieces_by_id, drafts, leavers)
         drafts += claims
         dropped += claims_dropped
-    return AnalysisResult(apply_rules(pieces, pieces_by_id, drafts), dropped)
+    return AnalysisResult(apply_rules(pieces, pieces_by_id, merge_repeats(drafts)), dropped)
 
 
 def apply_rules(pieces, pieces_by_id: dict, drafts: list[Draft]) -> list[Draft]:

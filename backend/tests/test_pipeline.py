@@ -566,3 +566,86 @@ def test_questions_from_the_model_count_against_the_cap_but_two_commit_questions
     out = run_rules(pieces, model_gaps)
     new = [d for d in out if d.text.startswith("Nothing in the sources")]
     assert [bool(d.question) for d in sorted(new, key=lambda d: d.evidence[0].piece_id)] == [True, True, False]
+
+
+# ---- less variance between runs ----
+
+
+def test_both_clients_ask_for_temperature_zero(monkeypatch):
+    bodies = []
+
+    def fake_post(url, **kwargs):
+        bodies.append(kwargs["json"])
+        return ok("x") if "messages" in url else chat_reply("x")
+
+    monkeypatch.setattr("app.pipeline.llm.httpx.post", fake_post)
+    AnthropicClient("k", ["m"]).complete("s", "u")
+    ChatCompletionsClient("k", ["m"]).complete("s", "u")
+    assert [b["temperature"] for b in bodies] == [0, 0]
+
+
+def test_pieces_reach_the_model_in_the_same_order_whatever_order_they_arrive_in():
+    pieces = [chat_piece(3, "Ravi", "third"), chat_piece(1, "Asha", "first"), chat_piece(2, "Ravi", "second")]
+    llm = FakeLLM({"statements": [], "gaps": []})
+    analyze(llm, pieces)
+    prompt = llm.prompts[0][1]
+    assert prompt.index("first") < prompt.index("second") < prompt.index("third")
+
+
+def task_piece(piece_id, text):
+    return SimpleNamespace(id=piece_id, content=text, locator=f"task T{piece_id}", meta={"owner": "Ravi"},
+                           source=SimpleNamespace(name="Tasks", type="tasks"))
+
+
+def test_uncited_tasks_prs_and_non_routine_commits_get_their_own_request():
+    pieces = [
+        task_piece(1, "T1 Write the deploy guide, owner: Ravi, status: open"),
+        task_piece(2, "T2 Renew the domain, owner: Ravi, status: open"),
+        repo_piece(3, "aaaaaa1", "Fix typo in the readme"),
+        repo_piece(4, "aaaaaa2", "Move sessions to Redis"),
+    ]
+    first = {"statements": [statement(text="Deploy guide is open", relation="claim_only",
+                                       evidence=[{"piece_id": 1, "quote": "Write the deploy guide"}])], "gaps": []}
+    second = {"statements": [statement(text="Sessions move to Redis", relation="claim_only",
+                                        evidence=[{"piece_id": 4, "quote": "Move sessions to Redis"}]),
+                             statement(text="Domain renewal is open", relation="claim_only",
+                                        evidence=[{"piece_id": 2, "quote": "Renew the domain"}])], "gaps": []}
+    llm = FakeLLM(first, {"statements": [], "gaps": []}, second)
+    result = analyze(llm, pieces)
+    asked = [u for _, u in llm.prompts if "[id=" in u]
+    record_request = [u for u in asked if "[id=2]" in u and "[id=1]" not in u][0]
+    assert "[id=4]" in record_request and "[id=3]" not in record_request  # the typo commit is not asked about
+    assert {d.text for d in result.drafts} >= {"Sessions move to Redis", "Domain renewal is open"}
+
+
+def test_thin_result_for_a_big_project_is_asked_for_once_more_and_small_ones_are_not():
+    pieces = [chat_piece(i, "Ravi", f"message number {i}") for i in range(1, 41)]
+    one = {"statements": [statement(text="First", relation="claim_only", evidence=[{"piece_id": 1, "quote": "message number 1"}])], "gaps": []}
+    two = {"statements": [statement(text="Second", relation="claim_only", evidence=[{"piece_id": 2, "quote": "message number 2"}])], "gaps": []}
+    llm = FakeLLM(one, two)
+    result = analyze(llm, pieces)
+    assert [d.text for d in result.drafts] == ["First", "Second"]
+    assert len(llm.prompts) == 2 and "message number 40" in llm.prompts[1][1]
+
+    small = FakeLLM(one)
+    analyze(small, pieces[:3])
+    assert len(small.prompts) == 1
+
+
+def test_near_identical_statements_about_the_same_piece_are_merged_and_keep_all_evidence():
+    pieces = [chat_piece(1, "Ravi", "We chose Render for hosting"), chat_piece(2, "Neha", "Render hosting it is")]
+    a = statement(text="The team chose Render for hosting", relation="claim_only", evidence=[{"piece_id": 1, "quote": "chose Render"}])
+    b = statement(text="The team chose Render for hosting.", relation="claim_only",
+                  evidence=[{"piece_id": 1, "quote": "chose Render"}, {"piece_id": 2, "quote": "Render hosting"}])
+    different = statement(text="Backups are nightly", relation="claim_only", evidence=[{"piece_id": 1, "quote": "chose Render"}])
+    result = analyze(FakeLLM({"statements": [a, b, different], "gaps": []}), pieces)
+    assert [d.text for d in result.drafts] == ["The team chose Render for hosting", "Backups are nightly"]
+    assert [e.piece_id for e in result.drafts[0].evidence] == [1, 2]
+
+
+def test_merging_never_joins_different_labels():
+    pieces = [chat_piece(1, "Ravi", "We chose Render for hosting")]
+    supported = statement(text="We chose Render for hosting", evidence=[{"piece_id": 1, "quote": "chose Render"}])
+    claim = statement(text="We chose Render for hosting", relation="claim_only", evidence=[{"piece_id": 1, "quote": "chose Render"}])
+    result = analyze(FakeLLM({"statements": [supported, claim], "gaps": []}, verdict("supported")), pieces)
+    assert sorted(d.label for d in result.drafts) == ["unverified", "verified"]
