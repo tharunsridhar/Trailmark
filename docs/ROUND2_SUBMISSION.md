@@ -14,7 +14,7 @@ WCC Forge 48, Round 2 (The Build). Team Trailmark: Kishan S and Tharun Sridhar.
 
 ## Features done
 
-Against the seven core features in the Round 1 plan. "Backend" means built and covered by the 199 automated tests. The frontend screens call the backend. One journey through all three roles was clicked through by hand in a browser against a local backend (not a deployed one, no automated frontend tests).
+Against the seven core features in the Round 1 plan. "Backend" means built and covered by the 197 automated tests. The frontend screens call the backend. One journey through all three roles was clicked through by hand in a browser against a local backend (not a deployed one, no automated frontend tests).
 
 | Core feature | Status |
 | --- | --- |
@@ -52,7 +52,7 @@ Not built yet.
 ## Known limitations
 
 - The score varies from run to run, because the model is not deterministic. In the last round the three runs got the expected label on 29, 30 and 31 of 32 cases (30, 32 and 32 cited). Earlier rounds were weaker, down to 15. The saved run is the best of its round, so it is not typical, which is why the saved fallback exists.
-- Not tested yet: a deployed instance, and the frontend in AI mode. All 199 tests pass on SQLite. The first 192 also passed on PostgreSQL; the 7 added since are pipeline-only tests with no database.
+- Not tested yet: a deployed instance, and the frontend in AI mode. All 197 tests pass on SQLite. The first 192 also passed on PostgreSQL; the 5 added since are pipeline-only tests with no database.
 - The AI runs on the free tier of Gemini, which limits requests. If the service is unavailable the app shows the saved results.
 - Redaction is pattern based and will miss some sensitive text.
 - All pieces go to the model in one request, so a large repository would need chunking.

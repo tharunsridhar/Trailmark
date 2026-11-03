@@ -362,69 +362,73 @@ def facts_for_records(pieces, drafts: list[Draft]) -> list[Draft]:
     return added
 
 
-# ---- restricted places ----
+# ---- restricted places are never named ----
 
-PLACEHOLDER = "a restricted source"
-# a gap about a source nobody may read says where something is hidden, which is itself the leak
-ACCESS_GAP = re.compile(r"confidential|restricted|inaccessible|not accessible|cannot be accessed", re.I)
-
-
-def restricted_pieces(pieces) -> list:
-    """Pieces of a source that the departing or the incoming member may not read."""
-    return [
-        p for p in pieces
-        if getattr(p.source, "allowed_roles", None) is not None
-        and not {"departing", "incoming"} <= set(p.source.allowed_roles)
-    ]
+NEUTRAL_TEXT = "A restricted source raises a point that is not documented in the shared sources."
+NEUTRAL_QUESTION = "Is there anything about this point that the incoming member should know?"
+GENERIC_NAME_WORDS = {"the", "of", "and", "for", "a"}
 
 
-def location_patterns(restricted) -> list[re.Pattern]:
-    """Every way a restricted place is written: the source name, with and without the bracket, the file
-    name found in a locator, and the locator itself (file name and paragraph or message number)."""
-    names: set[str] = set()
-    for piece in restricted:
-        name = piece.source.name.strip()
-        names |= {name, re.sub(r"\s*\([^)]*\)", "", name).strip()}
-        files = re.findall(r"[\w-]+\.(?:md|txt|csv|json|pdf|docx)", piece.locator)
-        for file_name in files:
-            names |= {file_name, file_name.rsplit(".", 1)[0]}
-        if files:
-            # "chat message 3" alone would also match the open chat, so only locators with a file name count
-            names.add(piece.locator)
-    patterns = []
-    for name in sorted((n for n in names if len(n) >= 4), key=len, reverse=True):
-        flexible = re.escape(name).replace(r"\ ", r"[ _]").replace("_", "[ _]")
-        patterns.append(re.compile(flexible + r"(?:,?\s+(?:paragraph|message|row|line)\s+\d+)?", re.I))
-    return patterns
+def is_restricted_piece(piece) -> bool:
+    """A piece the departing or the incoming member may not see. Pieces without a role list are open."""
+    roles = getattr(piece, "allowed_roles", None)
+    return roles is not None and not {"departing", "incoming"} <= set(roles)
 
 
-def scrub_text(text: str | None, patterns: list[re.Pattern]) -> str | None:
-    if not text:
-        return text
-    for pattern in patterns:
-        text = pattern.sub(PLACEHOLDER, text)
-    return text
-
-
-def hide_restricted_locations(pieces, drafts: list[Draft]) -> list[Draft]:
-    """No statement or question names a restricted place, whatever the model or another rule wrote.
-    A gap that rests only on restricted pieces (or none) and names one, or only says a source is closed,
-    is dropped. The quotes are not touched: they
-    stay behind the statement's own access check."""
-    restricted = restricted_pieces(pieces)
-    if not restricted:
-        return drafts
-    restricted_ids = {p.id for p in restricted}
-    patterns = location_patterns(restricted)
-    kept = []
-    for draft in drafts:
-        cited = {e.piece_id for e in draft.evidence}
-        text, question = scrub_text(draft.text, patterns), scrub_text(draft.question, patterns)
-        only_restricted = cited <= restricted_ids
-        # a gap that only points at a closed source, by name or by saying it is closed, has no use left
-        if draft.label == "missing" and only_restricted and (ACCESS_GAP.search(draft.text) or text != draft.text):
+def restricted_names(pieces) -> tuple[list[str], list[list[str]]]:
+    """Exact names of restricted places (source name, file name, file name without extension and
+    underscores, and locators that no open source also uses), and the word list of each restricted
+    source name for loose matches such as 'Confidential HR notes document'."""
+    open_locators = {p.locator for p in pieces if not is_restricted_piece(p)}
+    exact: set[str] = set()
+    word_lists: list[list[str]] = []
+    for piece in pieces:
+        if not is_restricted_piece(piece):
             continue
-        draft.text, draft.question = text, question
-        kept.append(draft)
-    return kept
+        name = getattr(piece.source, "name", "") or ""
+        if name:
+            exact.add(name)
+            exact.add(re.sub(r"\s*\([^)]*\)", "", name).strip())
+            words = [w for w in re.findall(r"[a-z0-9][a-z0-9-]*", name.lower()) if w not in GENERIC_NAME_WORDS]
+            if len(words) >= 2 and words not in word_lists:
+                word_lists.append(words)
+        file_name = piece.locator.split(" paragraph ")[0] if "paragraph" in piece.locator else ""
+        if file_name:
+            stem = file_name.rsplit(".", 1)[0]
+            exact.update({file_name, stem, stem.replace("_", " ")})
+        if piece.locator not in open_locators:
+            exact.add(piece.locator)
+    return sorted((n for n in exact if len(n) >= 4), key=len, reverse=True), word_lists
 
+
+def names_restricted_place(text: str, exact: list[str], word_lists: list[list[str]]) -> bool:
+    lowered = text.lower()
+    if any(re.search(r"(?<![a-z0-9])" + re.escape(n.lower()) + r"(?![a-z0-9])", lowered) for n in exact):
+        return True
+    found = set(re.findall(r"[a-z0-9][a-z0-9-]*", lowered))
+    return any(len(words) >= 3 and len(set(words) & found) >= 3 or len(words) == 2 and set(words) <= found
+               for words in word_lists)
+
+
+def hide_restricted_names(pieces, drafts: list[Draft]) -> list[Draft]:
+    """Text that can reach the incoming member must not name where a restricted fact lives (a file name,
+    path, paragraph number or source title). A statement or question that does is rewritten: with no
+    open piece behind it the whole text becomes neutral, otherwise the name alone is replaced. The
+    evidence is untouched, so the lead still sees the real quote and where it came from."""
+    exact, word_lists = restricted_names(pieces)
+    if not exact and not word_lists:
+        return drafts
+    by_id = {p.id: p for p in pieces}
+    for draft in drafts:
+        open_backing = any(not is_restricted_piece(by_id[e.piece_id]) for e in draft.evidence if e.piece_id in by_id)
+        for field, neutral in (("text", NEUTRAL_TEXT), ("question", NEUTRAL_QUESTION)):
+            value = getattr(draft, field)
+            if not value or not names_restricted_place(value, exact, word_lists):
+                continue
+            if not open_backing:
+                setattr(draft, field, neutral)
+                continue
+            for name in exact:
+                value = re.sub(r"(?<![A-Za-z0-9])" + re.escape(name) + r"(?![A-Za-z0-9])", "a restricted source", value, flags=re.I)
+            setattr(draft, field, value if not names_restricted_place(value, exact, word_lists) else neutral)
+    return drafts

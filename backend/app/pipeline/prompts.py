@@ -27,6 +27,7 @@ unfinished is work that was started and not finished (an open pull request, a st
 recurring is the same problem mentioned more than once. contact is who to ask about something.
 - next_action statements are a suggested order of what the incoming member should do first, most urgent first.
 - risk for a gap is 1 (low) to 3 (high).
+- In the text of a statement, gap or question, never write a file name, path, paragraph number or source title. \nDescribe what is missing in plain words; the evidence already says where it comes from.
 
 Reply with JSON only, in exactly this shape:
 {
