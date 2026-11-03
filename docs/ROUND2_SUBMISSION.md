@@ -14,7 +14,7 @@ WCC Forge 48, Round 2 (The Build). Team Trailmark: Kishan S and Tharun Sridhar.
 
 ## Features done
 
-Against the seven core features in the Round 1 plan. "Backend" means built and covered by the 197 automated tests. The frontend screens call the backend. One journey through all three roles was clicked through by hand in a browser against a local backend, before the merge of the departing-member work, and not repeated since (not a deployed backend, no automated frontend tests). `tsc --noEmit` and `next build` pass on the merged code.
+Against the seven core features in the Round 1 plan. "Backend" means built and covered by the 197 automated tests. The frontend screens call the backend. One journey through all three roles was clicked through on the merged code in the built-in browser and again in Chrome against a local backend (not a deployed backend, no automated frontend tests). Voice recording was not run. `tsc --noEmit` and `next build` pass.
 
 | Core feature | Status |
 | --- | --- |
@@ -45,7 +45,7 @@ Every earlier score in `TESTING.md` (the run tables, the model comparison, the 2
 | PostgreSQL with pgvector and similarity search | PostgreSQL in deployment, SQLite locally, no pgvector | The demo project is small enough to give the model every piece in one request. Similarity search would add work without a benefit at this size |
 | Postgres row-level security as a second layer | Not built | Access is enforced in the backend and covered by tests. We say so instead of claiming a layer we do not have |
 | GitHub REST API for repository data | Upload of a repository export (JSON) | No tokens or live access to manage, and it works offline |
-| Backend, frontend and database in Docker Compose | Compose runs the backend and Postgres (built and checked on 3 Nov 2026 on the current code). The frontend has a Dockerfile and a `frontend` profile; that image was built and answered `200` with `docker run` on 3 Nov 2026, but was not tried in a browser against the backend | The frontend runs with `npm run dev`, or build the image with `docker compose --profile frontend up --build` |
+| Backend, frontend and database in Docker Compose | Compose runs the backend and Postgres (built and checked on 3 Nov 2026 on the current code). The frontend has a Dockerfile and a `frontend` profile; that image was built and started with `docker run` on 3 Nov 2026, but `compose up` with the profile was not run | The frontend runs with `npm run dev`, or build the image with `docker compose --profile frontend up --build` |
 
 ## Three improvements committed for Round 3
 
@@ -60,7 +60,7 @@ Not built yet.
 - The score varies from run to run, because the model is not deterministic. In the last round the three runs got the expected label on 29, 30 and 31 of 32 cases with the old key (30, 32 and 32 cited). The saved run, the one that got 31, is 32 with the corrected key; the other two were not re-scored. Earlier rounds were weaker, down to 15. The saved run is the best of its round, so it is not typical, which is why the saved fallback exists.
 - Other limits: the code looks for three fixed conflict topics (any other conflict is found only if the model finds it), the routine-commit word list is a guess that was not tuned on other projects, and a score of 32 of 32 is one run scored by a generous script, not an average.
 - All 197 tests pass on SQLite and on PostgreSQL 16 (3 Nov 2026, two separate runs).
-- Not tested yet: a deployed instance, the frontend journey after the latest merge (the edit-answer, voice, follow-up-box and 375 px rows are reported by Kishan, not re-run by me), the frontend in AI mode, the frontend image in a browser, Docker upload and analysis on the current build, and other browsers or widths. Each item is in [`TESTING.md`](TESTING.md).
+- Not tested yet: voice recording and transcription, Firefox and Safari, a real phone, a deployed instance, `docker compose --profile frontend up`, and Docker upload and analysis on the current build. Each item is in [`TESTING.md`](TESTING.md).
 - The AI runs on the free tier of Gemini, which limits requests. If the service is unavailable the app shows the saved results.
 - Redaction is pattern based and will miss some sensitive text.
 - All pieces go to the model in one request, so a large repository would need chunking.

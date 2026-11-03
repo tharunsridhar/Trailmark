@@ -62,7 +62,7 @@ The browser did not keep or send the login cookie. Check in this order:
 
 ## Same-origin mode, what was tested
 
-Tested locally: with `BACKEND_URL=http://localhost:8000` and an empty `NEXT_PUBLIC_API_URL`, the app on port 3001 signed in and loaded a handover with every request going to port 3001 (`curl` and a browser run). A production build contains the rewrites and a build without `BACKEND_URL` contains none. Not tested: forwarding on Vercel to Render itself. A very long AI analysis could hit Vercel's own request time limit, which the local test cannot show. In that case use the direct mode.
+Tested locally twice. First, with `BACKEND_URL=http://localhost:8000` and an empty `NEXT_PUBLIC_API_URL`, the app on port 3001 signed in and loaded a handover with every request going to port 3001 (`curl` and a browser run). Second, on 3 Nov 2026 in Chrome, with `NEXT_PUBLIC_API_URL=same-origin` and `BACKEND_URL=http://localhost:8001`, sign-in worked, the cookie was kept after a reload, and all 46 recorded requests went to the frontend's own port (see `TESTING.md`). A production build contains the rewrites and a build without `BACKEND_URL` contains none. Not tested: forwarding on Vercel to Render itself. A very long AI analysis could hit Vercel's own request time limit, which the local test cannot show. In that case use the direct mode.
 
 ## After deploying
 

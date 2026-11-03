@@ -18,19 +18,19 @@ The AI is never called in tests. A scripted fake model plays back fixed replies,
 
 ## Latest result
 
-Run on 3 Nov 2026 on the merged documents branch, which is `origin/main` at `b8fc04a` plus the key audit and the documents changes. All commands were run from this machine (Windows, Docker 29.9.2).
+Run on 3 Nov 2026 on `origin/main` at `e98ee51` with the documents branch merged in (no code differs from `e98ee51`). All commands were run from this machine (Windows, Docker 29.9.2).
 
 | Check | Command, from | Result |
 | --- | --- | --- |
-| Backend tests, SQLite | `.venv\Scripts\python.exe -m pytest -q`, `backend` | 197 passed, 1 warning (an `httpx` deprecation notice from Starlette's test client), 2 min 23 s |
-| Backend tests, PostgreSQL 16 (current suite) | `TEST_DATABASE_URL=postgresql://trailmark:trailmark@127.0.0.1:55432/trailmark`, same command, against the `db` service of `docker compose` | 197 passed, 1 warning, 3 min 48 s. No PostgreSQL-only failure |
+| Backend tests, SQLite | `.venv\Scripts\python.exe -m pytest -q`, `backend` | 197 passed, 1 warning (an `httpx` deprecation notice from Starlette's test client), 2 min 31 s |
+| Backend tests, PostgreSQL 16 (current suite) | `TEST_DATABASE_URL=postgresql://trailmark:trailmark@127.0.0.1:55432/trailmark`, same command, against the `db` service of `docker compose` | 197 passed, 1 warning, 3 min 37 s. No PostgreSQL-only failure |
 | TypeScript | `node_modules\.bin\tsc --noEmit`, `frontend` | No errors |
 | Production build | `node_modules\.bin\next build`, `frontend` | Compiled, 6 static pages generated |
 | Saved run, scorer | `.venv\Scripts\python.exe tests/score_run.py saved_results/campus-events-app.json`, `backend` | 106 statements (54 `verified`, 31 `unverified`, 18 `missing`, 3 `conflicting`), 9 questions, 32/32 cited, 32/32 expected label, 3/3 conflicts, 4/4 leaver-only `unverified`, 0 restricted names, 0 sourceless |
-| Docker, backend and Postgres | `docker compose config -q`, `docker compose build backend`, `BACKEND_PORT=8010 docker compose up -d db backend` | Config valid, image built, both containers healthy. `GET /health` returned `{"status": "ok"}`, `POST /auth/register` returned `201`, `GET /handovers` without a login returned `401`. Port 8010 was used because port 8000 was taken on this machine |
-| Docker, frontend image | `docker compose --profile frontend build frontend`, then `docker run -p 3010:3000` | Image built. Started with `docker run` and the page answered `200`, running as user `node`. `docker compose up` for the frontend failed because port 3000 was already in use on this machine, so the compose start of the frontend was not run |
+| Docker, backend and Postgres | `docker compose config -q`, `docker compose build backend`, `BACKEND_PORT=8010 docker compose up -d db backend` | Config valid, image built, both containers healthy. `GET /health` returned `{"status": "ok"}`, `POST /auth/register` returned `201`, `POST /auth/login` `200`, `POST /handovers` `201`, and `GET /handovers` without a login `401`. Port 8010 was used because port 8000 was taken on this machine |
+| Docker, frontend image | Not re-run in this pass | The run recorded in "Frontend run by hand" built and started it. Earlier on 3 Nov 2026 I built it from `b8fc04a` and started it with `docker run -p 3010:3000` (page `200`, user `node`). Compose start of the frontend was never run because ports 3000 and 8000 were busy |
 
-What these checks do not show: the Docker checks did not upload files or run an analysis, and the frontend image was not opened in a browser or used against the backend container.
+What these checks do not show: the Docker checks did not upload files or run an analysis in the container.
 
 An older Docker run (earlier on 3 Nov 2026, before the latest merges) also uploaded the nine synthetic files with a wrong `LLM_API_KEY`. The analysis finished in `saved` mode with the notice "AI unavailable: showing saved results from an earlier run." and the file of that time (114 statements). That part was not repeated.
 
@@ -271,6 +271,43 @@ Run on the merged frontend (`frontend-final-check` merged on top of the departin
 | AI mode (once, with the key in `.env`) | Pass on the second try. The first run fell back to `saved` with the notice "AI unavailable: showing saved results from an earlier run" (backend log: "the model returned broken JSON"). The second run took about 110 seconds and showed `Mode: ai` (no notice is shown in this mode): 43 verified, 32 unverified, 11 missing, 3 conflicting, 6 dropped, 89 statements with labels and quotes, 9 questions. The incoming member's screens were not re-checked on the AI result |
 | Frontend Docker image | Pass, with a change. `docker compose --profile frontend build` built the backend and the frontend images. Ports 3000 and 8000 were busy, so the frontend image was started with `docker run -p 3200:3000`, not `compose up`. The page loaded and "Enter as Team Lead" signed in against the backend on 8001 |
 
+### Second pass in real Chrome (3 Nov 2026, run on this pass, no code changed)
+
+Run by me through the Claude in Chrome extension on `e98ee51`. Backend on port 8001 (fresh SQLite file, empty `LLM_API_KEY`, so the analysis ran in `saved` mode). Two production builds of the frontend: cross-origin on port 3201 (`NEXT_PUBLIC_API_URL=http://localhost:8001`) and same-origin on port 3202 (`NEXT_PUBLIC_API_URL=same-origin`, `BACKEND_URL=http://localhost:8001`). Chrome screenshots timed out on this machine, so the pages were driven through their element tree and the page's own DOM (clicks and typing in the fields), and results were checked against the backend's answers. Firefox and Safari cannot be run here and were not run.
+
+| Step (Chrome, cross-origin build on 3201) | Result |
+| --- | --- |
+| Lead: enter, create a handover, upload the 9 synthetic files | Pass. 8 imported, 128 pieces, "Empty Tasks Test File" shown as "Empty, not imported" |
+| Lead: run the analysis | Pass. `Mode: saved`, 54 verified, 31 unverified, 18 missing, 3 conflicting, 9 questions |
+| Departing member: answer, Save Answer | Pass. The screen said "Saved in backend" |
+| Departing member: Next, Back, change the answer, Update | Pass. The backend then held the changed text |
+| Departing member: Skip, "I don't know" | Pass. The backend showed `skipped` and `unknown` for questions 2 and 3 |
+| Departing member: reload | Pass, with a note. After a reload the app returns to role selection. After entering as the departing member again and choosing Resume Interview, the changed text was in the answer box |
+| Lead: edit a statement | Pass. Statement 1 went to v2 with the edited text |
+| Lead: reject with a reason | Pass. "Confirm Rejection" was disabled until a reason was typed; the backend showed the statement as `rejected` |
+| Lead: resolve the three conflicts with a written reason | Pass. No `conflicting` statement was left |
+| Lead: approve | Pass. The backend showed the handover `approved` with `approved_at` set; the screen said so after that |
+| Incoming member: view | Pass. The rejected statement is not on the page, and none of `hr_private`, `lead_private`, "HR Private", "Lead 1-on-1", "confidential", "salary", "severance" appears in the page text |
+| Incoming member: confirm receipt, reload | Pass. "Receipt Confirmed by Kiran" is shown again after a reload (`GET /receipt` `200`) |
+| Wrong password | Pass. "Wrong email or password" |
+| Wrong role | Pass. The incoming member's calls to `GET /statements` and `GET /sources` on the handover returned `403` |
+| Accept a gap, approve while a conflict is open, departing member after approval | Not repeated in Chrome (covered in the first run above) |
+
+| Same-origin and cross-origin | Result |
+| --- | --- |
+| Same-origin build (3202), `/health` through the frontend | Pass. `200` |
+| Same-origin: sign in as lead, then reload and ask `/auth/me` | Pass. `200`, user Deepak, so the cookie was kept. The screen goes back to role selection after a reload, as above |
+| Same-origin: every request | Pass. In the network list all 46 requests went to `localhost:3202`, none to port 8001. The `403` answers were lead-only lists requested right after the reload while the cookie still belonged to the incoming member, before the new sign-in |
+| Cross-origin build (3201) | Pass. Sign-in and the lead screens worked; the 15 API requests in the list went directly to `localhost:8001`, all `200` |
+| Console | The extension's console reader returned no messages for the pages above. It starts recording only when first called, so the first part of the journey was not captured |
+| Network failures | The only non-`200` answers seen were the `403` lead-only lists after a reload (above) and `404` for `/favicon.ico` on port 3202 |
+
+| Voice answer (Chrome) | Result |
+| --- | --- |
+| Open the recorder | Pass. The answer box kept the typed text, and the panel showed "Start Recording" |
+| Press "Start Recording" and allow the microphone | **Not run.** I pressed it three times. The page asked for the microphone, the browser's permission state stayed "prompt", and `getUserMedia` stayed pending for 15 seconds. The prompt was not answered in the tab I drove, even after the project owner said they had clicked Allow. No recording started and no transcription was run. No speech was produced either |
+| Message when permission is denied, typed text kept | Not tested. Reading the code, the recorder shows an error message and the typed answer is a separate field, but that was not run |
+
 Bugs found and fixed in the frontend during this run: the lead dashboard showed "Pending / Run analysis to compute" after a reload although an analysis existed (the last analysis is now loaded); the "Inspect Piece" button ran past the card at 375px (incoming screens); the dashboard's header buttons ran past the edge at 768px; "Mode: null" was shown while an analysis was running. Review of the departing-member work also removed the optimistic local copy of the typed answer: it was set before the server answered, so a rejected save could still show the text as the answer. The screen now shows only what the server returned.
 
 One backend finding, now fixed: for a handover that includes a lead-only document, a `missing` gap with no source of its own was shown to the incoming member. In an earlier saved file one such statement read "The contents of 'hr_private_notes paragraph 2' are not provided in the sources" (`GET /handovers/1/handover-view` as the incoming member, statement 37). It leaked the name of a restricted location, not its content.
@@ -283,11 +320,11 @@ A second defence was added in the pipeline (rule 10, `rules.py`): restricted sou
 
 "Not tested yet" means no result has been recorded for it. The checks that were run, with their dates, are in "Latest result" and "Frontend run by hand".
 
-- **Voice answers.** Recording and transcription were not run. The built-in browser blocks the microphone.
-- **Browsers other than the Claude desktop app's built-in one.** Chrome, Firefox and Safari were not used. A real phone and touch devices were not used.
-- **Same-origin mode (`BACKEND_URL`).** Not re-run in the latest pass. It was run once earlier on a local build (see `DEPLOY.md`).
-- **A deployed instance, including Vercel.** Nothing is deployed to Render or Vercel.
+- **Voice answers: recording and transcription.** Not run. In Chrome the microphone prompt was never answered, so recording did not start (see "Second pass in real Chrome"). The built-in browser blocks the microphone. The denied-permission message was not tested.
+- **Firefox and Safari.** Not run (not available here). A real phone and touch devices were not used.
+- **Vercel, and a deployed instance.** Nothing is deployed to Render or Vercel. Forwarding through Vercel to Render is untested. Same-origin mode was run locally only.
 - **The frontend image under `docker compose --profile frontend up`.** Ports were busy, so the image was started with `docker run`.
+- **Docker, upload and analysis in the container.** Not run on the current build.
 - **Automated frontend tests.** None exist (skipped for Round 2).
 - **The AI in the automated tests.** The test suite never calls a real model. The real AI was run by hand on the synthetic project (above).
 - **Load and long inputs.** A very large repository would need chunking, which is not built.
