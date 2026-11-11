@@ -200,3 +200,5 @@ The repository is owned by the GitHub account `try2mastercode`, which belongs to
 - Demonstration data is synthetic.
 - AI assistance used in development, including AI-generated code, is disclosed in this repository. The backend code was written with help from Claude Code and reviewed by the team.
 - External services: a large language model API (Gemini by default), GitHub, Render and Vercel. Render and Vercel are not deployed to yet.
+
+<!-- last updated: 2026-11-11 -->
