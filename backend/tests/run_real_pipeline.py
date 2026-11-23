@@ -26,6 +26,25 @@ from app.deps import get_session_factory
 from app.main import app
 from tests.helpers import create_team, sign_in
 
+# Measurement only: records every evidence item the model proposed and whether its quote is really in
+# the cited piece, before the pipeline throws the bad ones away. Pipeline behaviour is not changed.
+import app.pipeline.analyze as analyze
+raw_log = []
+_check = analyze.check_evidence
+def _recording_check(raw_evidence, pieces_by_id):
+    items = []
+    for item in raw_evidence if isinstance(raw_evidence, list) else []:
+        try:
+            piece = pieces_by_id[int(item["piece_id"])]
+            quote = str(item["quote"])
+            items.append({"source": piece.source.name, "locator": getattr(piece, "locator", None), "quote": quote,
+                          "found": analyze.quote_in_piece(quote, piece)})
+        except (KeyError, TypeError, ValueError):
+            items.append({"source": None, "quote": str(item)[:200] if not isinstance(item, dict) else str(item.get("quote", ""))[:200], "found": False, "bad_piece_id": True})
+    raw_log.append(items)
+    return _check(raw_evidence, pieces_by_id)
+analyze.check_evidence = _recording_check
+
 engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
@@ -52,6 +71,7 @@ with TestClient(app) as c:
         if a["status"] != "running": break
         time.sleep(5)
     print({k: a.get(k) for k in ("status", "mode", "notice", "counts", "dropped")})
+(out / "grounding.json").write_text(json.dumps(raw_log, indent=1), encoding="utf-8")
 files = list((out / "saved").glob("*.json"))
 print("saved:", [f.name for f in files])
 if files:

@@ -149,6 +149,36 @@ This starts PostgreSQL and the backend at `http://localhost:8000` (if that port 
 6. Text shown to the incoming member has emails, phone numbers and secrets masked, and a statement is hidden unless they may see every source behind it.
 7. If the AI service fails, the last good results are shown (marked as saved), and if there are none, a basic listing built only from structured fields such as task owners. The response always says which mode was used.
 
+## Evaluation
+
+What share of AI-generated claims are backed by a quote that really exists in the cited source.
+
+**Definition**
+- A claim is grounded if every quote it cites appears in the source piece it points to
+- Matching is exact, ignoring only spacing and line breaks
+- Measured on the model's raw output, before the pipeline discards bad claims
+
+**Result**
+
+| Claims | Grounded | Ungrounded | Rate |
+|---|---|---|---|
+| 110 | 106 | 4 | 96.4% |
+
+- 130 of 134 individual quotes were found in the cited source (97.0%)
+- The 4 misses were paraphrases presented as quotes
+- Anything ungrounded is dropped before it reaches the user
+
+**Data and run**
+- 9 synthetic sources in `data/synthetic`: 2 chats, 4 docs, a repo export, 2 task boards
+- Model: `gemini-3.5-flash-lite`, one run
+- Reproduce from `backend`: `python tests/run_real_pipeline.py OUT`, then `python tests/score_grounding.py OUT`
+
+**Limits**
+- Small sample: one run on one synthetic project
+- Checks that the quote exists, not that the claim follows from it
+- Claims rejected before evidence was checked (malformed output) are not counted
+- Results will vary between runs and models
+
 ## Privacy, security and responsible design
 
 - **Access is checked in the backend.** Every endpoint checks who you are and your role in that handover. A statement or question is shown only if the viewer may see every source behind it, so a summary of a restricted document inherits the restriction. The incoming member only sees what the lead approved.
