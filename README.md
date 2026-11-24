@@ -1,6 +1,12 @@
 # Trailmark
 
-Trailmark is a knowledge-handover platform built for **WCC Forge 48** (We Code Coders). When a team member leaves a project, it reads the project's authorised sources, finds what is missing or unclear, asks the departing member about those gaps, and gives the incoming member a reviewed, evidence-linked handover.
+Trailmark is a knowledge-handover platform built as a two-person project. When a team member leaves a project, it reads the project's authorised sources, finds what is missing or unclear, asks the departing member about those gaps, and gives the incoming member a reviewed, evidence-linked handover.
+
+## Demo
+
+The full journey on the synthetic "Campus Events App" project: the lead imports sources and runs the analysis, the departing member answers a question, the lead resolves the three source conflicts and approves, and the incoming member confirms receipt. The analysis step in this recording shows the saved result of a real AI run (`backend/saved_results/`), so the recording is repeatable. The [full video](docs/demo/trailmark-demo.webm) is in the repo, and `docs/demo/record.mjs` regenerates it.
+
+![Trailmark demo](docs/demo/trailmark-demo.gif)
 
 ## The problem
 
