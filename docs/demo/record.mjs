@@ -41,6 +41,7 @@ await ctx.addInitScript(() => {
       document.documentElement.appendChild(el);
     }
     el.textContent = text;
+    el.style.display = text ? "block" : "none";
   };
 });
 const page = await ctx.newPage();
@@ -51,6 +52,9 @@ const caption = async (text, holdMs = 2600) => {
   await page.waitForTimeout(holdMs);
   frameNo += 1;
   await page.screenshot({ path: path.join(here, "frames", String(frameNo).padStart(2, "0") + ".png") });
+  // Clear the caption as soon as its hold is over, so it can never sit on top of the next page
+  // while the app is navigating or switching persona.
+  await page.evaluate(() => window.__cap(""));
 };
 const enter = async (re) => {
   await page.getByRole("button", { name: re }).click();
