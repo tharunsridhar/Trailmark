@@ -6,6 +6,8 @@ Trailmark is a knowledge-handover platform built as a two-person project. When a
 
 The full journey on the synthetic "Campus Events App" project: the lead imports sources and runs the analysis, the departing member answers a question, the lead resolves the three source conflicts and approves, and the incoming member confirms receipt. The analysis step in this recording shows the saved result of a real AI run (`backend/saved_results/`), so the recording is repeatable. The [full video](docs/demo/trailmark-demo.webm) is in the repo, and `docs/demo/record.mjs` regenerates it.
 
+https://github.com/user-attachments/assets/5552cd44-3b1b-4dc4-938c-a0edf2d2e217
+
 ![Trailmark demo](docs/demo/trailmark-demo.gif)
 
 ## The problem
